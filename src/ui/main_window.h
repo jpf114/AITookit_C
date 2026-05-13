@@ -4,6 +4,7 @@
 
 #include <memory>
 
+#include "core/settings_store.h"
 #include "core/types.h"
 #include "models/yolo_detection_model.h"
 #include "services/export_service.h"
@@ -33,11 +34,13 @@ private:
     void buildShell();
     void wireSignals();
     void updateContextPanel();
+    void refreshSettingsPage();
     void showPage(int pageId);
     void handleManifestSelected(const QString& manifestPath);
     void handleImageSelected(const QString& imagePath);
     void handleRunRequested();
     void handleExportRequested();
+    void handleDefaultExportDirectoryChanged(const QString& directoryPath);
     void applyInferenceResult(const core::InferenceSummary& summary);
 
     NavPanel* navPanel_ = nullptr;
@@ -56,6 +59,7 @@ private:
     services::ModelService modelService_;
     services::InferenceService inferenceService_;
     services::ExportService exportService_;
+    core::SettingsStore settingsStore_;
 
     std::unique_ptr<models::YoloDetectionModel> currentModel_;
     QString currentManifestPath_;

@@ -15,6 +15,7 @@ private slots:
     void deduplicatesAndCapsRecentEntries();
     void deduplicatesRecentModelsIgnoringCaseOnWindows();
     void respectsRecentModelsReadbackLimit();
+    void savesAndLoadsDefaultExportDirectory();
 };
 
 QString settingsFilePath(QTemporaryDir& tempDir, const QString& fileName) {
@@ -90,6 +91,20 @@ void SettingsStoreTest::respectsRecentModelsReadbackLimit() {
     QCOMPARE(recentModels.size(), 10);
     QCOMPARE(recentModels.front(), QStringLiteral("C:/models/model_11.onnx"));
     QCOMPARE(recentModels.back(), QStringLiteral("C:/models/model_2.onnx"));
+}
+
+void SettingsStoreTest::savesAndLoadsDefaultExportDirectory() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+    const QString iniPath = settingsFilePath(tempDir, QStringLiteral("settings.ini"));
+
+    {
+        aitoolkit::core::SettingsStore store(iniPath, QSettings::IniFormat);
+        store.setDefaultExportDirectory(QStringLiteral("C:/exports/results"));
+    }
+
+    aitoolkit::core::SettingsStore store(iniPath, QSettings::IniFormat);
+    QCOMPARE(store.defaultExportDirectory(), QStringLiteral("C:/exports/results"));
 }
 
 }  // namespace

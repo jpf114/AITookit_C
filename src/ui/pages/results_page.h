@@ -6,6 +6,7 @@
 #include "core/types.h"
 
 class QLabel;
+class QTableWidget;
 
 namespace aitoolkit::ui {
 
@@ -26,6 +27,7 @@ signals:
 private:
     QLabel* summaryLabel_ = nullptr;
     ImagePreviewWidget* previewWidget_ = nullptr;
+    QTableWidget* detectionsTable_ = nullptr;
 };
 
 }  // namespace aitoolkit::ui

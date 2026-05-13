@@ -46,6 +46,7 @@ ai_add_qt_test_if_exists(test_settings_store.cpp)
 ai_add_qt_test_if_exists(test_yolo_postprocess.cpp)
 ai_add_qt_test_if_exists(test_export_service.cpp)
 ai_add_qt_test_if_exists(test_main_window.cpp)
+ai_add_qt_test_if_exists(test_results_page.cpp)
 
 if(TARGET test_yolo_postprocess)
     target_link_libraries(
@@ -78,6 +79,23 @@ if(TARGET test_main_window)
     )
     target_link_libraries(
         test_main_window
+        PRIVATE
+            ai_services
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::Svg
+    )
+endif()
+
+if(TARGET test_results_page)
+    target_sources(
+        test_results_page
+        PRIVATE
+            ${CMAKE_SOURCE_DIR}/src/ui/pages/results_page.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/widgets/image_preview_widget.cpp
+    )
+    target_link_libraries(
+        test_results_page
         PRIVATE
             ai_services
             Qt6::Gui

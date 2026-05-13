@@ -15,9 +15,11 @@ public:
 
     [[nodiscard]] QStringList recentModels() const;
     [[nodiscard]] QStringList recentInputs() const;
+    [[nodiscard]] QString defaultExportDirectory() const;
 
     void setRecentModels(const QStringList& paths);
     void setRecentInputs(const QStringList& paths);
+    void setDefaultExportDirectory(const QString& directoryPath);
 
     void addRecentModel(const QString& path, int maxItems = 10);
     void addRecentInput(const QString& path, int maxItems = 10);

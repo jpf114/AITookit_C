@@ -8,6 +8,7 @@ namespace {
 
 constexpr auto kRecentModelsKey = "recent/models";
 constexpr auto kRecentInputsKey = "recent/inputs";
+constexpr auto kDefaultExportDirectoryKey = "export/defaultDirectory";
 
 }  // namespace
 
@@ -27,12 +28,23 @@ QStringList SettingsStore::recentInputs() const {
     return recentValues(QString::fromLatin1(kRecentInputsKey));
 }
 
+QString SettingsStore::defaultExportDirectory() const {
+    return QDir::cleanPath(settings_.value(QString::fromLatin1(kDefaultExportDirectoryKey)).toString().trimmed());
+}
+
 void SettingsStore::setRecentModels(const QStringList& paths) {
     setRecentValues(QString::fromLatin1(kRecentModelsKey), paths);
 }
 
 void SettingsStore::setRecentInputs(const QStringList& paths) {
     setRecentValues(QString::fromLatin1(kRecentInputsKey), paths);
+}
+
+void SettingsStore::setDefaultExportDirectory(const QString& directoryPath) {
+    settings_.setValue(
+        QString::fromLatin1(kDefaultExportDirectoryKey),
+        QDir::cleanPath(directoryPath.trimmed()));
+    settings_.sync();
 }
 
 void SettingsStore::addRecentModel(const QString& path, const int maxItems) {

@@ -1,6 +1,10 @@
 #pragma once
 
+#include <QStringList>
 #include <QWidget>
+
+class QLineEdit;
+class QListWidget;
 
 namespace aitoolkit::ui {
 
@@ -9,6 +13,18 @@ class SettingsPage : public QWidget {
 
 public:
     explicit SettingsPage(QWidget* parent = nullptr);
+
+    void setDefaultExportDirectory(const QString& directoryPath);
+    void setRecentModels(const QStringList& recentModels);
+    void setRecentInputs(const QStringList& recentInputs);
+
+signals:
+    void defaultExportDirectoryChanged(const QString& directoryPath);
+
+private:
+    QLineEdit* exportDirectoryEdit_ = nullptr;
+    QListWidget* recentModelsList_ = nullptr;
+    QListWidget* recentInputsList_ = nullptr;
 };
 
 }  // namespace aitoolkit::ui

@@ -1,9 +1,11 @@
 #include "ui/main_window.h"
 
 #include <QFileDialog>
+#include <QDir>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QImage>
+#include <QFileInfo>
 #include <QLabel>
 #include <QMessageBox>
 #include <QStackedWidget>
@@ -25,6 +27,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     buildShell();
     wireSignals();
+    refreshSettingsPage();
     updateContextPanel();
 }
 
@@ -81,6 +84,7 @@ void MainWindow::wireSignals() {
     connect(inferencePage_, &InferencePage::imageSelected, this, &MainWindow::handleImageSelected);
     connect(inferencePage_, &InferencePage::runRequested, this, &MainWindow::handleRunRequested);
     connect(resultsPage_, &ResultsPage::exportRequested, this, &MainWindow::handleExportRequested);
+    connect(settingsPage_, &SettingsPage::defaultExportDirectoryChanged, this, &MainWindow::handleDefaultExportDirectoryChanged);
 }
 
 void MainWindow::updateContextPanel() {
@@ -106,12 +110,20 @@ void MainWindow::showPage(const int pageId) {
     }
 }
 
+void MainWindow::refreshSettingsPage() {
+    settingsPage_->setDefaultExportDirectory(settingsStore_.defaultExportDirectory());
+    settingsPage_->setRecentModels(settingsStore_.recentModels());
+    settingsPage_->setRecentInputs(settingsStore_.recentInputs());
+}
+
 void MainWindow::handleManifestSelected(const QString& manifestPath) {
     try {
         currentModel_ = modelService_.loadDetectionModel(manifestPath);
         currentManifestPath_ = manifestPath;
+        settingsStore_.addRecentModel(manifestPath);
         modelsPage_->setCurrentManifestPath(manifestPath);
         inferencePage_->setModelReady(true);
+        refreshSettingsPage();
         updateContextPanel();
         showPage(NavPanel::InferencePageId);
     } catch (const std::exception& error) {
@@ -121,8 +133,10 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
 
 void MainWindow::handleImageSelected(const QString& imagePath) {
     currentImagePath_ = imagePath;
+    settingsStore_.addRecentInput(imagePath);
     inferencePage_->setCurrentImagePath(imagePath);
     resultsPage_->setImage(QImage(imagePath));
+    refreshSettingsPage();
     updateContextPanel();
 }
 
@@ -150,10 +164,17 @@ void MainWindow::handleExportRequested() {
         return;
     }
 
+    QString initialDirectory = settingsStore_.defaultExportDirectory();
+    if (initialDirectory.isEmpty() && !currentImagePath_.isEmpty()) {
+        initialDirectory = QFileInfo(currentImagePath_).absolutePath();
+    }
+
     const QString outputPath = QFileDialog::getSaveFileName(
         this,
         QStringLiteral("导出 JSON"),
-        QString(),
+        initialDirectory.isEmpty()
+            ? QString()
+            : QDir(initialDirectory).filePath(QStringLiteral("result.json")),
         QStringLiteral("JSON Files (*.json)"));
     if (outputPath.isEmpty()) {
         return;
@@ -161,9 +182,16 @@ void MainWindow::handleExportRequested() {
 
     try {
         exportService_.exportJson(outputPath, currentSummary_);
+        settingsStore_.setDefaultExportDirectory(QFileInfo(outputPath).absolutePath());
+        refreshSettingsPage();
     } catch (const std::exception& error) {
         QMessageBox::critical(this, QStringLiteral("导出失败"), QString::fromUtf8(error.what()));
     }
+}
+
+void MainWindow::handleDefaultExportDirectoryChanged(const QString& directoryPath) {
+    settingsStore_.setDefaultExportDirectory(directoryPath);
+    refreshSettingsPage();
 }
 
 void MainWindow::applyInferenceResult(const core::InferenceSummary& summary) {
