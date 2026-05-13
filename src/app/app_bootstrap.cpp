@@ -1,0 +1,55 @@
+#include "app/app_bootstrap.h"
+
+#include <QApplication>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QStringList>
+
+namespace aitoolkit::app {
+
+namespace {
+
+QString findExistingPath(const QStringList& candidatePaths) {
+    for (const QString& candidatePath : candidatePaths) {
+        if (QFile::exists(candidatePath)) {
+            return QDir::cleanPath(candidatePath);
+        }
+    }
+    return {};
+}
+
+}  // namespace
+
+void AppBootstrap::initialize(QApplication& app) {
+    app.setApplicationName(QStringLiteral("AI Toolkit C"));
+    app.setApplicationDisplayName(QStringLiteral("AI Toolkit C"));
+    app.setOrganizationName(QStringLiteral("MyProject"));
+
+    QFile styleFile(applicationStylePath());
+    if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        app.setStyleSheet(QString::fromUtf8(styleFile.readAll()));
+    }
+}
+
+QString AppBootstrap::applicationStylePath() {
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    const QStringList candidates{
+        appDir.filePath("resources/themes/app.qss"),
+        appDir.filePath("share/themes/app.qss"),
+        appDir.filePath("../resources/themes/app.qss"),
+        appDir.filePath("../share/themes/app.qss"),
+        appDir.filePath("../../resources/themes/app.qss"),
+        appDir.filePath("../../share/themes/app.qss"),
+        appDir.filePath("../../../resources/themes/app.qss"),
+        appDir.filePath("../../../share/themes/app.qss"),
+        appDir.filePath("../../../../resources/themes/app.qss"),
+        appDir.filePath("../../../../share/themes/app.qss"),
+        appDir.filePath("../../../../../resources/themes/app.qss"),
+        appDir.filePath("../../../../../share/themes/app.qss"),
+    };
+
+    return findExistingPath(candidates);
+}
+
+}  // namespace aitoolkit::app

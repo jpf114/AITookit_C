@@ -1,0 +1,34 @@
+#pragma once
+
+#include <QSettings>
+#include <QString>
+#include <QStringList>
+
+namespace aitoolkit::core {
+
+class SettingsStore {
+public:
+    explicit SettingsStore(
+        const QString& organizationName = QStringLiteral("MyProject"),
+        const QString& applicationName = QStringLiteral("AI Toolkit C"));
+    SettingsStore(const QString& filePath, QSettings::Format format);
+
+    [[nodiscard]] QStringList recentModels() const;
+    [[nodiscard]] QStringList recentInputs() const;
+
+    void setRecentModels(const QStringList& paths);
+    void setRecentInputs(const QStringList& paths);
+
+    void addRecentModel(const QString& path, int maxItems = 10);
+    void addRecentInput(const QString& path, int maxItems = 10);
+
+private:
+    void setRecentValues(const QString& key, const QStringList& values);
+    [[nodiscard]] QStringList recentValues(const QString& key) const;
+    static bool pathsEqual(const QString& lhs, const QString& rhs);
+    static QStringList normalizeRecentValues(const QStringList& values, int maxItems);
+
+    QSettings settings_;
+};
+
+}  // namespace aitoolkit::core

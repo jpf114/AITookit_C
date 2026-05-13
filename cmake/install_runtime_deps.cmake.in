@@ -1,0 +1,25 @@
+set(installed_executable "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@/ai_toolkit_c.exe")
+
+if(NOT EXISTS "${installed_executable}")
+    message(STATUS "Skipping runtime dependency install: executable not found at ${installed_executable}")
+    return()
+endif()
+
+file(GET_RUNTIME_DEPENDENCIES
+    RESOLVED_DEPENDENCIES_VAR resolved_deps
+    UNRESOLVED_DEPENDENCIES_VAR unresolved_deps
+    EXECUTABLES "${installed_executable}"
+)
+
+if(unresolved_deps)
+    list(JOIN unresolved_deps "\n  - " unresolved_deps_message)
+    message(WARNING "Unresolved runtime dependencies detected:\n  - ${unresolved_deps_message}")
+endif()
+
+foreach(dep IN LISTS resolved_deps)
+    file(INSTALL
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@"
+        TYPE SHARED_LIBRARY
+        FILES "${dep}"
+    )
+endforeach()

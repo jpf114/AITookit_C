@@ -1,0 +1,55 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cmake-configure-debug",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--preset",
+        "debug"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake-configure-release",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--preset",
+        "release"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake-build-debug",
+      "type": "shell",
+      "dependsOn": [
+        "cmake-configure-debug"
+      ],
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "debug"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake-build-release",
+      "type": "shell",
+      "dependsOn": [
+        "cmake-configure-release"
+      ],
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "release"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
