@@ -43,6 +43,25 @@ function(ai_resolve_first_available_target out_var)
     set(${out_var} "" PARENT_SCOPE)
 endfunction()
 
+function(ai_copy_qt_windows_platform_plugin target)
+    if(NOT WIN32 OR NOT DEFINED ENV{VCPKG_ROOT})
+        return()
+    endif()
+
+    set(qt_platform_plugin
+        "$ENV{VCPKG_ROOT}/installed/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
+
+    add_custom_command(
+        TARGET ${target}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${target}>/platforms"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${qt_platform_plugin}"
+            "$<TARGET_FILE_DIR:${target}>/platforms/"
+        VERBATIM
+    )
+endfunction()
+
 ai_resolve_first_available_target(ai_opencv_core_target OpenCV::opencv_core opencv_core)
 ai_resolve_first_available_target(ai_opencv_imgproc_target OpenCV::opencv_imgproc opencv_imgproc)
 ai_resolve_first_available_target(ai_opencv_imgcodecs_target OpenCV::opencv_imgcodecs opencv_imgcodecs)
@@ -130,6 +149,7 @@ target_link_libraries(
         Qt6::Widgets
         Qt6::Svg
 )
+ai_copy_qt_windows_platform_plugin(ai_toolkit_c)
 
 install(TARGETS ai_toolkit_c RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 

@@ -1,0 +1,176 @@
+#include "ui/main_window.h"
+
+#include <QFileDialog>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QImage>
+#include <QLabel>
+#include <QMessageBox>
+#include <QStackedWidget>
+#include <QVBoxLayout>
+
+#include "ui/nav_panel.h"
+#include "ui/pages/home_page.h"
+#include "ui/pages/inference_page.h"
+#include "ui/pages/models_page.h"
+#include "ui/pages/results_page.h"
+#include "ui/pages/settings_page.h"
+
+namespace aitoolkit::ui {
+
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent) {
+    setWindowTitle(QStringLiteral("AI Toolkit C"));
+    resize(1440, 900);
+
+    buildShell();
+    wireSignals();
+    updateContextPanel();
+}
+
+void MainWindow::buildShell() {
+    auto* central = new QWidget(this);
+    auto* layout = new QHBoxLayout(central);
+    layout->setContentsMargins(0, 0, 0, 0);
+
+    navPanel_ = new NavPanel(central);
+
+    pageStack_ = new QStackedWidget(central);
+    homePage_ = new HomePage(pageStack_);
+    modelsPage_ = new ModelsPage(pageStack_);
+    inferencePage_ = new InferencePage(pageStack_);
+    resultsPage_ = new ResultsPage(pageStack_);
+    settingsPage_ = new SettingsPage(pageStack_);
+    pageStack_->addWidget(homePage_);
+    pageStack_->addWidget(modelsPage_);
+    pageStack_->addWidget(inferencePage_);
+    pageStack_->addWidget(resultsPage_);
+    pageStack_->addWidget(settingsPage_);
+
+    contextPanel_ = new QFrame(central);
+    contextPanel_->setObjectName(QStringLiteral("ContextPanel"));
+    auto* contextLayout = new QVBoxLayout(contextPanel_);
+    contextLayout->setContentsMargins(16, 16, 16, 16);
+    contextLayout->setSpacing(12);
+
+    auto* title = new QLabel(QStringLiteral("当前会话"), contextPanel_);
+    title->setStyleSheet(QStringLiteral("font-size: 18px; font-weight: 600;"));
+    modelStatusLabel_ = new QLabel(contextPanel_);
+    modelStatusLabel_->setWordWrap(true);
+    imageStatusLabel_ = new QLabel(contextPanel_);
+    imageStatusLabel_->setWordWrap(true);
+    runStatusLabel_ = new QLabel(contextPanel_);
+    runStatusLabel_->setWordWrap(true);
+
+    contextLayout->addWidget(title);
+    contextLayout->addWidget(modelStatusLabel_);
+    contextLayout->addWidget(imageStatusLabel_);
+    contextLayout->addWidget(runStatusLabel_);
+    contextLayout->addStretch(1);
+
+    layout->addWidget(navPanel_);
+    layout->addWidget(pageStack_, 1);
+    layout->addWidget(contextPanel_);
+
+    setCentralWidget(central);
+}
+
+void MainWindow::wireSignals() {
+    connect(navPanel_, &NavPanel::pageRequested, this, &MainWindow::showPage);
+    connect(modelsPage_, &ModelsPage::modelManifestSelected, this, &MainWindow::handleManifestSelected);
+    connect(inferencePage_, &InferencePage::imageSelected, this, &MainWindow::handleImageSelected);
+    connect(inferencePage_, &InferencePage::runRequested, this, &MainWindow::handleRunRequested);
+    connect(resultsPage_, &ResultsPage::exportRequested, this, &MainWindow::handleExportRequested);
+}
+
+void MainWindow::updateContextPanel() {
+    modelStatusLabel_->setText(
+        currentManifestPath_.isEmpty()
+            ? QStringLiteral("模型：未加载")
+            : QStringLiteral("模型：%1").arg(currentManifestPath_));
+    imageStatusLabel_->setText(
+        currentImagePath_.isEmpty()
+            ? QStringLiteral("图片：未选择")
+            : QStringLiteral("图片：%1").arg(currentImagePath_));
+    runStatusLabel_->setText(
+        currentSummary_.inputPath.isEmpty()
+            ? QStringLiteral("结果：尚未运行")
+            : QStringLiteral("结果：%1 个目标，耗时 %2 ms")
+                  .arg(currentSummary_.detectionCount)
+                  .arg(QString::number(currentSummary_.elapsedMs, 'f', 2)));
+}
+
+void MainWindow::showPage(const int pageId) {
+    if (pageId >= 0 && pageId < pageStack_->count()) {
+        pageStack_->setCurrentIndex(pageId);
+    }
+}
+
+void MainWindow::handleManifestSelected(const QString& manifestPath) {
+    try {
+        currentModel_ = modelService_.loadDetectionModel(manifestPath);
+        currentManifestPath_ = manifestPath;
+        modelsPage_->setCurrentManifestPath(manifestPath);
+        inferencePage_->setModelReady(true);
+        updateContextPanel();
+        showPage(NavPanel::InferencePageId);
+    } catch (const std::exception& error) {
+        QMessageBox::critical(this, QStringLiteral("加载模型失败"), QString::fromUtf8(error.what()));
+    }
+}
+
+void MainWindow::handleImageSelected(const QString& imagePath) {
+    currentImagePath_ = imagePath;
+    inferencePage_->setCurrentImagePath(imagePath);
+    resultsPage_->setImage(QImage(imagePath));
+    updateContextPanel();
+}
+
+void MainWindow::handleRunRequested() {
+    if (!currentModel_) {
+        QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单。"));
+        return;
+    }
+    if (currentImagePath_.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("缺少图片"), QStringLiteral("请先选择一张图片。"));
+        return;
+    }
+
+    try {
+        applyInferenceResult(inferenceService_.runImage(*currentModel_, currentImagePath_));
+        showPage(NavPanel::ResultsPageId);
+    } catch (const std::exception& error) {
+        QMessageBox::critical(this, QStringLiteral("推理失败"), QString::fromUtf8(error.what()));
+    }
+}
+
+void MainWindow::handleExportRequested() {
+    if (currentSummary_.inputPath.isEmpty()) {
+        QMessageBox::information(this, QStringLiteral("暂无结果"), QStringLiteral("请先完成一次推理。"));
+        return;
+    }
+
+    const QString outputPath = QFileDialog::getSaveFileName(
+        this,
+        QStringLiteral("导出 JSON"),
+        QString(),
+        QStringLiteral("JSON Files (*.json)"));
+    if (outputPath.isEmpty()) {
+        return;
+    }
+
+    try {
+        exportService_.exportJson(outputPath, currentSummary_);
+    } catch (const std::exception& error) {
+        QMessageBox::critical(this, QStringLiteral("导出失败"), QString::fromUtf8(error.what()));
+    }
+}
+
+void MainWindow::applyInferenceResult(const core::InferenceSummary& summary) {
+    currentSummary_ = summary;
+    resultsPage_->setSummary(summary);
+    resultsPage_->setImage(QImage(currentImagePath_));
+    updateContextPanel();
+}
+
+}  // namespace aitoolkit::ui

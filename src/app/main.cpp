@@ -1,16 +1,14 @@
 #include "app/app_bootstrap.h"
 
 #include <QApplication>
-#include <QMainWindow>
+
+#include "ui/main_window.h"
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
     aitoolkit::app::AppBootstrap::initialize(app);
 
-    // Task 6 will replace this temporary shell with ui::MainWindow.
-    QMainWindow window;
-    window.setWindowTitle(QStringLiteral("AI Toolkit C"));
-    window.resize(1440, 900);
+    aitoolkit::ui::MainWindow window;
     window.show();
 
     return app.exec();
