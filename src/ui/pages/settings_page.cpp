@@ -29,14 +29,26 @@ SettingsPage::SettingsPage(QWidget* parent)
 
     auto* recentModelsLabel = new QLabel(QStringLiteral("Recent models"), this);
     recentModelsList_ = new QListWidget(this);
+    recentModelsList_->setObjectName(QStringLiteral("RecentModelsList"));
     recentModelsList_->setMinimumHeight(120);
 
     auto* recentInputsLabel = new QLabel(QStringLiteral("Recent images"), this);
     recentInputsList_ = new QListWidget(this);
+    recentInputsList_->setObjectName(QStringLiteral("RecentInputsList"));
     recentInputsList_->setMinimumHeight(120);
 
     connect(exportDirectoryEdit_, &QLineEdit::editingFinished, this, [this]() {
         emit defaultExportDirectoryChanged(exportDirectoryEdit_->text().trimmed());
+    });
+    connect(recentModelsList_, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
+        if (item != nullptr) {
+            emit recentModelActivated(item->text());
+        }
+    });
+    connect(recentInputsList_, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
+        if (item != nullptr) {
+            emit recentInputActivated(item->text());
+        }
     });
     connect(browseButton, &QPushButton::clicked, this, [this]() {
         const QString directoryPath = QFileDialog::getExistingDirectory(

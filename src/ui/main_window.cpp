@@ -85,6 +85,11 @@ void MainWindow::wireSignals() {
     connect(inferencePage_, &InferencePage::runRequested, this, &MainWindow::handleRunRequested);
     connect(resultsPage_, &ResultsPage::exportRequested, this, &MainWindow::handleExportRequested);
     connect(settingsPage_, &SettingsPage::defaultExportDirectoryChanged, this, &MainWindow::handleDefaultExportDirectoryChanged);
+    connect(settingsPage_, &SettingsPage::recentModelActivated, this, &MainWindow::handleManifestSelected);
+    connect(settingsPage_, &SettingsPage::recentInputActivated, this, [this](const QString& imagePath) {
+        handleImageSelected(imagePath);
+        showPage(NavPanel::InferencePageId);
+    });
 }
 
 void MainWindow::updateContextPanel() {

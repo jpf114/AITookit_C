@@ -13,20 +13,21 @@ InferencePage::InferencePage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("单图推理"), this);
+    auto* title = new QLabel(QStringLiteral("Inference"), this);
     title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
 
-    auto* openButton = new QPushButton(QStringLiteral("选择图片"), this);
-    runButton_ = new QPushButton(QStringLiteral("运行检测"), this);
+    auto* openButton = new QPushButton(QStringLiteral("Choose image"), this);
+    runButton_ = new QPushButton(QStringLiteral("Run detection"), this);
     runButton_->setEnabled(false);
 
-    imagePathLabel_ = new QLabel(QStringLiteral("当前未选择图片"), this);
+    imagePathLabel_ = new QLabel(QStringLiteral("No image selected"), this);
+    imagePathLabel_->setObjectName(QStringLiteral("InferenceImagePathLabel"));
     imagePathLabel_->setWordWrap(true);
 
     connect(openButton, &QPushButton::clicked, this, [this]() {
         const QString path = QFileDialog::getOpenFileName(
             this,
-            QStringLiteral("选择图片"),
+            QStringLiteral("Choose image"),
             QString(),
             QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp)"));
         if (!path.isEmpty()) {
@@ -44,11 +45,11 @@ InferencePage::InferencePage(QWidget* parent)
 
 void InferencePage::setCurrentImagePath(const QString& imagePath) {
     if (imagePath.isEmpty()) {
-        imagePathLabel_->setText(QStringLiteral("当前未选择图片"));
+        imagePathLabel_->setText(QStringLiteral("No image selected"));
         return;
     }
 
-    imagePathLabel_->setText(QStringLiteral("当前图片：%1").arg(imagePath));
+    imagePathLabel_->setText(QStringLiteral("Current image: %1").arg(imagePath));
 }
 
 void InferencePage::setModelReady(const bool ready) {

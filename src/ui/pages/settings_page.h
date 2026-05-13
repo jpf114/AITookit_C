@@ -20,6 +20,8 @@ public:
 
 signals:
     void defaultExportDirectoryChanged(const QString& directoryPath);
+    void recentModelActivated(const QString& manifestPath);
+    void recentInputActivated(const QString& imagePath);
 
 private:
     QLineEdit* exportDirectoryEdit_ = nullptr;
