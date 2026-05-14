@@ -11,11 +11,11 @@ namespace {
 
 QString manifestSummaryText(const core::ModelManifest& manifest) {
     if (manifest.manifestPath.isEmpty()) {
-        return QStringLiteral("Load a manifest to see model details.");
+        return QStringLiteral("加载模型清单后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。");
     }
 
     return QStringLiteral(
-               "Name: %1\nTask: %2\nBackend: %3\nInput: %4 x %5\nLabels: %6\nModel: %7")
+               "模型名称：%1\n任务类型：%2\n推理后端：%3\n输入尺寸：%4 x %5\n标签数量：%6\n模型文件：%7")
         .arg(manifest.name)
         .arg(manifest.taskType)
         .arg(manifest.backendType)
@@ -33,22 +33,25 @@ ModelsPage::ModelsPage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("Models"), this);
+    auto* title = new QLabel(QStringLiteral("模型"), this);
     title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
 
-    auto* loadButton = new QPushButton(QStringLiteral("Load manifest"), this);
-    manifestPathLabel_ = new QLabel(QStringLiteral("No manifest selected"), this);
+    auto* loadButton = new QPushButton(QStringLiteral("加载模型清单"), this);
+    loadButton->setObjectName(QStringLiteral("PrimaryButton"));
+    manifestPathLabel_ = new QLabel(QStringLiteral("当前未选择模型清单"), this);
     manifestPathLabel_->setObjectName(QStringLiteral("ManifestPathLabel"));
     manifestPathLabel_->setWordWrap(true);
 
-    manifestSummaryLabel_ = new QLabel(QStringLiteral("Load a manifest to see model details."), this);
+    manifestSummaryLabel_ = new QLabel(
+        QStringLiteral("加载模型清单后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。"),
+        this);
     manifestSummaryLabel_->setObjectName(QStringLiteral("ManifestSummaryLabel"));
     manifestSummaryLabel_->setWordWrap(true);
 
     connect(loadButton, &QPushButton::clicked, this, [this]() {
         const QString path = QFileDialog::getOpenFileName(
             this,
-            QStringLiteral("Choose model manifest"),
+            QStringLiteral("选择模型清单"),
             QString(),
             QStringLiteral("JSON Files (*.json)"));
         if (!path.isEmpty()) {
@@ -70,14 +73,14 @@ void ModelsPage::setCurrentManifest(const core::ModelManifest& manifest) {
 
 void ModelsPage::setCurrentManifestPath(const QString& manifestPath) {
     if (manifestPath.isEmpty()) {
-        manifestPathLabel_->setText(QStringLiteral("No manifest selected"));
+        manifestPathLabel_->setText(QStringLiteral("当前未选择模型清单"));
         if (manifestSummaryLabel_ != nullptr) {
-            manifestSummaryLabel_->setText(QStringLiteral("Load a manifest to see model details."));
+            manifestSummaryLabel_->setText(QStringLiteral("加载模型清单后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。"));
         }
         return;
     }
 
-    manifestPathLabel_->setText(QStringLiteral("Current manifest: %1").arg(manifestPath));
+    manifestPathLabel_->setText(QStringLiteral("当前模型清单：%1").arg(manifestPath));
 }
 
 }  // namespace aitoolkit::ui

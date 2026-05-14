@@ -16,23 +16,24 @@ SettingsPage::SettingsPage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("Settings"), this);
+    auto* title = new QLabel(QStringLiteral("设置"), this);
     title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
 
-    auto* exportLabel = new QLabel(QStringLiteral("Default export directory"), this);
+    auto* exportLabel = new QLabel(QStringLiteral("默认导出目录"), this);
     auto* exportRow = new QHBoxLayout();
     exportDirectoryEdit_ = new QLineEdit(this);
-    exportDirectoryEdit_->setPlaceholderText(QStringLiteral("Falls back to the current image folder"));
-    auto* browseButton = new QPushButton(QStringLiteral("Browse"), this);
+    exportDirectoryEdit_->setPlaceholderText(QStringLiteral("未设置时默认使用当前图像所在目录"));
+    auto* browseButton = new QPushButton(QStringLiteral("浏览"), this);
+    browseButton->setObjectName(QStringLiteral("SecondaryButton"));
     exportRow->addWidget(exportDirectoryEdit_, 1);
     exportRow->addWidget(browseButton);
 
-    auto* recentModelsLabel = new QLabel(QStringLiteral("Recent models"), this);
+    auto* recentModelsLabel = new QLabel(QStringLiteral("最近模型"), this);
     recentModelsList_ = new QListWidget(this);
     recentModelsList_->setObjectName(QStringLiteral("RecentModelsList"));
     recentModelsList_->setMinimumHeight(120);
 
-    auto* recentInputsLabel = new QLabel(QStringLiteral("Recent images"), this);
+    auto* recentInputsLabel = new QLabel(QStringLiteral("最近图像"), this);
     recentInputsList_ = new QListWidget(this);
     recentInputsList_->setObjectName(QStringLiteral("RecentInputsList"));
     recentInputsList_->setMinimumHeight(120);
@@ -53,7 +54,7 @@ SettingsPage::SettingsPage(QWidget* parent)
     connect(browseButton, &QPushButton::clicked, this, [this]() {
         const QString directoryPath = QFileDialog::getExistingDirectory(
             this,
-            QStringLiteral("Choose default export directory"),
+            QStringLiteral("选择默认导出目录"),
             exportDirectoryEdit_->text().trimmed());
         if (!directoryPath.isEmpty()) {
             exportDirectoryEdit_->setText(directoryPath);

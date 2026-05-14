@@ -22,7 +22,7 @@ namespace aitoolkit::ui {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
-    setWindowTitle(QStringLiteral("AI Toolkit C"));
+    setWindowTitle(QStringLiteral("AI 检测工具"));
     resize(1440, 900);
 
     buildShell();
@@ -56,7 +56,8 @@ void MainWindow::buildShell() {
     contextLayout->setContentsMargins(16, 16, 16, 16);
     contextLayout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("Current Session"), contextPanel_);
+    auto* title = new QLabel(QStringLiteral("当前会话"), contextPanel_);
+    title->setObjectName(QStringLiteral("ContextTitle"));
     title->setStyleSheet(QStringLiteral("font-size: 18px; font-weight: 600;"));
     modelStatusLabel_ = new QLabel(contextPanel_);
     modelStatusLabel_->setWordWrap(true);
@@ -95,16 +96,16 @@ void MainWindow::wireSignals() {
 void MainWindow::updateContextPanel() {
     modelStatusLabel_->setText(
         currentManifestPath_.isEmpty()
-            ? QStringLiteral("Model: not selected")
-            : QStringLiteral("Model: %1").arg(currentManifestPath_));
+            ? QStringLiteral("模型：未选择")
+            : QStringLiteral("模型：%1").arg(currentManifestPath_));
     imageStatusLabel_->setText(
         currentImagePath_.isEmpty()
-            ? QStringLiteral("Image: not selected")
-            : QStringLiteral("Image: %1").arg(currentImagePath_));
+            ? QStringLiteral("图像：未选择")
+            : QStringLiteral("图像：%1").arg(currentImagePath_));
     runStatusLabel_->setText(
         currentSummary_.inputPath.isEmpty()
-            ? QStringLiteral("Result: not run yet")
-            : QStringLiteral("Result: %1 detections, %2 ms")
+            ? QStringLiteral("结果：尚未执行")
+            : QStringLiteral("结果：%1 个目标，耗时 %2 ms")
                   .arg(currentSummary_.detectionCount)
                   .arg(QString::number(currentSummary_.elapsedMs, 'f', 2)));
 }
@@ -112,6 +113,7 @@ void MainWindow::updateContextPanel() {
 void MainWindow::showPage(const int pageId) {
     if (pageId >= 0 && pageId < pageStack_->count()) {
         pageStack_->setCurrentIndex(pageId);
+        navPanel_->setCurrentPage(pageId);
     }
 }
 
@@ -133,7 +135,7 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
         updateContextPanel();
         showPage(NavPanel::InferencePageId);
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("Model Load Failed"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("加载模型失败"), QString::fromUtf8(error.what()));
     }
 }
 
@@ -148,11 +150,11 @@ void MainWindow::handleImageSelected(const QString& imagePath) {
 
 void MainWindow::handleRunRequested() {
     if (currentManifestPath_.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Missing Model"), QStringLiteral("Load a model manifest before running inference."));
+        QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单。"));
         return;
     }
     if (currentImagePath_.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("Missing Image"), QStringLiteral("Choose an image before running inference."));
+        QMessageBox::warning(this, QStringLiteral("缺少图像"), QStringLiteral("请先选择一张待推理图像。"));
         return;
     }
 
@@ -164,13 +166,13 @@ void MainWindow::handleRunRequested() {
         applyInferenceResult(inferenceService_.runImage(*currentModel_, currentImagePath_));
         showPage(NavPanel::ResultsPageId);
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("Inference Failed"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("推理失败"), QString::fromUtf8(error.what()));
     }
 }
 
 void MainWindow::handleExportRequested() {
     if (currentSummary_.inputPath.isEmpty()) {
-        QMessageBox::information(this, QStringLiteral("No Result"), QStringLiteral("Run inference before exporting results."));
+        QMessageBox::information(this, QStringLiteral("暂无结果"), QStringLiteral("请先完成一次推理，再导出结果。"));
         return;
     }
 
@@ -181,7 +183,7 @@ void MainWindow::handleExportRequested() {
 
     const QString outputPath = QFileDialog::getSaveFileName(
         this,
-        QStringLiteral("Export JSON"),
+        QStringLiteral("导出 JSON"),
         initialDirectory.isEmpty()
             ? QString()
             : QDir(initialDirectory).filePath(QStringLiteral("result.json")),
@@ -195,7 +197,7 @@ void MainWindow::handleExportRequested() {
         settingsStore_.setDefaultExportDirectory(QFileInfo(outputPath).absolutePath());
         refreshSettingsPage();
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("Export Failed"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("导出失败"), QString::fromUtf8(error.what()));
     }
 }
 

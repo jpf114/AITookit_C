@@ -18,11 +18,12 @@ ResultsPage::ResultsPage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("Results"), this);
+    auto* title = new QLabel(QStringLiteral("结果"), this);
     title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
 
-    auto* exportButton = new QPushButton(QStringLiteral("Export JSON"), this);
-    summaryLabel_ = new QLabel(QStringLiteral("No results yet"), this);
+    auto* exportButton = new QPushButton(QStringLiteral("导出 JSON"), this);
+    exportButton->setObjectName(QStringLiteral("SecondaryButton"));
+    summaryLabel_ = new QLabel(QStringLiteral("当前还没有推理结果"), this);
     summaryLabel_->setObjectName(QStringLiteral("ResultsSummaryLabel"));
 
     previewWidget_ = new ImagePreviewWidget(this);
@@ -32,10 +33,10 @@ ResultsPage::ResultsPage(QWidget* parent)
     detectionsTable_->setObjectName(QStringLiteral("DetectionsTable"));
     detectionsTable_->setColumnCount(4);
     detectionsTable_->setHorizontalHeaderLabels({
-        QStringLiteral("Class"),
-        QStringLiteral("Label"),
-        QStringLiteral("Confidence"),
-        QStringLiteral("Box"),
+        QStringLiteral("类别"),
+        QStringLiteral("标签"),
+        QStringLiteral("置信度"),
+        QStringLiteral("框选范围"),
     });
     detectionsTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     detectionsTable_->horizontalHeader()->setStretchLastSection(true);
@@ -60,7 +61,7 @@ void ResultsPage::setImage(const QImage& image) {
 void ResultsPage::setSummary(const core::InferenceSummary& summary) {
     previewWidget_->setSummary(summary);
     summaryLabel_->setText(
-        QStringLiteral("Model: %1 | Detections: %2 | Time: %3 ms")
+        QStringLiteral("模型：%1 | 目标数：%2 | 耗时：%3 ms")
             .arg(summary.modelName)
             .arg(summary.detectionCount)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));
