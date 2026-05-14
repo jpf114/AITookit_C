@@ -56,20 +56,71 @@ void MainWindow::buildShell() {
     contextLayout->setContentsMargins(16, 16, 16, 16);
     contextLayout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("当前会话"), contextPanel_);
+    auto* title = new QLabel(QStringLiteral("任务摘要"), contextPanel_);
     title->setObjectName(QStringLiteral("ContextTitle"));
     title->setStyleSheet(QStringLiteral("font-size: 18px; font-weight: 600;"));
-    modelStatusLabel_ = new QLabel(contextPanel_);
-    modelStatusLabel_->setWordWrap(true);
-    imageStatusLabel_ = new QLabel(contextPanel_);
-    imageStatusLabel_->setWordWrap(true);
-    runStatusLabel_ = new QLabel(contextPanel_);
-    runStatusLabel_->setWordWrap(true);
+
+    const auto configureTitleLabel = [](QLabel* label, const QString& objectName, const QString& text) {
+        label->setObjectName(objectName);
+        label->setText(text);
+        label->setStyleSheet(QStringLiteral("font-size: 13px; font-weight: 600; color: #334155;"));
+    };
+    const auto configureValueLabel = [](QLabel* label, const QString& objectName) {
+        label->setObjectName(objectName);
+        label->setWordWrap(true);
+        label->setStyleSheet(QStringLiteral("font-size: 13px; color: #0f172a;"));
+    };
+    const auto buildDivider = [contextPanel_ = contextPanel_]() {
+        auto* divider = new QFrame(contextPanel_);
+        divider->setFrameShape(QFrame::HLine);
+        divider->setFrameShadow(QFrame::Plain);
+        divider->setStyleSheet(QStringLiteral("color: #cbd5e1;"));
+        return divider;
+    };
+    const auto addContextSection = [contextLayout, &buildDivider, &configureTitleLabel, &configureValueLabel](
+                                       QLabel*& titleLabel,
+                                       const QString& titleObjectName,
+                                       const QString& titleText,
+                                       QLabel*& valueLabel,
+                                       const QString& valueObjectName,
+                                       const bool addTrailingDivider) {
+        titleLabel = new QLabel(contextLayout->parentWidget());
+        configureTitleLabel(titleLabel, titleObjectName, titleText);
+        valueLabel = new QLabel(contextLayout->parentWidget());
+        configureValueLabel(valueLabel, valueObjectName);
+        contextLayout->addWidget(titleLabel);
+        contextLayout->addWidget(valueLabel);
+        if (addTrailingDivider) {
+            contextLayout->addWidget(buildDivider());
+        }
+    };
 
     contextLayout->addWidget(title);
-    contextLayout->addWidget(modelStatusLabel_);
-    contextLayout->addWidget(imageStatusLabel_);
-    contextLayout->addWidget(runStatusLabel_);
+    contextLayout->addWidget(buildDivider());
+    addContextSection(modelStatusTitleLabel_,
+                      QStringLiteral("ContextModelTitle"),
+                      QStringLiteral("当前模型"),
+                      modelStatusLabel_,
+                      QStringLiteral("ContextModelValue"),
+                      true);
+    addContextSection(imageStatusTitleLabel_,
+                      QStringLiteral("ContextImageTitle"),
+                      QStringLiteral("当前图像"),
+                      imageStatusLabel_,
+                      QStringLiteral("ContextImageValue"),
+                      true);
+    addContextSection(resultStatusTitleLabel_,
+                      QStringLiteral("ContextResultTitle"),
+                      QStringLiteral("当前结果"),
+                      runStatusLabel_,
+                      QStringLiteral("ContextResultValue"),
+                      true);
+    addContextSection(nextStepTitleLabel_,
+                      QStringLiteral("ContextNextStepTitle"),
+                      QStringLiteral("下一步"),
+                      nextStepLabel_,
+                      QStringLiteral("ContextNextStepValue"),
+                      false);
     contextLayout->addStretch(1);
 
     layout->addWidget(navPanel_);
@@ -94,20 +145,38 @@ void MainWindow::wireSignals() {
 }
 
 void MainWindow::updateContextPanel() {
+    const bool hasManifest = !currentManifestPath_.isEmpty();
+    const bool hasImage = !currentImagePath_.isEmpty();
+    const bool hasSummary = !currentSummary_.inputPath.isEmpty();
+
+    const QString modelDisplayName = !currentManifest_.name.isEmpty()
+        ? currentManifest_.name
+        : QFileInfo(currentManifestPath_).completeBaseName();
+    const QFileInfo imageInfo(currentImagePath_);
+    const QString imageDisplayName = !imageInfo.fileName().isEmpty()
+        ? imageInfo.fileName()
+        : currentImagePath_;
+
     modelStatusLabel_->setText(
-        currentManifestPath_.isEmpty()
-            ? QStringLiteral("模型：未选择")
-            : QStringLiteral("模型：%1").arg(currentManifestPath_));
+        hasManifest ? QStringLiteral("已加载：%1").arg(modelDisplayName) : QStringLiteral("未选择模型清单"));
     imageStatusLabel_->setText(
-        currentImagePath_.isEmpty()
-            ? QStringLiteral("图像：未选择")
-            : QStringLiteral("图像：%1").arg(currentImagePath_));
+        hasImage ? QStringLiteral("已选择：%1").arg(imageDisplayName) : QStringLiteral("未选择图像"));
     runStatusLabel_->setText(
-        currentSummary_.inputPath.isEmpty()
-            ? QStringLiteral("结果：尚未执行")
-            : QStringLiteral("结果：%1 个目标，耗时 %2 ms")
+        hasSummary
+            ? QStringLiteral("已完成，共 %1 个目标，耗时 %2 ms")
                   .arg(currentSummary_.detectionCount)
-                  .arg(QString::number(currentSummary_.elapsedMs, 'f', 2)));
+                  .arg(QString::number(currentSummary_.elapsedMs, 'f', 2))
+            : QStringLiteral("尚未执行检测"));
+
+    if (!hasManifest) {
+        nextStepLabel_->setText(QStringLiteral("请先加载模型清单。"));
+    } else if (!hasImage) {
+        nextStepLabel_->setText(QStringLiteral("请选择一张待推理图像。"));
+    } else if (!hasSummary) {
+        nextStepLabel_->setText(QStringLiteral("模型和图像已就绪，可以开始检测。"));
+    } else {
+        nextStepLabel_->setText(QStringLiteral("可查看结果明细，或直接导出 JSON。"));
+    }
 }
 
 void MainWindow::showPage(const int pageId) {
@@ -128,6 +197,7 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
         currentManifest_ = modelService_.loadManifest(manifestPath);
         currentModel_.reset();
         currentManifestPath_ = currentManifest_.manifestPath;
+        currentSummary_ = {};
         settingsStore_.addRecentModel(currentManifestPath_);
         modelsPage_->setCurrentManifest(currentManifest_);
         inferencePage_->setModelReady(true);
@@ -141,6 +211,7 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
 
 void MainWindow::handleImageSelected(const QString& imagePath) {
     currentImagePath_ = imagePath;
+    currentSummary_ = {};
     settingsStore_.addRecentInput(imagePath);
     inferencePage_->setCurrentImagePath(imagePath);
     resultsPage_->setImage(QImage(imagePath));
@@ -154,7 +225,7 @@ void MainWindow::handleRunRequested() {
         return;
     }
     if (currentImagePath_.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("缺少图像"), QStringLiteral("请先选择一张待推理图像。"));
+        QMessageBox::warning(this, QStringLiteral("缺少图像"), QStringLiteral("请选择一张待推理图像。"));
         return;
     }
 

@@ -46,9 +46,14 @@ private:
     NavPanel* navPanel_ = nullptr;
     QStackedWidget* pageStack_ = nullptr;
     QWidget* contextPanel_ = nullptr;
+    QLabel* modelStatusTitleLabel_ = nullptr;
     QLabel* modelStatusLabel_ = nullptr;
+    QLabel* imageStatusTitleLabel_ = nullptr;
     QLabel* imageStatusLabel_ = nullptr;
+    QLabel* resultStatusTitleLabel_ = nullptr;
     QLabel* runStatusLabel_ = nullptr;
+    QLabel* nextStepTitleLabel_ = nullptr;
+    QLabel* nextStepLabel_ = nullptr;
 
     HomePage* homePage_ = nullptr;
     ModelsPage* modelsPage_ = nullptr;
