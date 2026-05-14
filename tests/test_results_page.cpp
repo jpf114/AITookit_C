@@ -13,6 +13,7 @@ class ResultsPageTest : public QObject {
 
 private slots:
     void populatesDetectionTable();
+    void clearingSummaryShowsNoResultsState();
 };
 
 void ResultsPageTest::populatesDetectionTable() {
@@ -51,6 +52,34 @@ void ResultsPageTest::populatesDetectionTable() {
     QCOMPARE(table->rowCount(), 2);
     QCOMPARE(table->item(0, 1)->text(), QStringLiteral("person"));
     QCOMPARE(table->item(1, 1)->text(), QStringLiteral("dog"));
+}
+
+void ResultsPageTest::clearingSummaryShowsNoResultsState() {
+    aitoolkit::ui::ResultsPage page;
+
+    aitoolkit::core::InferenceSummary summary;
+    summary.modelName = QStringLiteral("YOLO Demo");
+    summary.inputPath = QStringLiteral("D:/images/demo.jpg");
+    summary.detectionCount = 1;
+    summary.elapsedMs = 18.25;
+
+    aitoolkit::core::DetectionItem detection;
+    detection.classId = 0;
+    detection.label = QStringLiteral("person");
+    detection.confidence = 0.95f;
+    detection.boundingBox = QRectF(10.0, 20.0, 100.0, 200.0);
+    summary.detections.push_back(detection);
+
+    page.setSummary(summary);
+    page.setSummary({});
+
+    auto* summaryLabel = page.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
+    QVERIFY(summaryLabel != nullptr);
+    QCOMPARE(summaryLabel->text(), QStringLiteral("当前还没有推理结果"));
+
+    auto* table = page.findChild<QTableWidget*>(QStringLiteral("DetectionsTable"));
+    QVERIFY(table != nullptr);
+    QCOMPARE(table->rowCount(), 0);
 }
 
 }  // namespace

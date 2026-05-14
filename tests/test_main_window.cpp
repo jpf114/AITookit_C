@@ -56,6 +56,21 @@ aitoolkit::core::InferenceSummary makeSummary(const QString& modelName, const QS
 void seedCurrentResult(aitoolkit::ui::MainWindow& window, const aitoolkit::core::InferenceSummary& summary) {
     window.currentSummary_ = summary;
     window.resultsPage_->setSummary(summary);
+    window.runStatusLabel_->setText(
+        QStringLiteral("已完成，共 %1 个目标，耗时 %2 ms")
+            .arg(summary.detectionCount)
+            .arg(QString::number(summary.elapsedMs, 'f', 2)));
+    window.nextStepLabel_->setText(QStringLiteral("可查看结果明细，或直接导出 JSON。"));
+}
+
+void verifyHasResultsState(aitoolkit::ui::MainWindow& window) {
+    auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
+    QVERIFY(contextResultValue != nullptr);
+    QVERIFY(contextResultValue->text().contains(QStringLiteral("已完成")));
+
+    auto* contextNextStepValue = window.findChild<QLabel*>(QStringLiteral("ContextNextStepValue"));
+    QVERIFY(contextNextStepValue != nullptr);
+    QVERIFY(contextNextStepValue->text().contains(QStringLiteral("导出 JSON")));
 }
 
 void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
@@ -128,6 +143,7 @@ void MainWindowTest::changingImageClearsStoredAndVisibleResults() {
     const auto summary = makeSummary(QStringLiteral("Warehouse Detector"), QStringLiteral("D:/images/first.jpg"));
     seedCurrentResult(window, summary);
     QVERIFY(!window.currentSummary_.inputPath.isEmpty());
+    verifyHasResultsState(window);
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
     QVERIFY(resultsSummaryLabel != nullptr);
@@ -169,6 +185,7 @@ void MainWindowTest::changingModelClearsStoredAndVisibleResults() {
     const auto summary = makeSummary(QStringLiteral("Warehouse Detector A"), QStringLiteral("D:/images/first.jpg"));
     seedCurrentResult(window, summary);
     QVERIFY(!window.currentSummary_.inputPath.isEmpty());
+    verifyHasResultsState(window);
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
     QVERIFY(resultsSummaryLabel != nullptr);
