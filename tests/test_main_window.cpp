@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
 #include <QListWidget>
@@ -18,12 +19,69 @@
 
 namespace {
 
+QString writeManifestFile(const QString& directoryPath, const QString& baseName, const QString& displayName) {
+    const QString modelPath = QDir(directoryPath).filePath(baseName + QStringLiteral(".onnx"));
+    QFile modelFile(modelPath);
+    if (!modelFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        return QString();
+    }
+    modelFile.write("dummy-model");
+    modelFile.close();
+
+    const QString manifestPath = QDir(directoryPath).filePath(baseName + QStringLiteral(".json"));
+    aitoolkit::core::writeJsonObject(
+        manifestPath,
+        QJsonObject{
+            {QStringLiteral("name"), displayName},
+            {QStringLiteral("task_type"), QStringLiteral("detection")},
+            {QStringLiteral("backend"), QStringLiteral("onnxruntime")},
+            {QStringLiteral("model"), baseName + QStringLiteral(".onnx")},
+            {QStringLiteral("input_width"), 640},
+            {QStringLiteral("input_height"), 640},
+            {QStringLiteral("labels_inline"), QJsonArray{QStringLiteral("person"), QStringLiteral("box")}},
+        });
+    return manifestPath;
+}
+
+aitoolkit::core::InferenceSummary makeSummary(const QString& modelName, const QString& imagePath) {
+    aitoolkit::core::InferenceSummary summary;
+    summary.modelName = modelName;
+    summary.inputPath = imagePath;
+    summary.detectionCount = 3;
+    summary.elapsedMs = 12.5;
+    summary.detections.append({0, QStringLiteral("box"), 0.9f, QRectF(1.0, 2.0, 3.0, 4.0)});
+    return summary;
+}
+
+void seedCurrentResult(aitoolkit::ui::MainWindow& window, const aitoolkit::core::InferenceSummary& summary) {
+    window.currentSummary_ = summary;
+    window.resultsPage_->setSummary(summary);
+}
+
+void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
+    QCOMPARE(window.currentSummary_.inputPath, QString());
+    QCOMPARE(window.currentSummary_.detections.size(), 0);
+
+    auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
+    QVERIFY(resultsSummaryLabel != nullptr);
+    QCOMPARE(resultsSummaryLabel->text(), QStringLiteral("当前还没有推理结果"));
+
+    auto* detectionsTable = window.findChild<QTableWidget*>(QStringLiteral("DetectionsTable"));
+    QVERIFY(detectionsTable != nullptr);
+    QCOMPARE(detectionsTable->rowCount(), 0);
+
+    auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
+    QVERIFY(contextResultValue != nullptr);
+    QCOMPARE(contextResultValue->text(), QStringLiteral("尚未执行检测"));
+}
+
 class MainWindowTest : public QObject {
     Q_OBJECT
 
 private slots:
     void buildsThreePaneShell();
-    void changingImageClearsResultsState();
+    void changingImageClearsStoredAndVisibleResults();
+    void changingModelClearsStoredAndVisibleResults();
     void recentInputClickReturnsToInferencePage();
     void recentModelClickLoadsManifestAndReturnsToInferencePage();
 };
@@ -56,7 +114,7 @@ void MainWindowTest::buildsThreePaneShell() {
     QVERIFY(contextNextStepTitle != nullptr);
 }
 
-void MainWindowTest::changingImageClearsResultsState() {
+void MainWindowTest::changingImageClearsStoredAndVisibleResults() {
     aitoolkit::ui::MainWindow window;
 
     auto* stack = window.findChild<QStackedWidget*>();
@@ -67,18 +125,9 @@ void MainWindowTest::changingImageClearsResultsState() {
     QVERIFY(QMetaObject::invokeMethod(
         inferencePage, "imageSelected", Qt::DirectConnection, Q_ARG(QString, QStringLiteral("D:/images/first.jpg"))));
 
-    aitoolkit::core::InferenceSummary summary;
-    summary.modelName = QStringLiteral("Warehouse Detector");
-    summary.inputPath = QStringLiteral("D:/images/first.jpg");
-    summary.detectionCount = 3;
-    summary.elapsedMs = 12.5;
-    summary.detections.append({0, QStringLiteral("box"), 0.9f, QRectF(1.0, 2.0, 3.0, 4.0)});
-    auto* resultsPage = stack->widget(3);
-    QVERIFY(resultsPage != nullptr);
-    QMetaObject::invokeMethod(resultsPage, [resultsPage, summary]() {
-        auto* typedResultsPage = static_cast<aitoolkit::ui::ResultsPage*>(resultsPage);
-        typedResultsPage->setSummary(summary);
-    });
+    const auto summary = makeSummary(QStringLiteral("Warehouse Detector"), QStringLiteral("D:/images/first.jpg"));
+    seedCurrentResult(window, summary);
+    QVERIFY(!window.currentSummary_.inputPath.isEmpty());
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
     QVERIFY(resultsSummaryLabel != nullptr);
@@ -91,12 +140,48 @@ void MainWindowTest::changingImageClearsResultsState() {
     QVERIFY(QMetaObject::invokeMethod(
         inferencePage, "imageSelected", Qt::DirectConnection, Q_ARG(QString, QStringLiteral("D:/images/second.jpg"))));
 
-    QCOMPARE(resultsSummaryLabel->text(), QStringLiteral("当前还没有推理结果"));
-    QCOMPARE(detectionsTable->rowCount(), 0);
+    verifyClearedResultsState(window);
+}
 
-    auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
-    QVERIFY(contextResultValue != nullptr);
-    QCOMPARE(contextResultValue->text(), QStringLiteral("尚未执行检测"));
+void MainWindowTest::changingModelClearsStoredAndVisibleResults() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    const QString firstManifestPath =
+        writeManifestFile(tempDir.path(), QStringLiteral("model_a"), QStringLiteral("Warehouse Detector A"));
+    const QString secondManifestPath =
+        writeManifestFile(tempDir.path(), QStringLiteral("model_b"), QStringLiteral("Warehouse Detector B"));
+    QVERIFY(!firstManifestPath.isEmpty());
+    QVERIFY(!secondManifestPath.isEmpty());
+
+    aitoolkit::ui::MainWindow window;
+
+    auto* stack = window.findChild<QStackedWidget*>();
+    QVERIFY(stack != nullptr);
+
+    auto* modelsPage = stack->widget(1);
+    QVERIFY(modelsPage != nullptr);
+    QVERIFY(QMetaObject::invokeMethod(
+        modelsPage, "modelManifestSelected", Qt::DirectConnection, Q_ARG(QString, firstManifestPath)));
+    QVERIFY(QMetaObject::invokeMethod(
+        stack->widget(2), "imageSelected", Qt::DirectConnection, Q_ARG(QString, QStringLiteral("D:/images/first.jpg"))));
+
+    const auto summary = makeSummary(QStringLiteral("Warehouse Detector A"), QStringLiteral("D:/images/first.jpg"));
+    seedCurrentResult(window, summary);
+    QVERIFY(!window.currentSummary_.inputPath.isEmpty());
+
+    auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
+    QVERIFY(resultsSummaryLabel != nullptr);
+    QVERIFY(resultsSummaryLabel->text().contains(QStringLiteral("Warehouse Detector A")));
+
+    auto* detectionsTable = window.findChild<QTableWidget*>(QStringLiteral("DetectionsTable"));
+    QVERIFY(detectionsTable != nullptr);
+    QCOMPARE(detectionsTable->rowCount(), 1);
+
+    QVERIFY(QMetaObject::invokeMethod(
+        modelsPage, "modelManifestSelected", Qt::DirectConnection, Q_ARG(QString, secondManifestPath)));
+
+    verifyClearedResultsState(window);
 }
 
 void MainWindowTest::recentInputClickReturnsToInferencePage() {
@@ -133,24 +218,9 @@ void MainWindowTest::recentModelClickLoadsManifestAndReturnsToInferencePage() {
     QTemporaryDir tempDir;
     QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
 
-    const QString modelPath = QDir(tempDir.path()).filePath("model.onnx");
-    QFile modelFile(modelPath);
-    QVERIFY(modelFile.open(QIODevice::WriteOnly | QIODevice::Text));
-    modelFile.write("dummy-model");
-    modelFile.close();
-
-    const QString manifestPath = QDir(tempDir.path()).filePath("model.json");
-    aitoolkit::core::writeJsonObject(
-        manifestPath,
-        QJsonObject{
-            {QStringLiteral("name"), QStringLiteral("Warehouse Detector")},
-            {QStringLiteral("task_type"), QStringLiteral("detection")},
-            {QStringLiteral("backend"), QStringLiteral("onnxruntime")},
-            {QStringLiteral("model"), QStringLiteral("model.onnx")},
-            {QStringLiteral("input_width"), 640},
-            {QStringLiteral("input_height"), 640},
-            {QStringLiteral("labels_inline"), QJsonArray{QStringLiteral("person"), QStringLiteral("box")}},
-        });
+    const QString manifestPath =
+        writeManifestFile(tempDir.path(), QStringLiteral("model"), QStringLiteral("Warehouse Detector"));
+    QVERIFY(!manifestPath.isEmpty());
 
     aitoolkit::ui::MainWindow window;
 
