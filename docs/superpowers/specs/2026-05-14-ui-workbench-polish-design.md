@@ -1,217 +1,217 @@
-# UI Workbench Polish Design
+# UI 工作台收口设计
 
-## 1. Goal
+## 1. 目标
 
-This spec defines the next UI polish pass for `AITookit_C`. The goal is not to expand feature scope. The goal is to turn the current functional prototype into a clearer desktop workbench that feels closer to `GIS_TOOL` in temperament while staying centered on the single-image detection workflow.
+本设计文档定义 `AITookit_C` 下一轮 UI 收口工作的目标。此次工作不扩大功能范围，重点是把当前“已经能用的功能原型”收成一个更清晰、更专业、也更接近 `GIS_TOOL` 气质的桌面工作台，同时继续围绕单图目标检测主流程展开。
 
-This pass must improve three things, in order:
+这一轮必须依次改善三件事：
 
-1. Professional desktop-tool feel closer to `GIS_TOOL`
-2. A smoother single-image inference workflow
-3. Clearer result reading and review experience
+1. 更接近 `GIS_TOOL` 的专业桌面工具感
+2. 更顺手的单图推理工作流
+3. 更清楚的结果阅读与复核体验
 
-The work should stay within the existing phase-1 feature boundary. No new task types, no plugin system, and no training workflow are part of this spec.
+本次工作仍然严格处于第一阶段范围内，不包含新任务类型、不包含插件体系，也不包含训练流程。
 
-## 2. Current Context
+## 2. 当前背景
 
-The current project already has:
+当前项目已经具备以下基础：
 
-- A Qt Widgets main shell with left navigation, center pages, and a right context panel
-- Pages for home, models, inference, results, and settings
-- Working single-image flow: load manifest, choose image, run detection, view result, export JSON
-- Recent model and recent image persistence
-- Basic UI regression coverage for main window and selected pages
+- 一个基于 Qt Widgets 的主界面外壳，包含左侧导航、中间页面区和右侧上下文面板
+- 首页、模型页、推理页、结果页、设置页
+- 可运行的单图主流程：加载清单、选择图像、执行检测、查看结果、导出 JSON
+- 最近模型和最近图像的持久化记录
+- 针对主窗口和部分页面的基础 UI 回归测试
 
-The current shortcoming is not missing core plumbing. The shortcoming is that the interface still reads like a stitched-together functional build instead of a deliberate desktop workbench. Several pages are too sparse, the center pane is under-structured, and the right context panel still behaves more like a loose status dump than a stable operator aid.
+当前短板已经不在底层能力，而在界面组织。现在的界面更像“把功能拼起来的开发版”，还不像一个经过整理的桌面工具工作台。若干页面过于稀薄，中间主区的结构感不足，右侧上下文面板也还更像零散状态输出，而不是稳定的操作辅助区。
 
-## 3. Scope
+## 3. 范围
 
-This design includes:
+本设计包含：
 
-- Restructuring the page interiors of the models, inference, and results pages
-- Tightening the role of the right context panel
-- Unifying button language, state text, and information hierarchy
-- Extending the existing theme so the app reads more like a professional desktop tool
+- 重新组织模型页、推理页、结果页的页面内部结构
+- 收紧右侧上下文面板的职责
+- 统一按钮语气、状态文案和信息层级
+- 扩展现有主题样式，使整体更像专业桌面工具
 
-This design does not include:
+本设计不包含：
 
-- Any new inference backend
-- Folder batch inference
-- Video inference
-- New export formats beyond the current JSON flow
-- Rewriting the service, model, or runtime architecture
+- 新的推理后端
+- 图片文件夹批处理
+- 视频推理
+- 超出当前 JSON 之外的新导出格式
+- 重写服务层、模型层或运行时架构
 
-## 4. Chosen Direction
+## 4. 选定方向
 
-Three approaches were considered:
+曾考虑过三种方向：
 
-1. Conservative cleanup: keep the current page structures and only tune spacing, labels, and colors
-2. Centered workbench: keep the existing three-column shell, but redesign each page so the center pane becomes the main work surface and the right pane becomes a stable task summary
-3. Aggressive consolidation: collapse models, inference, and results into a single continuous workbench view
+1. 保守收口：保留当前页面结构，只微调间距、文案和配色
+2. 中轴工作台：保留现有三栏外壳，但重做页面内部结构，让中间区域成为主工作面，右侧区域成为稳定任务摘要
+3. 激进收束：把模型、推理、结果三页进一步合成一个连续工作台
 
-Approach 2 is the chosen direction.
+本次选择第 2 种方向。
 
-It preserves the current architecture, keeps risk moderate, fits the existing tests, and gets much closer to the desktop-tool language the user wants. It also maps cleanly onto the current task flow without forcing a full navigation rethink.
+它能够保留现有架构，把风险控制在中等范围内，同时兼容当前已有测试，也最接近用户期望的 `GIS_TOOL` 式桌面工具语言。更重要的是，它与当前单图检测流程天然匹配，不需要先推翻导航结构。
 
-## 5. High-Level Layout
+## 5. 总体布局
 
-The outer shell remains a three-column structure.
+外层仍然保持三栏结构。
 
-### Left Column
+### 左栏
 
-The left column remains stable navigation. Its job is only to answer: where am I in the workflow?
+左栏继续作为稳定导航存在，它的职责只有一个：回答“我当前处于哪个工作阶段”。
 
-Expected characteristics:
+预期特征：
 
-- Persistent dark sidebar
-- Compact navigation items with a clear selected state
-- Small amount of framing text near the top and bottom
-- No operational controls beyond navigation
+- 持续存在的深色侧栏
+- 紧凑的导航项和明确的选中状态
+- 顶部和底部保留少量辅助性文字
+- 不承载具体操作控件，只负责导航
 
-### Center Column
+### 中栏
 
-The center column becomes the primary work surface for the current page. It is where the user reads, previews, edits, and executes the main task.
+中栏成为当前页面的主工作面，是用户阅读、预览、操作、执行任务的核心区域。
 
-Expected characteristics:
+预期特征：
 
-- Strong page title and short support text
-- One dominant work area per page
-- Page-specific grouping instead of loose vertical stacks
-- Predictable reading order from action to context to detail
+- 清晰的页面标题和简短说明
+- 每一页都应有一个主导性工作区域
+- 使用页面内分组，而不是松散的纵向堆叠
+- 阅读顺序清楚，从主操作到上下文再到细节
 
-### Right Column
+### 右栏
 
-The right column becomes a stable task context rail rather than a loose page-specific note area.
+右栏收束为稳定的任务上下文栏，而不是随着页面变化不断变成不同的小说明区。
 
-It should continuously answer:
+它应持续回答五个问题：
 
-- Which model is active?
-- Which image is active?
-- Has inference run yet?
-- What is the current result status?
-- What is the next recommended action?
+- 当前加载的是哪个模型
+- 当前选择的是哪张图像
+- 是否已经执行过推理
+- 当前结果是什么状态
+- 用户下一步最合适的动作是什么
 
-This panel should change content values as state changes, but the structure should remain stable across pages.
+右栏中的具体内容值会随着状态变化而更新，但结构本身应跨页面保持稳定。
 
-## 6. Page Designs
+## 6. 页面设计
 
-### 6.1 Models Page
+### 6.1 模型页
 
-The models page becomes a preparation surface rather than a bare file picker.
+模型页应该成为“准备区”，而不是只有一个文件选择按钮的空页面。
 
-Center-pane structure:
+中间主区结构如下：
 
-- Header area: page title and short description
-- Primary action section:
-  - `加载模型清单` button
-  - current manifest path
-  - short instruction text
-- Model summary section:
-  - model name
-  - task type
-  - backend type
-  - input size
-  - label count
-  - model file path
+- 页头区域：标题和简短说明
+- 主操作区：
+  - `加载模型清单` 按钮
+  - 当前清单路径
+  - 简短操作提示
+- 模型信息区：
+  - 模型名称
+  - 任务类型
+  - 推理后端
+  - 输入尺寸
+  - 标签数量
+  - 模型文件路径
 
-The summary should be visually grouped so the user can quickly confirm that the selected package is the intended one before moving to inference.
+模型信息区应具有明确分组感，用户在进入下一步前，能迅速确认当前加载的模型包是不是自己想要的那个。
 
-### 6.2 Inference Page
+### 6.2 推理页
 
-The inference page becomes the operational center of the app.
+推理页应成为整个应用的操作中心。
 
-Center-pane structure:
+中间主区结构如下：
 
-- Header area: page title and short description
-- Split work area:
-  - left: large image preview area
-  - right: action rail for the current image and run controls
+- 页头区域：标题和简短说明
+- 分栏工作区：
+  - 左侧：大的图像预览区
+  - 右侧：当前图像和运行控制操作栏
 
-The action rail contains:
+右侧操作栏包含：
 
-- current image path
-- `选择图像` button
-- `开始检测` primary button
-- readiness status text
+- 当前图像路径
+- `选择图像` 按钮
+- `开始检测` 主按钮
+- 就绪状态提示
 
-The preview and the action controls must live close together so the user does not need to bounce between disconnected parts of the window.
+预览区和操作区必须靠得足够近，避免用户在窗口中来回寻找主视图和主操作。
 
-### 6.3 Results Page
+### 6.3 结果页
 
-The results page becomes a review surface with a clear reading order.
+结果页应成为一个有明确阅读顺序的复核页面。
 
-Center-pane structure:
+中间主区结构如下：
 
-1. Summary strip
-   - model name
-   - detection count
-   - elapsed time
-   - `导出 JSON` action
-2. Main preview region
-   - image with overlays remains the visual anchor
-3. Detection detail table
-   - category id
-   - label
-   - confidence
-   - bounding box text
+1. 摘要条
+   - 模型名称
+   - 目标数量
+   - 推理耗时
+   - `导出 JSON` 操作
+2. 主预览区
+   - 叠加检测框的图像仍然是视觉中心
+3. 结果明细表
+   - 类别 ID
+   - 标签
+   - 置信度
+   - 边框文本信息
 
-The user should be able to understand the result in this order:
+用户应按下面的顺序理解一次结果：
 
-- What happened overall
-- What the image looks like with detections
-- Which exact detections were produced
+- 这次总体发生了什么
+- 图像上具体检测到了什么
+- 每一条检测结果的结构化细节是什么
 
-### 6.4 Settings Page
+### 6.4 设置页
 
-The settings page stays lighter than the main workflow pages. It remains a support page, not a primary workspace.
+设置页仍然保持相对轻量，它是支撑页，不是主工作页。
 
-Center-pane structure:
+中间主区结构如下：
 
-- Export directory group
-- Recent models group
-- Recent images group
+- 导出目录分组
+- 最近模型分组
+- 最近图像分组
 
-The page should visually match the rest of the workbench but should not compete with the model, inference, or result pages.
+它应在视觉上保持与整体工作台一致，但不应抢过模型页、推理页或结果页的重心。
 
-## 7. Context Rail Design
+## 7. 右侧上下文栏设计
 
-The right-side context panel is standardized into a stable card-like task summary.
+右侧上下文面板统一成稳定的任务摘要栏。
 
-Its sections are:
+固定分为四个部分：
 
 - `当前模型`
 - `当前图像`
 - `当前结果`
 - `下一步`
 
-Section behavior:
+各部分行为如下：
 
-- `当前模型`: shows whether a manifest is loaded and, when present, the current manifest path or display name
-- `当前图像`: shows whether an image is selected and, when present, the selected path
-- `当前结果`: shows not-run state or the latest detection count and elapsed time
-- `下一步`: derives one concise action hint from the current state
+- `当前模型`：显示是否已加载模型；若已加载，展示清单路径或模型显示名
+- `当前图像`：显示是否已选择图像；若已选择，展示图像路径
+- `当前结果`：显示未运行状态，或最新一次的目标数量与耗时
+- `下一步`：根据当前状态生成一句简短动作提示
 
-Examples:
+示例：
 
-- No model selected: `下一步：请先加载模型清单。`
-- Model loaded, no image selected: `下一步：请选择一张待推理图像。`
-- Model and image ready, no run yet: `下一步：模型和图像已就绪，可以开始检测。`
-- Result available: `下一步：可查看结果明细，或直接导出 JSON。`
+- 未加载模型：`下一步：请先加载模型清单。`
+- 已加载模型但未选图像：`下一步：请选择一张待推理图像。`
+- 模型和图像已就绪但尚未运行：`下一步：模型和图像已就绪，可以开始检测。`
+- 已有结果：`下一步：可查看结果明细，或直接导出 JSON。`
 
-The panel should read as calm and operational, not chatty.
+这一栏整体语气要平静、克制、可执行，不要像聊天提示。
 
-## 8. Content and Tone
+## 8. 文案与语气
 
-All visible text in this pass must be normalized to Chinese and must use restrained tool-style phrasing.
+本轮所有可见文本都应统一为中文，并使用克制的工具型表达。
 
-Rules:
+基本规则：
 
-- Use direct action labels
-- Avoid marketing language
-- Avoid overly technical runtime jargon in user-facing status text
-- Prefer short complete statements
+- 使用直接动作标签
+- 避免营销式语言
+- 避免把过多底层运行术语暴露给用户
+- 优先使用短而完整的句子
 
-Target examples:
+目标示例：
 
 - `加载模型清单`
 - `选择图像`
@@ -220,27 +220,27 @@ Target examples:
 - `当前还没有推理结果`
 - `本次检测完成，共识别 X 个目标。`
 
-## 9. Visual Style
+## 9. 视觉风格
 
-This pass should continue moving toward the `GIS_TOOL` desktop feel without copying its content.
+本轮应继续向 `GIS_TOOL` 的桌面工具感靠近，但不机械复制其页面内容。
 
-Desired visual traits:
+期望的视觉特征：
 
-- restrained color palette
-- dark, compact navigation rail
-- light center workspace and context rail
-- consistent borders, spacing, and button states
-- stronger hierarchy through grouping, not decoration
+- 克制的配色
+- 深色、紧凑的导航侧栏
+- 浅色的中间工作区和右侧上下文区
+- 一致的边框、间距和按钮状态
+- 通过分组和层级建立秩序，而不是靠装饰
 
-Specific intent:
+具体意图：
 
-- The app should feel like an operator tool, not a demo screen
-- Sections should read as functional groupings, not floating marketing cards
-- The main preview areas should dominate where visual inspection matters
+- 软件整体更像操作工作台，而不是演示页面
+- 区块应体现功能分组，而不是营销式漂浮卡片
+- 在需要视觉检查的页面上，主预览区域必须占据视觉重心
 
-## 10. Implementation Boundaries
+## 10. 实现边界
 
-The implementation should remain mostly inside:
+本轮实现应主要落在以下文件范围内：
 
 - `src/ui/main_window.*`
 - `src/ui/nav_panel.*`
@@ -250,66 +250,66 @@ The implementation should remain mostly inside:
 - `src/ui/pages/settings_page.*`
 - `resources/themes/app.qss`
 
-Minor state-handling additions in the UI layer are allowed where needed to support the context rail and page grouping.
+如果需要少量 UI 层状态处理扩展，以支撑右栏任务摘要或页面分组，这是允许的。
 
-The implementation should avoid changing:
+本轮应避免修改：
 
-- service-layer responsibilities
-- model/runtime boundaries
-- persistence semantics
-- the core single-image inference flow
+- 服务层职责边界
+- 模型层和运行时边界
+- 持久化语义
+- 当前单图推理主流程本身
 
-## 11. Testing and Verification
+## 11. 测试与验证
 
-At minimum, the implementation must preserve and, if needed, update verification for:
+本轮实现至少必须保住并在必要时更新以下验证内容：
 
-- main-window shell behavior
-- recent-model activation path
-- recent-image activation path
-- model-page summary behavior
-- settings-page signal behavior
+- 主窗口外壳行为
+- 最近模型点击回填路径
+- 最近图像点击回填路径
+- 模型页摘要展示行为
+- 设置页信号行为
 
-Expected verification steps:
+预期验证步骤：
 
-- build affected UI tests
-- run `test_main_window`
-- run `test_models_page`
-- run `test_settings_page`
+- 构建受影响的 UI 测试目标
+- 运行 `test_main_window`
+- 运行 `test_models_page`
+- 运行 `test_settings_page`
 
-If object names or widget structure change, tests should be updated rather than dropped.
+如果对象名或控件结构变化导致测试定位失效，应同步修改测试，而不是直接删除验证。
 
-## 12. Risks and Mitigations
+## 12. 风险与应对
 
-### Risk: UI polish accidentally changes workflow behavior
+### 风险一：UI 收口误伤主流程行为
 
-Mitigation:
+应对：
 
-- Keep service wiring intact
-- Limit behavior changes to page layout and UI-state presentation
-- Re-run the existing UI regression tests
+- 保持服务层接线不变
+- 把行为变化限制在页面布局和 UI 状态表达层
+- 重跑现有 UI 回归测试
 
-### Risk: deeper page restructuring breaks widget lookups used by tests
+### 风险二：页面重排破坏测试依赖的控件定位
 
-Mitigation:
+应对：
 
-- Preserve existing object names where practical
-- Add new wrappers without renaming stable test anchors unless necessary
+- 在可行范围内保留现有对象名
+- 如需增加中间包装层，尽量不改动现有稳定测试锚点
 
-### Risk: trying to do too much in one pass
+### 风险三：一轮里试图做太多
 
-Mitigation:
+应对：
 
-- Focus this pass on the models, inference, and results pages
-- Leave batch/video and release-packaging work for later milestones
+- 本轮聚焦模型页、推理页、结果页
+- 批处理、视频和 Release 交付链路继续放到后续里程碑
 
-## 13. Success Criteria
+## 13. 成功标准
 
-This pass is successful when:
+当满足以下条件时，可认为本轮收口成功：
 
-- The app reads as a more deliberate desktop workbench
-- The models, inference, and results pages have clearer internal hierarchy
-- The single-image workflow is easier to follow visually
-- The results page supports faster review
-- The right context panel gives useful and stable task guidance
-- Existing UI regression coverage still passes
+- 应用整体更像一个有组织的桌面工作台
+- 模型页、推理页、结果页的内部层级更清晰
+- 单图推理流程在视觉上更顺手
+- 结果页更适合阅读与复核
+- 右侧上下文栏能提供稳定而有用的任务指引
+- 现有 UI 回归验证继续通过
 
