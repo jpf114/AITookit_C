@@ -60,12 +60,21 @@ void ResultsPage::setImage(const QImage& image) {
 
 void ResultsPage::setSummary(const core::InferenceSummary& summary) {
     previewWidget_->setSummary(summary);
+
+    if (summary.inputPath.isEmpty()) {
+        summaryLabel_->setText(QStringLiteral("当前还没有推理结果"));
+        detectionsTable_->clearContents();
+        detectionsTable_->setRowCount(0);
+        return;
+    }
+
     summaryLabel_->setText(
         QStringLiteral("模型：%1 | 目标数：%2 | 耗时：%3 ms")
             .arg(summary.modelName)
             .arg(summary.detectionCount)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));
 
+    detectionsTable_->clearContents();
     detectionsTable_->setRowCount(summary.detections.size());
     for (int index = 0; index < summary.detections.size(); ++index) {
         const core::DetectionItem& detection = summary.detections.at(index);

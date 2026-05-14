@@ -6,11 +6,15 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QStackedWidget>
+#include <QTableWidget>
 #include <QTemporaryDir>
 #include <QWidget>
 
 #include "core/json_utils.h"
+#define private public
 #include "ui/main_window.h"
+#undef private
+#include "ui/pages/results_page.h"
 
 namespace {
 
@@ -19,6 +23,7 @@ class MainWindowTest : public QObject {
 
 private slots:
     void buildsThreePaneShell();
+    void changingImageClearsResultsState();
     void recentInputClickReturnsToInferencePage();
     void recentModelClickLoadsManifestAndReturnsToInferencePage();
 };
@@ -49,6 +54,49 @@ void MainWindowTest::buildsThreePaneShell() {
 
     const auto contextNextStepTitle = window.findChild<QLabel*>(QStringLiteral("ContextNextStepTitle"));
     QVERIFY(contextNextStepTitle != nullptr);
+}
+
+void MainWindowTest::changingImageClearsResultsState() {
+    aitoolkit::ui::MainWindow window;
+
+    auto* stack = window.findChild<QStackedWidget*>();
+    QVERIFY(stack != nullptr);
+
+    auto* inferencePage = stack->widget(2);
+    QVERIFY(inferencePage != nullptr);
+    QVERIFY(QMetaObject::invokeMethod(
+        inferencePage, "imageSelected", Qt::DirectConnection, Q_ARG(QString, QStringLiteral("D:/images/first.jpg"))));
+
+    aitoolkit::core::InferenceSummary summary;
+    summary.modelName = QStringLiteral("Warehouse Detector");
+    summary.inputPath = QStringLiteral("D:/images/first.jpg");
+    summary.detectionCount = 3;
+    summary.elapsedMs = 12.5;
+    summary.detections.append({0, QStringLiteral("box"), 0.9f, QRectF(1.0, 2.0, 3.0, 4.0)});
+    auto* resultsPage = stack->widget(3);
+    QVERIFY(resultsPage != nullptr);
+    QMetaObject::invokeMethod(resultsPage, [resultsPage, summary]() {
+        auto* typedResultsPage = static_cast<aitoolkit::ui::ResultsPage*>(resultsPage);
+        typedResultsPage->setSummary(summary);
+    });
+
+    auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
+    QVERIFY(resultsSummaryLabel != nullptr);
+    QVERIFY(resultsSummaryLabel->text().contains(QStringLiteral("Warehouse Detector")));
+
+    auto* detectionsTable = window.findChild<QTableWidget*>(QStringLiteral("DetectionsTable"));
+    QVERIFY(detectionsTable != nullptr);
+    QCOMPARE(detectionsTable->rowCount(), 1);
+
+    QVERIFY(QMetaObject::invokeMethod(
+        inferencePage, "imageSelected", Qt::DirectConnection, Q_ARG(QString, QStringLiteral("D:/images/second.jpg"))));
+
+    QCOMPARE(resultsSummaryLabel->text(), QStringLiteral("当前还没有推理结果"));
+    QCOMPARE(detectionsTable->rowCount(), 0);
+
+    auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
+    QVERIFY(contextResultValue != nullptr);
+    QCOMPARE(contextResultValue->text(), QStringLiteral("尚未执行检测"));
 }
 
 void MainWindowTest::recentInputClickReturnsToInferencePage() {
