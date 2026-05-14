@@ -225,7 +225,7 @@ void MainWindow::handleRunRequested() {
         return;
     }
     if (currentImagePath_.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("缺少图像"), QStringLiteral("请选择一张待推理图像。"));
+        QMessageBox::warning(this, QStringLiteral("缺少图像"), QStringLiteral("请先选择一张待推理图像。"));
         return;
     }
 
