@@ -126,6 +126,7 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
         currentModel_ = modelService_.loadDetectionModel(manifestPath);
         currentManifestPath_ = manifestPath;
         settingsStore_.addRecentModel(manifestPath);
+        modelsPage_->setCurrentManifest(currentModel_->manifest());
         modelsPage_->setCurrentManifestPath(manifestPath);
         inferencePage_->setModelReady(true);
         refreshSettingsPage();
