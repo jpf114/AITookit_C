@@ -147,6 +147,8 @@ void MainWindow::wireSignals() {
 void MainWindow::updateContextPanel() {
     const bool hasManifest = !currentManifestPath_.isEmpty();
     const bool hasImage = !currentImagePath_.isEmpty();
+    const bool hasSummary = !currentSummary_.inputPath.isEmpty();
+
     const QString modelDisplayName = !currentManifest_.name.isEmpty()
         ? currentManifest_.name
         : QFileInfo(currentManifestPath_).completeBaseName();
@@ -154,22 +156,13 @@ void MainWindow::updateContextPanel() {
     const QString imageDisplayName = !imageInfo.fileName().isEmpty()
         ? imageInfo.fileName()
         : currentImagePath_;
-    const QString currentImageAbsolutePath = QFileInfo(currentImagePath_).absoluteFilePath();
-    const bool summaryMatchesCurrentImage =
-        !currentSummary_.inputPath.isEmpty() &&
-        QFileInfo(currentSummary_.inputPath).absoluteFilePath().compare(currentImageAbsolutePath, Qt::CaseInsensitive) == 0;
-    const bool summaryMatchesCurrentModel =
-        !currentSummary_.modelName.isEmpty() &&
-        !modelDisplayName.isEmpty() &&
-        currentSummary_.modelName.compare(modelDisplayName, Qt::CaseInsensitive) == 0;
-    const bool hasCurrentSummary = summaryMatchesCurrentImage && summaryMatchesCurrentModel;
 
     modelStatusLabel_->setText(
         hasManifest ? QStringLiteral("已加载：%1").arg(modelDisplayName) : QStringLiteral("未选择模型清单"));
     imageStatusLabel_->setText(
         hasImage ? QStringLiteral("已选择：%1").arg(imageDisplayName) : QStringLiteral("未选择图像"));
     runStatusLabel_->setText(
-        hasCurrentSummary
+        hasSummary
             ? QStringLiteral("已完成，共 %1 个目标，耗时 %2 ms")
                   .arg(currentSummary_.detectionCount)
                   .arg(QString::number(currentSummary_.elapsedMs, 'f', 2))
@@ -179,7 +172,7 @@ void MainWindow::updateContextPanel() {
         nextStepLabel_->setText(QStringLiteral("请先加载模型清单。"));
     } else if (!hasImage) {
         nextStepLabel_->setText(QStringLiteral("请选择一张待推理图像。"));
-    } else if (!hasCurrentSummary) {
+    } else if (!hasSummary) {
         nextStepLabel_->setText(QStringLiteral("模型和图像已就绪，可以开始检测。"));
     } else {
         nextStepLabel_->setText(QStringLiteral("可查看结果明细，或直接导出 JSON。"));
@@ -204,6 +197,13 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
         currentManifest_ = modelService_.loadManifest(manifestPath);
         currentModel_.reset();
         currentManifestPath_ = currentManifest_.manifestPath;
+        currentSummary_ = {};
+        resultsPage_->setSummary(currentSummary_);
+        if (currentImagePath_.isEmpty()) {
+            resultsPage_->setImage(QImage());
+        } else {
+            resultsPage_->setImage(QImage(currentImagePath_));
+        }
         settingsStore_.addRecentModel(currentManifestPath_);
         modelsPage_->setCurrentManifest(currentManifest_);
         inferencePage_->setModelReady(true);
@@ -217,6 +217,8 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
 
 void MainWindow::handleImageSelected(const QString& imagePath) {
     currentImagePath_ = imagePath;
+    currentSummary_ = {};
+    resultsPage_->setSummary(currentSummary_);
     settingsStore_.addRecentInput(imagePath);
     inferencePage_->setCurrentImagePath(imagePath);
     resultsPage_->setImage(QImage(imagePath));
