@@ -100,7 +100,10 @@ void InferencePage::setCurrentImagePath(const QString& imagePath) {
     } else {
         const QImage image(imagePath);
         hasValidImage_ = !image.isNull();
-        imagePathLabel_->setText(QStringLiteral("\u5f53\u524d\u56fe\u50cf\uff1a%1").arg(imagePath));
+        imagePathLabel_->setText(
+            hasValidImage_
+                ? QStringLiteral("\u5f53\u524d\u56fe\u50cf\uff1a%1").arg(imagePath)
+                : QStringLiteral("\u5f53\u524d\u672a\u9009\u62e9\u56fe\u50cf"));
         previewWidget_->setImage(hasValidImage_ ? image : QImage());
     }
 

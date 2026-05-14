@@ -34,7 +34,7 @@ QImage loadUsableImage(const QString& imagePath) {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
-    setWindowTitle(QStringLiteral("AI 检测工具"));
+    setWindowTitle(QStringLiteral("AI \u68c0\u6d4b\u5de5\u5177"));
     resize(1440, 900);
 
     buildShell();
@@ -68,7 +68,7 @@ void MainWindow::buildShell() {
     contextLayout->setContentsMargins(16, 16, 16, 16);
     contextLayout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("任务摘要"), contextPanel_);
+    auto* title = new QLabel(QStringLiteral("\u4efb\u52a1\u6458\u8981"), contextPanel_);
     title->setObjectName(QStringLiteral("ContextTitle"));
     title->setStyleSheet(QStringLiteral("font-size: 18px; font-weight: 600;"));
 
@@ -111,25 +111,25 @@ void MainWindow::buildShell() {
     contextLayout->addWidget(buildDivider());
     addContextSection(modelStatusTitleLabel_,
                       QStringLiteral("ContextModelTitle"),
-                      QStringLiteral("当前模型"),
+                      QStringLiteral("\u5f53\u524d\u6a21\u578b"),
                       modelStatusLabel_,
                       QStringLiteral("ContextModelValue"),
                       true);
     addContextSection(imageStatusTitleLabel_,
                       QStringLiteral("ContextImageTitle"),
-                      QStringLiteral("当前图像"),
+                      QStringLiteral("\u5f53\u524d\u56fe\u50cf"),
                       imageStatusLabel_,
                       QStringLiteral("ContextImageValue"),
                       true);
     addContextSection(resultStatusTitleLabel_,
                       QStringLiteral("ContextResultTitle"),
-                      QStringLiteral("当前结果"),
+                      QStringLiteral("\u5f53\u524d\u7ed3\u679c"),
                       runStatusLabel_,
                       QStringLiteral("ContextResultValue"),
                       true);
     addContextSection(nextStepTitleLabel_,
                       QStringLiteral("ContextNextStepTitle"),
-                      QStringLiteral("下一步"),
+                      QStringLiteral("\u4e0b\u4e00\u6b65"),
                       nextStepLabel_,
                       QStringLiteral("ContextNextStepValue"),
                       false);
@@ -148,7 +148,10 @@ void MainWindow::wireSignals() {
     connect(inferencePage_, &InferencePage::imageSelected, this, &MainWindow::handleImageSelected);
     connect(inferencePage_, &InferencePage::runRequested, this, &MainWindow::handleRunRequested);
     connect(resultsPage_, &ResultsPage::exportRequested, this, &MainWindow::handleExportRequested);
-    connect(settingsPage_, &SettingsPage::defaultExportDirectoryChanged, this, &MainWindow::handleDefaultExportDirectoryChanged);
+    connect(settingsPage_,
+            &SettingsPage::defaultExportDirectoryChanged,
+            this,
+            &MainWindow::handleDefaultExportDirectoryChanged);
     connect(settingsPage_, &SettingsPage::recentModelActivated, this, &MainWindow::handleManifestSelected);
     connect(settingsPage_, &SettingsPage::recentInputActivated, this, [this](const QString& imagePath) {
         handleImageSelected(imagePath);
@@ -170,24 +173,26 @@ void MainWindow::updateContextPanel() {
         : currentImagePath_;
 
     modelStatusLabel_->setText(
-        hasManifest ? QStringLiteral("已加载：%1").arg(modelDisplayName) : QStringLiteral("未选择模型清单"));
+        hasManifest ? QStringLiteral("\u5df2\u52a0\u8f7d\uff1a%1").arg(modelDisplayName)
+                    : QStringLiteral("\u672a\u9009\u62e9\u6a21\u578b\u6e05\u5355"));
     imageStatusLabel_->setText(
-        hasImage ? QStringLiteral("已选择：%1").arg(imageDisplayName) : QStringLiteral("未选择图像"));
+        hasImage ? QStringLiteral("\u5df2\u9009\u62e9\uff1a%1").arg(imageDisplayName)
+                 : QStringLiteral("\u672a\u9009\u62e9\u56fe\u50cf"));
     runStatusLabel_->setText(
         hasSummary
-            ? QStringLiteral("已完成，共 %1 个目标，耗时 %2 ms")
+            ? QStringLiteral("\u5df2\u5b8c\u6210\uff0c\u5171 %1 \u4e2a\u76ee\u6807\uff0c\u8017\u65f6 %2 ms")
                   .arg(currentSummary_.detectionCount)
                   .arg(QString::number(currentSummary_.elapsedMs, 'f', 2))
-            : QStringLiteral("尚未执行检测"));
+            : QStringLiteral("\u5c1a\u672a\u6267\u884c\u68c0\u6d4b"));
 
     if (!hasManifest) {
-        nextStepLabel_->setText(QStringLiteral("请先加载模型清单。"));
+        nextStepLabel_->setText(QStringLiteral("\u8bf7\u5148\u52a0\u8f7d\u6a21\u578b\u6e05\u5355\u3002"));
     } else if (!hasImage) {
-        nextStepLabel_->setText(QStringLiteral("请选择一张待推理图像。"));
+        nextStepLabel_->setText(QStringLiteral("\u8bf7\u9009\u62e9\u4e00\u5f20\u5f85\u63a8\u7406\u56fe\u50cf\u3002"));
     } else if (!hasSummary) {
-        nextStepLabel_->setText(QStringLiteral("模型和图像已就绪，可以开始检测。"));
+        nextStepLabel_->setText(QStringLiteral("\u6a21\u578b\u548c\u56fe\u50cf\u5df2\u5c31\u7eea\uff0c\u53ef\u4ee5\u5f00\u59cb\u68c0\u6d4b\u3002"));
     } else {
-        nextStepLabel_->setText(QStringLiteral("可查看结果明细，或直接导出 JSON。"));
+        nextStepLabel_->setText(QStringLiteral("\u53ef\u67e5\u770b\u7ed3\u679c\u660e\u7ec6\uff0c\u6216\u76f4\u63a5\u5bfc\u51fa JSON\u3002"));
     }
 }
 
@@ -219,17 +224,18 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
         updateContextPanel();
         showPage(NavPanel::InferencePageId);
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("加载模型失败"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("\u52a0\u8f7d\u6a21\u578b\u5931\u8d25"), QString::fromUtf8(error.what()));
     }
 }
 
 void MainWindow::handleImageSelected(const QString& imagePath) {
-    currentImagePath_ = imagePath;
+    const QImage image = loadUsableImage(imagePath);
+    currentImagePath_ = image.isNull() ? QString() : imagePath;
     currentSummary_ = {};
     resultsPage_->setSummary(currentSummary_);
     settingsStore_.addRecentInput(imagePath);
-    inferencePage_->setCurrentImagePath(imagePath);
-    resultsPage_->setImage(loadUsableImage(imagePath));
+    inferencePage_->setCurrentImagePath(currentImagePath_);
+    resultsPage_->setImage(image);
     refreshSettingsPage();
     updateContextPanel();
 }
@@ -237,11 +243,12 @@ void MainWindow::handleImageSelected(const QString& imagePath) {
 void MainWindow::handleRunRequested() {
     const QImage currentImage = loadUsableImage(currentImagePath_);
     if (currentManifestPath_.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单。"));
+        QMessageBox::warning(this, QStringLiteral("\u7f3a\u5c11\u6a21\u578b"), QStringLiteral("\u8bf7\u5148\u52a0\u8f7d\u6a21\u578b\u6e05\u5355\u3002"));
         return;
     }
     if (currentImage.isNull()) {
-        QMessageBox::warning(this, QStringLiteral("缺少图像"), QStringLiteral("请先选择一张待推理图像。"));
+        QMessageBox::warning(this, QStringLiteral("\u7f3a\u5c11\u56fe\u50cf"), QStringLiteral("\u8bf7\u5148\u9009\u62e9\u4e00\u5f20\u5f85\u63a8\u7406\u56fe\u50cf\u3002"));
+        currentImagePath_.clear();
         inferencePage_->setCurrentImagePath(currentImagePath_);
         updateContextPanel();
         return;
@@ -255,13 +262,13 @@ void MainWindow::handleRunRequested() {
         applyInferenceResult(inferenceService_.runImage(*currentModel_, currentImagePath_));
         showPage(NavPanel::ResultsPageId);
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("推理失败"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("\u63a8\u7406\u5931\u8d25"), QString::fromUtf8(error.what()));
     }
 }
 
 void MainWindow::handleExportRequested() {
     if (currentSummary_.inputPath.isEmpty()) {
-        QMessageBox::information(this, QStringLiteral("暂无结果"), QStringLiteral("请先完成一次推理，再导出结果。"));
+        QMessageBox::information(this, QStringLiteral("\u6682\u65e0\u7ed3\u679c"), QStringLiteral("\u8bf7\u5148\u5b8c\u6210\u4e00\u6b21\u63a8\u7406\uff0c\u518d\u5bfc\u51fa\u7ed3\u679c\u3002"));
         return;
     }
 
@@ -272,7 +279,7 @@ void MainWindow::handleExportRequested() {
 
     const QString outputPath = QFileDialog::getSaveFileName(
         this,
-        QStringLiteral("导出 JSON"),
+        QStringLiteral("\u5bfc\u51fa JSON"),
         initialDirectory.isEmpty()
             ? QString()
             : QDir(initialDirectory).filePath(QStringLiteral("result.json")),
@@ -286,7 +293,7 @@ void MainWindow::handleExportRequested() {
         settingsStore_.setDefaultExportDirectory(QFileInfo(outputPath).absolutePath());
         refreshSettingsPage();
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("导出失败"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("\u5bfc\u51fa\u5931\u8d25"), QString::fromUtf8(error.what()));
     }
 }
 

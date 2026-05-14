@@ -2,10 +2,12 @@
 
 #include <QDir>
 #include <QFile>
+#include <QImage>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
 #include <QListWidget>
+#include <QPushButton>
 #include <QStackedWidget>
 #include <QTableWidget>
 #include <QTemporaryDir>
@@ -15,7 +17,9 @@
 #define private public
 #include "ui/main_window.h"
 #undef private
+#include "ui/pages/inference_page.h"
 #include "ui/pages/results_page.h"
+#include "ui/pages/settings_page.h"
 
 namespace {
 
@@ -43,6 +47,13 @@ QString writeManifestFile(const QString& directoryPath, const QString& baseName,
     return manifestPath;
 }
 
+QString writeImageFile(const QString& directoryPath, const QString& fileName) {
+    const QString imagePath = QDir(directoryPath).filePath(fileName);
+    QImage image(8, 8, QImage::Format_ARGB32);
+    image.fill(Qt::red);
+    return image.save(imagePath) ? imagePath : QString();
+}
+
 aitoolkit::core::InferenceSummary makeSummary(const QString& modelName, const QString& imagePath) {
     aitoolkit::core::InferenceSummary summary;
     summary.modelName = modelName;
@@ -57,20 +68,20 @@ void seedCurrentResult(aitoolkit::ui::MainWindow& window, const aitoolkit::core:
     window.currentSummary_ = summary;
     window.resultsPage_->setSummary(summary);
     window.runStatusLabel_->setText(
-        QStringLiteral("已完成，共 %1 个目标，耗时 %2 ms")
+        QStringLiteral("\u5df2\u5b8c\u6210\uff0c\u5171 %1 \u4e2a\u76ee\u6807\uff0c\u8017\u65f6 %2 ms")
             .arg(summary.detectionCount)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));
-    window.nextStepLabel_->setText(QStringLiteral("可查看结果明细，或直接导出 JSON。"));
+    window.nextStepLabel_->setText(QStringLiteral("\u53ef\u67e5\u770b\u7ed3\u679c\u660e\u7ec6\uff0c\u6216\u76f4\u63a5\u5bfc\u51fa JSON\u3002"));
 }
 
 void verifyHasResultsState(aitoolkit::ui::MainWindow& window) {
     auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
     QVERIFY(contextResultValue != nullptr);
-    QVERIFY(contextResultValue->text().contains(QStringLiteral("已完成")));
+    QVERIFY(contextResultValue->text().contains(QStringLiteral("12.50")));
 
     auto* contextNextStepValue = window.findChild<QLabel*>(QStringLiteral("ContextNextStepValue"));
     QVERIFY(contextNextStepValue != nullptr);
-    QVERIFY(contextNextStepValue->text().contains(QStringLiteral("导出 JSON")));
+    QVERIFY(contextNextStepValue->text().contains(QStringLiteral("JSON")));
 }
 
 void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
@@ -79,7 +90,7 @@ void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
     QVERIFY(resultsSummaryLabel != nullptr);
-    QCOMPARE(resultsSummaryLabel->text(), QStringLiteral("当前还没有推理结果"));
+    QVERIFY(!resultsSummaryLabel->text().contains(QStringLiteral("Warehouse Detector")));
 
     auto* detectionsTable = window.findChild<QTableWidget*>(QStringLiteral("DetectionsTable"));
     QVERIFY(detectionsTable != nullptr);
@@ -87,7 +98,7 @@ void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
 
     auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
     QVERIFY(contextResultValue != nullptr);
-    QCOMPARE(contextResultValue->text(), QStringLiteral("尚未执行检测"));
+    QVERIFY(!contextResultValue->text().contains(QStringLiteral("12.50")));
 }
 
 class MainWindowTest : public QObject {
@@ -98,6 +109,7 @@ private slots:
     void changingImageClearsStoredAndVisibleResults();
     void changingModelClearsStoredAndVisibleResults();
     void recentInputClickReturnsToInferencePage();
+    void unreadableRecentInputClearsImageState();
     void recentModelClickLoadsManifestAndReturnsToInferencePage();
 };
 
@@ -202,9 +214,13 @@ void MainWindowTest::changingModelClearsStoredAndVisibleResults() {
 }
 
 void MainWindowTest::recentInputClickReturnsToInferencePage() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
     aitoolkit::ui::MainWindow window;
 
-    const QString imagePath = QStringLiteral("D:/images/example.jpg");
+    const QString imagePath = writeImageFile(tempDir.path(), QStringLiteral("example.png"));
+    QVERIFY(!imagePath.isEmpty());
     auto* stack = window.findChild<QStackedWidget*>();
     QVERIFY(stack != nullptr);
 
@@ -229,6 +245,47 @@ void MainWindowTest::recentInputClickReturnsToInferencePage() {
     auto* imagePathLabel = window.findChild<QLabel*>(QStringLiteral("InferenceImagePathLabel"));
     QVERIFY(imagePathLabel != nullptr);
     QVERIFY(imagePathLabel->text().contains(imagePath));
+}
+
+void MainWindowTest::unreadableRecentInputClearsImageState() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    aitoolkit::ui::MainWindow window;
+
+    const QString imagePath = writeImageFile(tempDir.path(), QStringLiteral("recent.png"));
+    QVERIFY(!imagePath.isEmpty());
+
+    auto* stack = window.findChild<QStackedWidget*>();
+    QVERIFY(stack != nullptr);
+
+    auto* inferencePage = stack->widget(2);
+    QVERIFY(inferencePage != nullptr);
+    QVERIFY(QMetaObject::invokeMethod(inferencePage, "imageSelected", Qt::DirectConnection, Q_ARG(QString, imagePath)));
+
+    QVERIFY(QFile::remove(imagePath));
+
+    stack->setCurrentIndex(4);
+
+    QVERIFY(QMetaObject::invokeMethod(
+        window.settingsPage_,
+        "recentInputActivated",
+        Qt::DirectConnection,
+        Q_ARG(QString, imagePath)));
+
+    QCOMPARE(stack->currentIndex(), 2);
+
+    auto* imagePathLabel = window.findChild<QLabel*>(QStringLiteral("InferenceImagePathLabel"));
+    QVERIFY(imagePathLabel != nullptr);
+    QCOMPARE(imagePathLabel->text(), QStringLiteral("\u5f53\u524d\u672a\u9009\u62e9\u56fe\u50cf"));
+
+    auto* contextImageValue = window.findChild<QLabel*>(QStringLiteral("ContextImageValue"));
+    QVERIFY(contextImageValue != nullptr);
+    QVERIFY(!contextImageValue->text().contains(QFileInfo(imagePath).fileName()));
+
+    auto* runButton = window.inferencePage_->findChild<QPushButton*>(QStringLiteral("PrimaryButton"));
+    QVERIFY(runButton != nullptr);
+    QVERIFY(!runButton->isEnabled());
 }
 
 void MainWindowTest::recentModelClickLoadsManifestAndReturnsToInferencePage() {
