@@ -29,6 +29,12 @@ void ModelsPageTest::showsManifestSummary() {
 
     page.setCurrentManifest(manifest);
 
+    auto* modelLoadSection = page.findChild<QWidget*>(QStringLiteral("ModelLoadSection"));
+    QVERIFY(modelLoadSection != nullptr);
+
+    auto* modelSummarySection = page.findChild<QWidget*>(QStringLiteral("ModelSummarySection"));
+    QVERIFY(modelSummarySection != nullptr);
+
     auto* pathLabel = page.findChild<QLabel*>(QStringLiteral("ManifestPathLabel"));
     QVERIFY(pathLabel != nullptr);
     QVERIFY(pathLabel->text().contains(manifest.manifestPath));

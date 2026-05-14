@@ -37,6 +37,18 @@ void MainWindowTest::buildsThreePaneShell() {
 
     const auto contextPanel = window.findChild<QWidget*>(QStringLiteral("ContextPanel"));
     QVERIFY(contextPanel != nullptr);
+
+    const auto contextModelTitle = window.findChild<QLabel*>(QStringLiteral("ContextModelTitle"));
+    QVERIFY(contextModelTitle != nullptr);
+
+    const auto contextImageTitle = window.findChild<QLabel*>(QStringLiteral("ContextImageTitle"));
+    QVERIFY(contextImageTitle != nullptr);
+
+    const auto contextResultTitle = window.findChild<QLabel*>(QStringLiteral("ContextResultTitle"));
+    QVERIFY(contextResultTitle != nullptr);
+
+    const auto contextNextStepTitle = window.findChild<QLabel*>(QStringLiteral("ContextNextStepTitle"));
+    QVERIFY(contextNextStepTitle != nullptr);
 }
 
 void MainWindowTest::recentInputClickReturnsToInferencePage() {
