@@ -19,6 +19,18 @@
 #include "ui/pages/settings_page.h"
 
 namespace aitoolkit::ui {
+namespace {
+
+QImage loadUsableImage(const QString& imagePath) {
+    if (imagePath.isEmpty()) {
+        return QImage();
+    }
+
+    const QImage image(imagePath);
+    return image.isNull() ? QImage() : image;
+}
+
+}  // namespace
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
@@ -146,7 +158,7 @@ void MainWindow::wireSignals() {
 
 void MainWindow::updateContextPanel() {
     const bool hasManifest = !currentManifestPath_.isEmpty();
-    const bool hasImage = !currentImagePath_.isEmpty();
+    const bool hasImage = !loadUsableImage(currentImagePath_).isNull();
     const bool hasSummary = !currentSummary_.inputPath.isEmpty();
 
     const QString modelDisplayName = !currentManifest_.name.isEmpty()
@@ -199,11 +211,7 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
         currentManifestPath_ = currentManifest_.manifestPath;
         currentSummary_ = {};
         resultsPage_->setSummary(currentSummary_);
-        if (currentImagePath_.isEmpty()) {
-            resultsPage_->setImage(QImage());
-        } else {
-            resultsPage_->setImage(QImage(currentImagePath_));
-        }
+        resultsPage_->setImage(loadUsableImage(currentImagePath_));
         settingsStore_.addRecentModel(currentManifestPath_);
         modelsPage_->setCurrentManifest(currentManifest_);
         inferencePage_->setModelReady(true);
@@ -221,18 +229,21 @@ void MainWindow::handleImageSelected(const QString& imagePath) {
     resultsPage_->setSummary(currentSummary_);
     settingsStore_.addRecentInput(imagePath);
     inferencePage_->setCurrentImagePath(imagePath);
-    resultsPage_->setImage(QImage(imagePath));
+    resultsPage_->setImage(loadUsableImage(imagePath));
     refreshSettingsPage();
     updateContextPanel();
 }
 
 void MainWindow::handleRunRequested() {
+    const QImage currentImage = loadUsableImage(currentImagePath_);
     if (currentManifestPath_.isEmpty()) {
         QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单。"));
         return;
     }
-    if (currentImagePath_.isEmpty()) {
+    if (currentImage.isNull()) {
         QMessageBox::warning(this, QStringLiteral("缺少图像"), QStringLiteral("请先选择一张待推理图像。"));
+        inferencePage_->setCurrentImagePath(currentImagePath_);
+        updateContextPanel();
         return;
     }
 
@@ -287,7 +298,7 @@ void MainWindow::handleDefaultExportDirectoryChanged(const QString& directoryPat
 void MainWindow::applyInferenceResult(const core::InferenceSummary& summary) {
     currentSummary_ = summary;
     resultsPage_->setSummary(summary);
-    resultsPage_->setImage(QImage(currentImagePath_));
+    resultsPage_->setImage(loadUsableImage(currentImagePath_));
     updateContextPanel();
 }
 

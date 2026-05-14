@@ -93,8 +93,6 @@ InferencePage::InferencePage(QWidget* parent)
 }
 
 void InferencePage::setCurrentImagePath(const QString& imagePath) {
-    currentImagePath_ = imagePath;
-
     if (imagePath.isEmpty()) {
         hasValidImage_ = false;
         imagePathLabel_->setText(QStringLiteral("\u5f53\u524d\u672a\u9009\u62e9\u56fe\u50cf"));
