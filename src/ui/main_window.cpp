@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 
 #include "ui/nav_panel.h"
+#include "ui/dialogs/onnx_setup_dialog.h"
 #include "ui/pages/home_page.h"
 #include "ui/pages/inference_page.h"
 #include "ui/pages/models_page.h"
@@ -37,10 +38,22 @@ MainWindow::MainWindow(QWidget* parent)
     setWindowTitle(QStringLiteral("AI \u68c0\u6d4b\u5de5\u5177"));
     resize(1440, 900);
 
+    inferenceThread_ = new QThread(this);
+    inferenceWorker_ = new services::InferenceWorker();
+    inferenceWorker_->moveToThread(inferenceThread_);
+    inferenceThread_->start();
+
     buildShell();
     wireSignals();
     refreshSettingsPage();
     updateContextPanel();
+}
+
+MainWindow::~MainWindow() {
+    inferenceWorker_->cancel();
+    inferenceThread_->quit();
+    inferenceThread_->wait();
+    delete inferenceWorker_;
 }
 
 void MainWindow::buildShell() {
@@ -144,18 +157,101 @@ void MainWindow::buildShell() {
 
 void MainWindow::wireSignals() {
     connect(navPanel_, &NavPanel::pageRequested, this, &MainWindow::showPage);
-    connect(modelsPage_, &ModelsPage::modelManifestSelected, this, &MainWindow::handleManifestSelected);
+    connect(homePage_, &HomePage::loadModelClicked, this, [this]() { showPage(NavPanel::ModelsPageId); });
+    connect(homePage_, &HomePage::selectImageClicked, this, [this]() { showPage(NavPanel::InferencePageId); });
+    connect(homePage_, &HomePage::recentModelActivated, this, &MainWindow::handleModelManifestSelected);
+    connect(homePage_, &HomePage::recentInputActivated, this, [this](const QString& imagePath) {
+        handleImageSelected(imagePath);
+        showPage(NavPanel::InferencePageId);
+    });
+    connect(modelsPage_, &ModelsPage::modelManifestSelected, this, &MainWindow::handleModelManifestSelected);
+    connect(modelsPage_, &ModelsPage::onnxFileSelected, this, &MainWindow::handleOnnxFileSelected);
     connect(inferencePage_, &InferencePage::imageSelected, this, &MainWindow::handleImageSelected);
+    connect(inferencePage_, &InferencePage::folderSelected, this, &MainWindow::handleFolderSelected);
+    connect(inferencePage_, &InferencePage::videoSelected, this, &MainWindow::handleVideoSelected);
     connect(inferencePage_, &InferencePage::runRequested, this, &MainWindow::handleRunRequested);
     connect(resultsPage_, &ResultsPage::exportRequested, this, &MainWindow::handleExportRequested);
+    connect(resultsPage_, &ResultsPage::exportImageRequested, this, &MainWindow::handleExportImageRequested);
     connect(settingsPage_,
             &SettingsPage::defaultExportDirectoryChanged,
             this,
             &MainWindow::handleDefaultExportDirectoryChanged);
-    connect(settingsPage_, &SettingsPage::recentModelActivated, this, &MainWindow::handleManifestSelected);
+    connect(settingsPage_, &SettingsPage::recentModelActivated, this, &MainWindow::handleModelManifestSelected);
     connect(settingsPage_, &SettingsPage::recentInputActivated, this, [this](const QString& imagePath) {
         handleImageSelected(imagePath);
         showPage(NavPanel::InferencePageId);
+    });
+    connect(inferenceWorker_, &services::InferenceWorker::imageResultReady, this, [this](const core::InferenceSummary& summary) {
+        applyInferenceResult(summary);
+        showPage(NavPanel::ResultsPageId);
+    });
+    connect(inferenceWorker_, &services::InferenceWorker::batchProgress, this, [this](int completed, int total) {
+        runStatusLabel_->setText(QStringLiteral("批量推理 %1/%2…").arg(completed).arg(total));
+    });
+    connect(inferenceWorker_, &services::InferenceWorker::batchFinished, this, [this](const QVector<core::InferenceSummary>& results) {
+        if (results.isEmpty()) {
+            return;
+        }
+        currentSummary_ = results.first();
+        currentImagePath_ = currentSummary_.inputPath;
+        inferencePage_->setCurrentImagePath(currentImagePath_);
+        resultsPage_->setImage(loadUsableImage(currentImagePath_));
+        resultsPage_->setSummary(currentSummary_);
+        updateContextPanel();
+        showPage(NavPanel::ResultsPageId);
+
+        int totalDetections = 0;
+        double totalElapsedMs = 0.0;
+        for (const core::InferenceSummary& s : results) {
+            totalDetections += s.detectionCount;
+            totalElapsedMs += s.elapsedMs;
+        }
+        QMessageBox::information(
+            this,
+            QStringLiteral("批量推理完成"),
+            QStringLiteral("共处理 %1 张图像，检测到 %2 个目标，总耗时 %3 ms。")
+                .arg(results.size())
+                .arg(totalDetections)
+                .arg(QString::number(totalElapsedMs, 'f', 1)));
+    });
+    connect(inferenceWorker_, &services::InferenceWorker::videoProgress, this, [this](int frameIndex, int totalFrames) {
+        if (totalFrames > 0) {
+            runStatusLabel_->setText(QStringLiteral("视频推理 %1/%2…").arg(frameIndex).arg(totalFrames));
+        } else {
+            runStatusLabel_->setText(QStringLiteral("视频推理 第 %1 帧…").arg(frameIndex));
+        }
+    });
+    connect(inferenceWorker_, &services::InferenceWorker::videoFinished, this, [this](const QVector<core::InferenceSummary>& results) {
+        if (results.isEmpty()) {
+            QMessageBox::information(this, QStringLiteral("无帧数据"), QStringLiteral("未能从视频中读取任何帧。"));
+            return;
+        }
+        currentSummary_ = results.first();
+        currentImagePath_.clear();
+        inferencePage_->setCurrentImagePath(currentImagePath_);
+        resultsPage_->setImage(QImage());
+        resultsPage_->setSummary(currentSummary_);
+        updateContextPanel();
+        showPage(NavPanel::ResultsPageId);
+
+        int totalDetections = 0;
+        double totalElapsedMs = 0.0;
+        for (const core::InferenceSummary& s : results) {
+            totalDetections += s.detectionCount;
+            totalElapsedMs += s.elapsedMs;
+        }
+        QMessageBox::information(
+            this,
+            QStringLiteral("视频推理完成"),
+            QStringLiteral("共处理 %1 帧，检测到 %2 个目标，总耗时 %3 ms。")
+                .arg(results.size())
+                .arg(totalDetections)
+                .arg(QString::number(totalElapsedMs, 'f', 1)));
+    });
+    connect(inferenceWorker_, &services::InferenceWorker::error, this, [this](const QString& message) {
+        runStatusLabel_->setText(QStringLiteral("推理失败"));
+        nextStepLabel_->setText(QStringLiteral("请检查模型和输入后重试。"));
+        QMessageBox::critical(this, QStringLiteral("推理失败"), message);
     });
 }
 
@@ -207,9 +303,11 @@ void MainWindow::refreshSettingsPage() {
     settingsPage_->setDefaultExportDirectory(settingsStore_.defaultExportDirectory());
     settingsPage_->setRecentModels(settingsStore_.recentModels());
     settingsPage_->setRecentInputs(settingsStore_.recentInputs());
+    homePage_->setRecentModels(settingsStore_.recentModels());
+    homePage_->setRecentInputs(settingsStore_.recentInputs());
 }
 
-void MainWindow::handleManifestSelected(const QString& manifestPath) {
+void MainWindow::handleModelManifestSelected(const QString& manifestPath) {
     try {
         currentManifest_ = modelService_.loadManifest(manifestPath);
         currentModel_.reset();
@@ -228,6 +326,38 @@ void MainWindow::handleManifestSelected(const QString& manifestPath) {
     }
 }
 
+void MainWindow::handleOnnxFileSelected(const QString& onnxPath) {
+    auto* dialog = new dialogs::OnnxSetupDialog(onnxPath, this);
+    if (dialog->exec() != QDialog::Accepted) {
+        dialog->deleteLater();
+        return;
+    }
+
+    try {
+        const core::ModelManifest manifest = modelService_.createManifestFromOnnx(
+            onnxPath,
+            dialog->modelName(),
+            dialog->inputWidth(),
+            dialog->inputHeight(),
+            dialog->confidenceThreshold(),
+            dialog->nmsThreshold(),
+            dialog->labels());
+
+        currentManifest_ = manifest;
+        currentManifestPath_ = manifest.manifestPath;
+        currentModel_ = std::make_unique<models::YoloDetectionModel>(manifest);
+
+        modelsPage_->setCurrentManifest(manifest);
+        settingsStore_.addRecentModel(manifest.manifestPath);
+        refreshSettingsPage();
+        updateContextPanel();
+    } catch (const std::exception& error) {
+        QMessageBox::critical(this, QStringLiteral("ONNX 加载失败"), QString::fromUtf8(error.what()));
+    }
+
+    dialog->deleteLater();
+}
+
 void MainWindow::handleImageSelected(const QString& imagePath) {
     const QImage image = loadUsableImage(imagePath);
     currentImagePath_ = image.isNull() ? QString() : imagePath;
@@ -238,6 +368,71 @@ void MainWindow::handleImageSelected(const QString& imagePath) {
     resultsPage_->setImage(image);
     refreshSettingsPage();
     updateContextPanel();
+}
+
+void MainWindow::handleFolderSelected(const QString& folderPath) {
+    if (currentManifestPath_.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单，再进行批量推理。"));
+        return;
+    }
+
+    const QDir dir(folderPath);
+    const QStringList nameFilters = {
+        QStringLiteral("*.png"),
+        QStringLiteral("*.jpg"),
+        QStringLiteral("*.jpeg"),
+        QStringLiteral("*.bmp"),
+    };
+    const QFileInfoList entries = dir.entryInfoList(nameFilters, QDir::Files | QDir::Readable, QDir::Name);
+    if (entries.isEmpty()) {
+        QMessageBox::information(this, QStringLiteral("无图像文件"), QStringLiteral("所选文件夹中没有找到支持的图像文件。"));
+        return;
+    }
+
+    try {
+        if (!currentModel_ ||
+            currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
+            currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
+        }
+
+        QStringList imagePaths;
+        imagePaths.reserve(entries.size());
+        for (const QFileInfo& entry : entries) {
+            imagePaths.append(entry.absoluteFilePath());
+        }
+
+        inferenceWorker_->setModel(std::shared_ptr<const models::YoloDetectionModel>(currentModel_.get(), [](auto*) {}));
+        runStatusLabel_->setText(QStringLiteral("批量推理 0/%1…").arg(entries.size()));
+        nextStepLabel_->setText(QStringLiteral("请等待推理完成。"));
+        settingsStore_.addRecentInput(folderPath);
+        refreshSettingsPage();
+        QMetaObject::invokeMethod(inferenceWorker_, "runBatch", Qt::QueuedConnection, Q_ARG(QStringList, imagePaths));
+    } catch (const std::exception& error) {
+        QMessageBox::critical(this, QStringLiteral("批量推理失败"), QString::fromUtf8(error.what()));
+    }
+}
+
+void MainWindow::handleVideoSelected(const QString& videoPath) {
+    if (currentManifestPath_.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单，再进行视频推理。"));
+        return;
+    }
+
+    try {
+        if (!currentModel_ ||
+            currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
+            currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
+        }
+
+        inferenceWorker_->setModel(std::shared_ptr<const models::YoloDetectionModel>(currentModel_.get(), [](auto*) {}));
+        runStatusLabel_->setText(QStringLiteral("视频推理准备中…"));
+        nextStepLabel_->setText(QStringLiteral("请等待推理完成。"));
+        settingsStore_.addRecentInput(videoPath);
+        refreshSettingsPage();
+        QMetaObject::invokeMethod(inferenceWorker_, "runVideo", Qt::QueuedConnection, Q_ARG(QString, videoPath), Q_ARG(int, 0));
+    } catch (const std::exception& error) {
+        QMessageBox::critical(this, QStringLiteral("视频推理失败"), QString::fromUtf8(error.what()));
+    }
 }
 
 void MainWindow::handleRunRequested() {
@@ -259,8 +454,10 @@ void MainWindow::handleRunRequested() {
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
         }
-        applyInferenceResult(inferenceService_.runImage(*currentModel_, currentImagePath_));
-        showPage(NavPanel::ResultsPageId);
+        inferenceWorker_->setModel(std::shared_ptr<const models::YoloDetectionModel>(currentModel_.get(), [](auto*) {}));
+        runStatusLabel_->setText(QStringLiteral("\u63a8\u7406\u4e2d\u2026"));
+        nextStepLabel_->setText(QStringLiteral("\u8bf7\u7b49\u5f85\u63a8\u7406\u5b8c\u6210\u3002"));
+        QMetaObject::invokeMethod(inferenceWorker_, "runImage", Qt::QueuedConnection, Q_ARG(QString, currentImagePath_));
     } catch (const std::exception& error) {
         QMessageBox::critical(this, QStringLiteral("\u63a8\u7406\u5931\u8d25"), QString::fromUtf8(error.what()));
     }
@@ -300,6 +497,43 @@ void MainWindow::handleExportRequested() {
 void MainWindow::handleDefaultExportDirectoryChanged(const QString& directoryPath) {
     settingsStore_.setDefaultExportDirectory(directoryPath);
     refreshSettingsPage();
+}
+
+void MainWindow::handleExportImageRequested() {
+    if (currentSummary_.inputPath.isEmpty()) {
+        QMessageBox::information(this, QStringLiteral("暂无结果"), QStringLiteral("请先完成一次推理，再导出图片。"));
+        return;
+    }
+
+    const QImage currentImage = loadUsableImage(currentImagePath_);
+    if (currentImage.isNull()) {
+        QMessageBox::warning(this, QStringLiteral("图像不可用"), QStringLiteral("当前图像无法读取，无法导出渲染图。"));
+        return;
+    }
+
+    QString initialDirectory = settingsStore_.defaultExportDirectory();
+    if (initialDirectory.isEmpty() && !currentImagePath_.isEmpty()) {
+        initialDirectory = QFileInfo(currentImagePath_).absolutePath();
+    }
+
+    const QString outputPath = QFileDialog::getSaveFileName(
+        this,
+        QStringLiteral("导出图片"),
+        initialDirectory.isEmpty()
+            ? QString()
+            : QDir(initialDirectory).filePath(QStringLiteral("result.png")),
+        QStringLiteral("PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp)"));
+    if (outputPath.isEmpty()) {
+        return;
+    }
+
+    try {
+        exportService_.exportRenderedImage(outputPath, currentImage, currentSummary_);
+        settingsStore_.setDefaultExportDirectory(QFileInfo(outputPath).absolutePath());
+        refreshSettingsPage();
+    } catch (const std::exception& error) {
+        QMessageBox::critical(this, QStringLiteral("导出失败"), QString::fromUtf8(error.what()));
+    }
 }
 
 void MainWindow::applyInferenceResult(const core::InferenceSummary& summary) {

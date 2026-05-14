@@ -65,6 +65,7 @@ endfunction()
 ai_resolve_first_available_target(ai_opencv_core_target OpenCV::opencv_core opencv_core)
 ai_resolve_first_available_target(ai_opencv_imgproc_target OpenCV::opencv_imgproc opencv_imgproc)
 ai_resolve_first_available_target(ai_opencv_imgcodecs_target OpenCV::opencv_imgcodecs opencv_imgcodecs)
+ai_resolve_first_available_target(ai_opencv_videoio_target OpenCV::opencv_videoio opencv_videoio)
 
 if(NOT ai_opencv_core_target)
     message(FATAL_ERROR "Unable to resolve an OpenCV core target")
@@ -113,11 +114,14 @@ ai_define_module(
     SOURCES
         services/model_service.cpp
         services/inference_service.cpp
+        services/inference_worker.cpp
         services/export_service.cpp
     LINK_LIBS
         ai_core
         ai_models
+        Qt6::Gui
         ${ai_opencv_imgcodecs_target}
+        ${ai_opencv_videoio_target}
 )
 
 ai_collect_existing_sources(
@@ -126,6 +130,7 @@ ai_collect_existing_sources(
     app/app_bootstrap.cpp
     ui/main_window.cpp
     ui/nav_panel.cpp
+    ui/dialogs/onnx_setup_dialog.cpp
     ui/pages/home_page.cpp
     ui/pages/models_page.cpp
     ui/pages/inference_page.cpp

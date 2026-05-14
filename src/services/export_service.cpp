@@ -2,6 +2,8 @@
 
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QPainter>
+#include <QPen>
 
 #include "core/json_utils.h"
 
@@ -31,6 +33,49 @@ void ExportService::exportJson(const QString& filePath, const core::InferenceSum
     root.insert(QStringLiteral("elapsed_ms"), summary.elapsedMs);
     root.insert(QStringLiteral("detections"), detections);
     core::writeJsonObject(filePath, root);
+}
+
+void ExportService::exportRenderedImage(
+    const QString& filePath,
+    const QImage& image,
+    const core::InferenceSummary& summary) const {
+    if (image.isNull()) {
+        throw std::runtime_error("Cannot export rendered image: source image is empty");
+    }
+
+    QImage rendered = image.convertToFormat(QImage::Format_RGB32);
+    QPainter painter(&rendered);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    QPen boxPen(QColor(QStringLiteral("#ef4444")), 3.0);
+    painter.setPen(boxPen);
+
+    QFont labelFont = painter.font();
+    labelFont.setPointSize(12);
+    labelFont.setBold(true);
+    painter.setFont(labelFont);
+
+    for (const core::DetectionItem& item : summary.detections) {
+        painter.drawRect(item.boundingBox);
+
+        const QString labelText = QStringLiteral("%1 %2%")
+            .arg(item.label)
+            .arg(QString::number(item.confidence * 100.0, 'f', 0));
+
+        QRectF labelRect = painter.fontMetrics().boundingRect(labelText);
+        labelRect.moveTopLeft(item.boundingBox.topLeft() + QPointF(2.0, -labelRect.height() - 2.0));
+
+        painter.fillRect(labelRect.adjusted(-2, -1, 2, 1), QColor(QStringLiteral("#ef4444")));
+        painter.setPen(QColor(QStringLiteral("#ffffff")));
+        painter.drawText(labelRect, labelText);
+        painter.setPen(boxPen);
+    }
+
+    painter.end();
+
+    if (!rendered.save(filePath)) {
+        throw std::runtime_error("Failed to save rendered image");
+    }
 }
 
 }  // namespace aitoolkit::services

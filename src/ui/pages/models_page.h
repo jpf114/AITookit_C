@@ -20,6 +20,7 @@ public:
 
 signals:
     void modelManifestSelected(const QString& manifestPath);
+    void onnxFileSelected(const QString& onnxPath);
 
 private:
     QLabel* manifestPathLabel_ = nullptr;

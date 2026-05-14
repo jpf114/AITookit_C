@@ -21,6 +21,8 @@ public:
 
 signals:
     void imageSelected(const QString& imagePath);
+    void folderSelected(const QString& folderPath);
+    void videoSelected(const QString& videoPath);
     void runRequested();
 
 private:

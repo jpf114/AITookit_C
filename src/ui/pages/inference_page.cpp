@@ -46,6 +46,12 @@ InferencePage::InferencePage(QWidget* parent)
     auto* openButton = new QPushButton(QStringLiteral("\u9009\u62e9\u56fe\u50cf"), this);
     openButton->setObjectName(QStringLiteral("SecondaryButton"));
 
+    auto* openFolderButton = new QPushButton(QStringLiteral("\u9009\u62e9\u6587\u4ef6\u5939"), this);
+    openFolderButton->setObjectName(QStringLiteral("SecondaryButton"));
+
+    auto* openVideoButton = new QPushButton(QStringLiteral("\u9009\u62e9\u89c6\u9891"), this);
+    openVideoButton->setObjectName(QStringLiteral("SecondaryButton"));
+
     runButton_ = new QPushButton(QStringLiteral("\u5f00\u59cb\u68c0\u6d4b"), this);
     runButton_->setObjectName(QStringLiteral("PrimaryButton"));
     runButton_->setEnabled(false);
@@ -65,6 +71,8 @@ InferencePage::InferencePage(QWidget* parent)
     actionLayout->setContentsMargins(16, 16, 16, 16);
     actionLayout->setSpacing(10);
     actionLayout->addWidget(openButton);
+    actionLayout->addWidget(openFolderButton);
+    actionLayout->addWidget(openVideoButton);
     actionLayout->addWidget(runButton_);
     actionLayout->addWidget(imagePathLabel_);
     actionLayout->addWidget(readinessLabel_);
@@ -83,6 +91,24 @@ InferencePage::InferencePage(QWidget* parent)
             QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp)"));
         if (!path.isEmpty()) {
             emit imageSelected(path);
+        }
+    });
+    connect(openFolderButton, &QPushButton::clicked, this, [this]() {
+        const QString path = QFileDialog::getExistingDirectory(
+            this,
+            QStringLiteral("\u9009\u62e9\u56fe\u50cf\u6587\u4ef6\u5939"));
+        if (!path.isEmpty()) {
+            emit folderSelected(path);
+        }
+    });
+    connect(openVideoButton, &QPushButton::clicked, this, [this]() {
+        const QString path = QFileDialog::getOpenFileName(
+            this,
+            QStringLiteral("\u9009\u62e9\u89c6\u9891"),
+            QString(),
+            QStringLiteral("Videos (*.mp4 *.avi *.mkv *.mov *.wmv)"));
+        if (!path.isEmpty()) {
+            emit videoSelected(path);
         }
     });
     connect(runButton_, &QPushButton::clicked, this, &InferencePage::runRequested);

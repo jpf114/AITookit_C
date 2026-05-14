@@ -25,6 +25,9 @@ ResultsPage::ResultsPage(QWidget* parent)
     auto* exportButton = new QPushButton(QStringLiteral("\u5bfc\u51fa JSON"), this);
     exportButton->setObjectName(QStringLiteral("SecondaryButton"));
 
+    auto* exportImageButton = new QPushButton(QStringLiteral("\u5bfc\u51fa\u56fe\u7247"), this);
+    exportImageButton->setObjectName(QStringLiteral("SecondaryButton"));
+
     summaryStrip_ = new QWidget(this);
     summaryStrip_->setObjectName(QStringLiteral("ResultsSummaryStrip"));
 
@@ -37,6 +40,7 @@ ResultsPage::ResultsPage(QWidget* parent)
     summaryLabel_->setWordWrap(true);
 
     summaryStripLayout->addWidget(summaryLabel_, 1);
+    summaryStripLayout->addWidget(exportImageButton, 0);
     summaryStripLayout->addWidget(exportButton, 0);
 
     previewWidget_ = new ImagePreviewWidget(this);
@@ -59,6 +63,7 @@ ResultsPage::ResultsPage(QWidget* parent)
     detectionsTable_->setMinimumHeight(180);
 
     connect(exportButton, &QPushButton::clicked, this, &ResultsPage::exportRequested);
+    connect(exportImageButton, &QPushButton::clicked, this, &ResultsPage::exportImageRequested);
 
     layout->addWidget(title);
     layout->addWidget(summaryStrip_);

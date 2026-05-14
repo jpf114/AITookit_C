@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QThread>
 
 #include <memory>
 
@@ -9,6 +10,7 @@
 #include "models/yolo_detection_model.h"
 #include "services/export_service.h"
 #include "services/inference_service.h"
+#include "services/inference_worker.h"
 #include "services/model_service.h"
 
 class QLabel;
@@ -29,6 +31,7 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(QWidget* parent = nullptr);
+    ~MainWindow() override;
 
 private:
     void buildShell();
@@ -36,10 +39,14 @@ private:
     void updateContextPanel();
     void refreshSettingsPage();
     void showPage(int pageId);
-    void handleManifestSelected(const QString& manifestPath);
+    void handleModelManifestSelected(const QString& manifestPath);
+    void handleOnnxFileSelected(const QString& onnxPath);
     void handleImageSelected(const QString& imagePath);
+    void handleFolderSelected(const QString& folderPath);
+    void handleVideoSelected(const QString& videoPath);
     void handleRunRequested();
     void handleExportRequested();
+    void handleExportImageRequested();
     void handleDefaultExportDirectoryChanged(const QString& directoryPath);
     void applyInferenceResult(const core::InferenceSummary& summary);
 
@@ -65,6 +72,9 @@ private:
     services::InferenceService inferenceService_;
     services::ExportService exportService_;
     core::SettingsStore settingsStore_;
+
+    services::InferenceWorker* inferenceWorker_ = nullptr;
+    QThread* inferenceThread_ = nullptr;
 
     core::ModelManifest currentManifest_;
     std::unique_ptr<models::YoloDetectionModel> currentModel_;

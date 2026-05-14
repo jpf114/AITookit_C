@@ -60,6 +60,9 @@ ModelsPage::ModelsPage(QWidget* parent)
     auto* loadButton = new QPushButton(QStringLiteral("加载模型清单"), loadSection_);
     loadButton->setObjectName(QStringLiteral("PrimaryButton"));
 
+    auto* loadOnnxButton = new QPushButton(QStringLiteral("加载 ONNX 文件"), loadSection_);
+    loadOnnxButton->setObjectName(QStringLiteral("SecondaryButton"));
+
     manifestPathLabel_ = new QLabel(QStringLiteral("当前未选择模型清单"), loadSection_);
     manifestPathLabel_->setObjectName(QStringLiteral("ManifestPathLabel"));
     manifestPathLabel_->setWordWrap(true);
@@ -67,6 +70,7 @@ ModelsPage::ModelsPage(QWidget* parent)
     loadSectionLayout->addWidget(loadSectionTitle);
     loadSectionLayout->addWidget(loadHintLabel);
     loadSectionLayout->addWidget(loadButton);
+    loadSectionLayout->addWidget(loadOnnxButton);
     loadSectionLayout->addWidget(manifestPathLabel_);
 
     summarySection_ = new QWidget(this);
@@ -94,6 +98,16 @@ ModelsPage::ModelsPage(QWidget* parent)
             QStringLiteral("JSON Files (*.json)"));
         if (!path.isEmpty()) {
             emit modelManifestSelected(path);
+        }
+    });
+    connect(loadOnnxButton, &QPushButton::clicked, this, [this]() {
+        const QString path = QFileDialog::getOpenFileName(
+            this,
+            QStringLiteral("选择 ONNX 文件"),
+            QString(),
+            QStringLiteral("ONNX Files (*.onnx)"));
+        if (!path.isEmpty()) {
+            emit onnxFileSelected(path);
         }
     });
 

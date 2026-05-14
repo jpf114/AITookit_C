@@ -23,6 +23,7 @@ public:
 
 signals:
     void exportRequested();
+    void exportImageRequested();
 
 private:
     QLabel* summaryLabel_ = nullptr;
