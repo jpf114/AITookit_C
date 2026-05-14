@@ -13,11 +13,11 @@
 namespace aitoolkit::ui {
 namespace {
 
-QString readinessText(const bool modelReady, const QString& imagePath) {
+QString readinessText(const bool modelReady, const bool imageReady) {
     if (!modelReady) {
         return QStringLiteral("\u8bf7\u5148\u52a0\u8f7d\u6a21\u578b\u6e05\u5355\u3002");
     }
-    if (imagePath.isEmpty()) {
+    if (!imageReady) {
         return QStringLiteral("\u6a21\u578b\u5df2\u5c31\u7eea\uff0c\u8bf7\u9009\u62e9\u4e00\u5f20\u5f85\u63a8\u7406\u56fe\u50cf\u3002");
     }
     return QStringLiteral("\u6a21\u578b\u548c\u56fe\u50cf\u5df2\u5c31\u7eea\uff0c\u53ef\u4ee5\u5f00\u59cb\u68c0\u6d4b\u3002");
@@ -93,25 +93,27 @@ InferencePage::InferencePage(QWidget* parent)
 }
 
 void InferencePage::setCurrentImagePath(const QString& imagePath) {
-    setProperty("currentImagePath", imagePath);
+    currentImagePath_ = imagePath;
 
     if (imagePath.isEmpty()) {
+        hasValidImage_ = false;
         imagePathLabel_->setText(QStringLiteral("\u5f53\u524d\u672a\u9009\u62e9\u56fe\u50cf"));
         previewWidget_->setImage(QImage());
     } else {
+        const QImage image(imagePath);
+        hasValidImage_ = !image.isNull();
         imagePathLabel_->setText(QStringLiteral("\u5f53\u524d\u56fe\u50cf\uff1a%1").arg(imagePath));
-        previewWidget_->setImage(QImage(imagePath));
+        previewWidget_->setImage(hasValidImage_ ? image : QImage());
     }
 
-    readinessLabel_->setText(readinessText(modelReady_, imagePath));
-    runButton_->setEnabled(modelReady_ && !imagePath.isEmpty());
+    readinessLabel_->setText(readinessText(modelReady_, hasValidImage_));
+    runButton_->setEnabled(modelReady_ && hasValidImage_);
 }
 
 void InferencePage::setModelReady(const bool ready) {
     modelReady_ = ready;
-    const QString imagePath = property("currentImagePath").toString();
-    readinessLabel_->setText(readinessText(modelReady_, imagePath));
-    runButton_->setEnabled(modelReady_ && !imagePath.isEmpty());
+    readinessLabel_->setText(readinessText(modelReady_, hasValidImage_));
+    runButton_->setEnabled(modelReady_ && hasValidImage_);
 }
 
 }  // namespace aitoolkit::ui

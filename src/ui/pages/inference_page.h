@@ -28,6 +28,8 @@ private:
     QLabel* readinessLabel_ = nullptr;
     QPushButton* runButton_ = nullptr;
     ImagePreviewWidget* previewWidget_ = nullptr;
+    QString currentImagePath_;
+    bool hasValidImage_ = false;
     bool modelReady_ = false;
 };
 
