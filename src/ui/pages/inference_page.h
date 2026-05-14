@@ -8,6 +8,8 @@ class QPushButton;
 
 namespace aitoolkit::ui {
 
+class ImagePreviewWidget;
+
 class InferencePage : public QWidget {
     Q_OBJECT
 
@@ -23,7 +25,10 @@ signals:
 
 private:
     QLabel* imagePathLabel_ = nullptr;
+    QLabel* readinessLabel_ = nullptr;
     QPushButton* runButton_ = nullptr;
+    ImagePreviewWidget* previewWidget_ = nullptr;
+    bool modelReady_ = false;
 };
 
 }  // namespace aitoolkit::ui
