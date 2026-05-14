@@ -25,6 +25,32 @@ QStackedWidget {
     background-color: #f5f6f8;
 }
 
+QWidget#ModelLoadSection,
+QWidget#ModelSummarySection,
+QWidget#InferenceActionPanel,
+QWidget#ResultsSummaryStrip,
+QWidget#ContextCard {
+    background-color: #ffffff;
+    border: 1px solid #e2e5ea;
+    border-radius: 8px;
+}
+
+QLabel#PageLead,
+QLabel#SectionHint,
+QLabel#ContextNextStepValue {
+    color: #4f637a;
+    font-size: 12px;
+}
+
+QLabel#ContextModelTitle,
+QLabel#ContextImageTitle,
+QLabel#ContextResultTitle,
+QLabel#ContextNextStepTitle {
+    color: #7e92a8;
+    font-size: 11px;
+    font-weight: 700;
+}
+
 QPushButton {
     min-height: 36px;
     padding: 0 14px;

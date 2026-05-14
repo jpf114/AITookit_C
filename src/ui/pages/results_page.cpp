@@ -2,6 +2,7 @@
 
 #include <QAbstractItemView>
 #include <QHeaderView>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
 #include <QTableWidget>
@@ -18,13 +19,25 @@ ResultsPage::ResultsPage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("结果"), this);
+    auto* title = new QLabel(QStringLiteral("\u7ed3\u679c"), this);
     title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
 
-    auto* exportButton = new QPushButton(QStringLiteral("导出 JSON"), this);
+    auto* exportButton = new QPushButton(QStringLiteral("\u5bfc\u51fa JSON"), this);
     exportButton->setObjectName(QStringLiteral("SecondaryButton"));
-    summaryLabel_ = new QLabel(QStringLiteral("当前还没有推理结果"), this);
+
+    summaryStrip_ = new QWidget(this);
+    summaryStrip_->setObjectName(QStringLiteral("ResultsSummaryStrip"));
+
+    auto* summaryStripLayout = new QHBoxLayout(summaryStrip_);
+    summaryStripLayout->setContentsMargins(16, 12, 16, 12);
+    summaryStripLayout->setSpacing(12);
+
+    summaryLabel_ = new QLabel(QStringLiteral("\u5f53\u524d\u8fd8\u6ca1\u6709\u63a8\u7406\u7ed3\u679c"), summaryStrip_);
     summaryLabel_->setObjectName(QStringLiteral("ResultsSummaryLabel"));
+    summaryLabel_->setWordWrap(true);
+
+    summaryStripLayout->addWidget(summaryLabel_, 1);
+    summaryStripLayout->addWidget(exportButton, 0);
 
     previewWidget_ = new ImagePreviewWidget(this);
     previewWidget_->setMinimumSize(480, 320);
@@ -33,10 +46,10 @@ ResultsPage::ResultsPage(QWidget* parent)
     detectionsTable_->setObjectName(QStringLiteral("DetectionsTable"));
     detectionsTable_->setColumnCount(4);
     detectionsTable_->setHorizontalHeaderLabels({
-        QStringLiteral("类别"),
-        QStringLiteral("标签"),
-        QStringLiteral("置信度"),
-        QStringLiteral("框选范围"),
+        QStringLiteral("\u7c7b\u522b"),
+        QStringLiteral("\u6807\u7b7e"),
+        QStringLiteral("\u7f6e\u4fe1\u5ea6"),
+        QStringLiteral("\u6846\u9009\u8303\u56f4"),
     });
     detectionsTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     detectionsTable_->horizontalHeader()->setStretchLastSection(true);
@@ -48,8 +61,7 @@ ResultsPage::ResultsPage(QWidget* parent)
     connect(exportButton, &QPushButton::clicked, this, &ResultsPage::exportRequested);
 
     layout->addWidget(title);
-    layout->addWidget(exportButton);
-    layout->addWidget(summaryLabel_);
+    layout->addWidget(summaryStrip_);
     layout->addWidget(previewWidget_, 1);
     layout->addWidget(detectionsTable_);
 }
@@ -62,14 +74,14 @@ void ResultsPage::setSummary(const core::InferenceSummary& summary) {
     previewWidget_->setSummary(summary);
 
     if (summary.inputPath.isEmpty()) {
-        summaryLabel_->setText(QStringLiteral("当前还没有推理结果"));
+        summaryLabel_->setText(QStringLiteral("\u5f53\u524d\u8fd8\u6ca1\u6709\u63a8\u7406\u7ed3\u679c"));
         detectionsTable_->clearContents();
         detectionsTable_->setRowCount(0);
         return;
     }
 
     summaryLabel_->setText(
-        QStringLiteral("模型：%1 | 目标数：%2 | 耗时：%3 ms")
+        QStringLiteral("\u6a21\u578b\uff1a%1 | \u76ee\u6807\u6570\uff1a%2 | \u8017\u65f6\uff1a%3 ms")
             .arg(summary.modelName)
             .arg(summary.detectionCount)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));

@@ -26,6 +26,7 @@ signals:
 
 private:
     QLabel* summaryLabel_ = nullptr;
+    QWidget* summaryStrip_ = nullptr;
     ImagePreviewWidget* previewWidget_ = nullptr;
     QTableWidget* detectionsTable_ = nullptr;
 };
