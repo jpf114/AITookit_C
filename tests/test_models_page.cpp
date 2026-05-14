@@ -17,6 +17,11 @@ private slots:
 void ModelsPageTest::showsManifestSummary() {
     aitoolkit::ui::ModelsPage page;
 
+    auto* pageLead = page.findChild<QLabel*>(QStringLiteral("PageLead"));
+    QVERIFY(pageLead != nullptr);
+    QCOMPARE(pageLead->text(), QStringLiteral("先加载一个模型清单，再确认模型信息是否符合当前任务。"));
+    QVERIFY(pageLead->wordWrap());
+
     aitoolkit::core::ModelManifest manifest;
     manifest.manifestPath = QStringLiteral("D:/models/yolo/model.json");
     manifest.name = QStringLiteral("Warehouse Detector");
@@ -34,6 +39,11 @@ void ModelsPageTest::showsManifestSummary() {
 
     auto* modelSummarySection = page.findChild<QWidget*>(QStringLiteral("ModelSummarySection"));
     QVERIFY(modelSummarySection != nullptr);
+
+    auto* sectionHint = page.findChild<QLabel*>(QStringLiteral("SectionHint"));
+    QVERIFY(sectionHint != nullptr);
+    QCOMPARE(sectionHint->text(), QStringLiteral("支持选择 JSON 模型清单文件。"));
+    QVERIFY(sectionHint->wordWrap());
 
     auto* pathLabel = page.findChild<QLabel*>(QStringLiteral("ManifestPathLabel"));
     QVERIFY(pathLabel != nullptr);

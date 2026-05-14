@@ -24,6 +24,8 @@ signals:
 private:
     QLabel* manifestPathLabel_ = nullptr;
     QLabel* manifestSummaryLabel_ = nullptr;
+    QWidget* loadSection_ = nullptr;
+    QWidget* summarySection_ = nullptr;
 };
 
 }  // namespace aitoolkit::ui

@@ -9,9 +9,13 @@ namespace aitoolkit::ui {
 
 namespace {
 
+QString defaultManifestSummaryText() {
+    return QStringLiteral("加载模型清单后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。");
+}
+
 QString manifestSummaryText(const core::ModelManifest& manifest) {
     if (manifest.manifestPath.isEmpty()) {
-        return QStringLiteral("加载模型清单后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。");
+        return defaultManifestSummaryText();
     }
 
     return QStringLiteral(
@@ -31,22 +35,56 @@ ModelsPage::ModelsPage(QWidget* parent)
     : QWidget(parent) {
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(24, 24, 24, 24);
-    layout->setSpacing(12);
+    layout->setSpacing(16);
 
-    auto* title = new QLabel(QStringLiteral("模型"), this);
+    auto* title = new QLabel(QStringLiteral("模型准备"), this);
     title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
 
-    auto* loadButton = new QPushButton(QStringLiteral("加载模型清单"), this);
+    auto* lead = new QLabel(QStringLiteral("先加载一个模型清单，再确认模型信息是否符合当前任务。"), this);
+    lead->setObjectName(QStringLiteral("PageLead"));
+    lead->setWordWrap(true);
+
+    loadSection_ = new QWidget(this);
+    loadSection_->setObjectName(QStringLiteral("ModelLoadSection"));
+    auto* loadSectionLayout = new QVBoxLayout(loadSection_);
+    loadSectionLayout->setContentsMargins(16, 16, 16, 16);
+    loadSectionLayout->setSpacing(10);
+
+    auto* loadSectionTitle = new QLabel(QStringLiteral("加载清单"), loadSection_);
+    loadSectionTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
+
+    auto* loadHintLabel = new QLabel(QStringLiteral("支持选择 JSON 模型清单文件。"), loadSection_);
+    loadHintLabel->setObjectName(QStringLiteral("SectionHint"));
+    loadHintLabel->setWordWrap(true);
+
+    auto* loadButton = new QPushButton(QStringLiteral("加载模型清单"), loadSection_);
     loadButton->setObjectName(QStringLiteral("PrimaryButton"));
-    manifestPathLabel_ = new QLabel(QStringLiteral("当前未选择模型清单"), this);
+
+    manifestPathLabel_ = new QLabel(QStringLiteral("当前未选择模型清单"), loadSection_);
     manifestPathLabel_->setObjectName(QStringLiteral("ManifestPathLabel"));
     manifestPathLabel_->setWordWrap(true);
 
-    manifestSummaryLabel_ = new QLabel(
-        QStringLiteral("加载模型清单后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。"),
-        this);
+    loadSectionLayout->addWidget(loadSectionTitle);
+    loadSectionLayout->addWidget(loadHintLabel);
+    loadSectionLayout->addWidget(loadButton);
+    loadSectionLayout->addWidget(manifestPathLabel_);
+
+    summarySection_ = new QWidget(this);
+    summarySection_->setObjectName(QStringLiteral("ModelSummarySection"));
+    auto* summarySectionLayout = new QVBoxLayout(summarySection_);
+    summarySectionLayout->setContentsMargins(16, 16, 16, 16);
+    summarySectionLayout->setSpacing(10);
+
+    auto* summarySectionTitle = new QLabel(QStringLiteral("清单摘要"), summarySection_);
+    summarySectionTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
+
+    manifestSummaryLabel_ = new QLabel(defaultManifestSummaryText(), summarySection_);
     manifestSummaryLabel_->setObjectName(QStringLiteral("ManifestSummaryLabel"));
     manifestSummaryLabel_->setWordWrap(true);
+
+    summarySectionLayout->addWidget(summarySectionTitle);
+    summarySectionLayout->addWidget(manifestSummaryLabel_);
+    summarySectionLayout->addStretch(1);
 
     connect(loadButton, &QPushButton::clicked, this, [this]() {
         const QString path = QFileDialog::getOpenFileName(
@@ -60,9 +98,9 @@ ModelsPage::ModelsPage(QWidget* parent)
     });
 
     layout->addWidget(title);
-    layout->addWidget(loadButton);
-    layout->addWidget(manifestPathLabel_);
-    layout->addWidget(manifestSummaryLabel_);
+    layout->addWidget(lead);
+    layout->addWidget(loadSection_);
+    layout->addWidget(summarySection_);
     layout->addStretch(1);
 }
 
@@ -75,7 +113,7 @@ void ModelsPage::setCurrentManifestPath(const QString& manifestPath) {
     if (manifestPath.isEmpty()) {
         manifestPathLabel_->setText(QStringLiteral("当前未选择模型清单"));
         if (manifestSummaryLabel_ != nullptr) {
-            manifestSummaryLabel_->setText(QStringLiteral("加载模型清单后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。"));
+            manifestSummaryLabel_->setText(defaultManifestSummaryText());
         }
         return;
     }
