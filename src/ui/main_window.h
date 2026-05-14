@@ -61,6 +61,7 @@ private:
     services::ExportService exportService_;
     core::SettingsStore settingsStore_;
 
+    core::ModelManifest currentManifest_;
     std::unique_ptr<models::YoloDetectionModel> currentModel_;
     QString currentManifestPath_;
     QString currentImagePath_;

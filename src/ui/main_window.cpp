@@ -1,11 +1,11 @@
 #include "ui/main_window.h"
 
-#include <QFileDialog>
 #include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QImage>
-#include <QFileInfo>
 #include <QLabel>
 #include <QMessageBox>
 #include <QStackedWidget>
@@ -56,7 +56,7 @@ void MainWindow::buildShell() {
     contextLayout->setContentsMargins(16, 16, 16, 16);
     contextLayout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("当前会话"), contextPanel_);
+    auto* title = new QLabel(QStringLiteral("Current Session"), contextPanel_);
     title->setStyleSheet(QStringLiteral("font-size: 18px; font-weight: 600;"));
     modelStatusLabel_ = new QLabel(contextPanel_);
     modelStatusLabel_->setWordWrap(true);
@@ -95,16 +95,16 @@ void MainWindow::wireSignals() {
 void MainWindow::updateContextPanel() {
     modelStatusLabel_->setText(
         currentManifestPath_.isEmpty()
-            ? QStringLiteral("模型：未加载")
-            : QStringLiteral("模型：%1").arg(currentManifestPath_));
+            ? QStringLiteral("Model: not selected")
+            : QStringLiteral("Model: %1").arg(currentManifestPath_));
     imageStatusLabel_->setText(
         currentImagePath_.isEmpty()
-            ? QStringLiteral("图片：未选择")
-            : QStringLiteral("图片：%1").arg(currentImagePath_));
+            ? QStringLiteral("Image: not selected")
+            : QStringLiteral("Image: %1").arg(currentImagePath_));
     runStatusLabel_->setText(
         currentSummary_.inputPath.isEmpty()
-            ? QStringLiteral("结果：尚未运行")
-            : QStringLiteral("结果：%1 个目标，耗时 %2 ms")
+            ? QStringLiteral("Result: not run yet")
+            : QStringLiteral("Result: %1 detections, %2 ms")
                   .arg(currentSummary_.detectionCount)
                   .arg(QString::number(currentSummary_.elapsedMs, 'f', 2)));
 }
@@ -123,17 +123,17 @@ void MainWindow::refreshSettingsPage() {
 
 void MainWindow::handleManifestSelected(const QString& manifestPath) {
     try {
-        currentModel_ = modelService_.loadDetectionModel(manifestPath);
-        currentManifestPath_ = manifestPath;
-        settingsStore_.addRecentModel(manifestPath);
-        modelsPage_->setCurrentManifest(currentModel_->manifest());
-        modelsPage_->setCurrentManifestPath(manifestPath);
+        currentManifest_ = modelService_.loadManifest(manifestPath);
+        currentModel_.reset();
+        currentManifestPath_ = currentManifest_.manifestPath;
+        settingsStore_.addRecentModel(currentManifestPath_);
+        modelsPage_->setCurrentManifest(currentManifest_);
         inferencePage_->setModelReady(true);
         refreshSettingsPage();
         updateContextPanel();
         showPage(NavPanel::InferencePageId);
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("加载模型失败"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("Model Load Failed"), QString::fromUtf8(error.what()));
     }
 }
 
@@ -147,26 +147,30 @@ void MainWindow::handleImageSelected(const QString& imagePath) {
 }
 
 void MainWindow::handleRunRequested() {
-    if (!currentModel_) {
-        QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单。"));
+    if (currentManifestPath_.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("Missing Model"), QStringLiteral("Load a model manifest before running inference."));
         return;
     }
     if (currentImagePath_.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("缺少图片"), QStringLiteral("请先选择一张图片。"));
+        QMessageBox::warning(this, QStringLiteral("Missing Image"), QStringLiteral("Choose an image before running inference."));
         return;
     }
 
     try {
+        if (!currentModel_ ||
+            currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
+            currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
+        }
         applyInferenceResult(inferenceService_.runImage(*currentModel_, currentImagePath_));
         showPage(NavPanel::ResultsPageId);
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("推理失败"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("Inference Failed"), QString::fromUtf8(error.what()));
     }
 }
 
 void MainWindow::handleExportRequested() {
     if (currentSummary_.inputPath.isEmpty()) {
-        QMessageBox::information(this, QStringLiteral("暂无结果"), QStringLiteral("请先完成一次推理。"));
+        QMessageBox::information(this, QStringLiteral("No Result"), QStringLiteral("Run inference before exporting results."));
         return;
     }
 
@@ -177,7 +181,7 @@ void MainWindow::handleExportRequested() {
 
     const QString outputPath = QFileDialog::getSaveFileName(
         this,
-        QStringLiteral("导出 JSON"),
+        QStringLiteral("Export JSON"),
         initialDirectory.isEmpty()
             ? QString()
             : QDir(initialDirectory).filePath(QStringLiteral("result.json")),
@@ -191,7 +195,7 @@ void MainWindow::handleExportRequested() {
         settingsStore_.setDefaultExportDirectory(QFileInfo(outputPath).absolutePath());
         refreshSettingsPage();
     } catch (const std::exception& error) {
-        QMessageBox::critical(this, QStringLiteral("导出失败"), QString::fromUtf8(error.what()));
+        QMessageBox::critical(this, QStringLiteral("Export Failed"), QString::fromUtf8(error.what()));
     }
 }
 
