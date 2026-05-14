@@ -1,3 +1,5 @@
+cmake_policy(SET CMP0207 NEW)
+
 set(installed_executable "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@/ai_toolkit_c.exe")
 
 if(NOT EXISTS "${installed_executable}")
@@ -5,10 +7,18 @@ if(NOT EXISTS "${installed_executable}")
     return()
 endif()
 
+set(vcpkg_bin_dir "$ENV{VCPKG_ROOT}/installed/x64-windows/bin")
+
 file(GET_RUNTIME_DEPENDENCIES
     RESOLVED_DEPENDENCIES_VAR resolved_deps
     UNRESOLVED_DEPENDENCIES_VAR unresolved_deps
     EXECUTABLES "${installed_executable}"
+    DIRECTORIES "${vcpkg_bin_dir}"
+    PRE_EXCLUDE_REGEXES
+        "^api-ms-"
+        "^ext-ms-"
+    POST_EXCLUDE_REGEXES
+        "^[Cc]:[\\/][Ww][Ii][Nn][Dd][Oo][Ww][Ss][\\/]"
 )
 
 if(unresolved_deps)
@@ -22,4 +32,58 @@ foreach(dep IN LISTS resolved_deps)
         TYPE SHARED_LIBRARY
         FILES "${dep}"
     )
+endforeach()
+
+set(explicit_vcpkg_dlls
+    onnxruntime.dll
+    Qt6Svg.dll
+)
+
+foreach(dll_name IN LISTS explicit_vcpkg_dlls)
+    if(EXISTS "${vcpkg_bin_dir}/${dll_name}")
+        file(INSTALL
+            DESTINATION "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@"
+            TYPE SHARED_LIBRARY
+            FILES "${vcpkg_bin_dir}/${dll_name}"
+        )
+    endif()
+endforeach()
+
+set(qt_plugins_dir "$ENV{VCPKG_ROOT}/installed/x64-windows/Qt6/plugins")
+
+if(EXISTS "${qt_plugins_dir}/platforms/qwindows.dll")
+    file(INSTALL
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@/platforms"
+        TYPE SHARED_LIBRARY
+        FILES
+            "${qt_plugins_dir}/platforms/qwindows.dll"
+            "${qt_plugins_dir}/platforms/qdirect2d.dll"
+    )
+endif()
+
+if(EXISTS "${qt_plugins_dir}/styles/qmodernwindowsstyle.dll")
+    file(INSTALL
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@/styles"
+        TYPE SHARED_LIBRARY
+        FILES "${qt_plugins_dir}/styles/qmodernwindowsstyle.dll"
+    )
+endif()
+
+set(image_format_plugins
+    qjpeg.dll
+    qsvg.dll
+    qgif.dll
+    qico.dll
+    qtiff.dll
+    qwebp.dll
+)
+
+foreach(plugin IN LISTS image_format_plugins)
+    if(EXISTS "${qt_plugins_dir}/imageformats/${plugin}")
+        file(INSTALL
+            DESTINATION "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@/imageformats"
+            TYPE SHARED_LIBRARY
+            FILES "${qt_plugins_dir}/imageformats/${plugin}"
+        )
+    endif()
 endforeach()
