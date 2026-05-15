@@ -35,7 +35,7 @@ namespace aitoolkit::ui {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
-    setWindowTitle(QStringLiteral("AI 检测工具"));
+    setWindowTitle(QStringLiteral("AI 检测工具 v%1").arg(QCoreApplication::applicationVersion()));
     resize(1440, 900);
     setAcceptDrops(true);
 

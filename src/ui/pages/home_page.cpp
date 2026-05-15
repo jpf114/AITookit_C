@@ -1,5 +1,6 @@
 #include "ui/pages/home_page.h"
 
+#include <QCoreApplication>
 #include <QFileInfo>
 #include <QLabel>
 #include <QListWidget>
@@ -15,7 +16,7 @@ HomePage::HomePage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(16);
 
-    auto* title = new QLabel(QStringLiteral("AI \u68c0\u6d4b\u5de5\u5177"), this);
+    auto* title = new QLabel(QStringLiteral("AI \u68c0\u6d4b\u5de5\u5177 v%1").arg(QCoreApplication::applicationVersion()), this);
     title->setStyleSheet(QStringLiteral("font-size: 24px; font-weight: 600;"));
 
     auto* lead = new QLabel(
