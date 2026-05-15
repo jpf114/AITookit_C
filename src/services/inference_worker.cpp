@@ -17,7 +17,7 @@ namespace aitoolkit::services {
 InferenceWorker::InferenceWorker(QObject* parent)
     : QObject(parent) {}
 
-void InferenceWorker::setModel(std::shared_ptr<models::YoloDetectionModel> model) {
+void InferenceWorker::setModel(std::shared_ptr<models::InferenceBackend> model) {
     QMutexLocker locker(&mutex_);
     model_ = std::move(model);
 }
@@ -32,7 +32,7 @@ void InferenceWorker::runImage(const QString& imagePath) {
     cancelled_.store(false);
     const QString cleanPath = QDir::cleanPath(imagePath);
 
-    std::shared_ptr<models::YoloDetectionModel> model;
+    std::shared_ptr<models::InferenceBackend> model;
     double confThreshold = -1.0;
     double nmsThresholdVal = -1.0;
     {
@@ -59,7 +59,7 @@ void InferenceWorker::runImage(const QString& imagePath) {
         const QVector<core::DetectionItem> detections = model->detect(image, confThreshold, nmsThresholdVal);
 
         core::InferenceSummary summary;
-        summary.modelName = model_->manifest().name;
+        summary.modelName = model->manifest().name;
         summary.inputPath = cleanPath;
         summary.imageWidth = image.cols;
         summary.imageHeight = image.rows;
@@ -76,7 +76,7 @@ void InferenceWorker::runImage(const QString& imagePath) {
 void InferenceWorker::runBatch(const QStringList& imagePaths) {
     cancelled_.store(false);
 
-    std::shared_ptr<models::YoloDetectionModel> model;
+    std::shared_ptr<models::InferenceBackend> model;
     double confThreshold = -1.0;
     double nmsThresholdVal = -1.0;
     {
@@ -141,7 +141,7 @@ void InferenceWorker::runBatch(const QStringList& imagePaths) {
 void InferenceWorker::runVideo(const QString& videoPath, const int maxFrames) {
     cancelled_.store(false);
 
-    std::shared_ptr<models::YoloDetectionModel> model;
+    std::shared_ptr<models::InferenceBackend> model;
     double confThreshold = -1.0;
     double nmsThresholdVal = -1.0;
     {

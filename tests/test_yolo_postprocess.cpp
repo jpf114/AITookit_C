@@ -36,7 +36,7 @@ aitoolkit::core::ModelManifest makeManifest() {
 }
 
 void YoloPostprocessTest::converts2dTensorWithEightyFiveAttributes() {
-    aitoolkit::runtime::OnnxTensor tensor;
+    aitoolkit::runtime::InferenceTensor tensor;
     tensor.shape = {2, 85};
     tensor.values.resize(2 * 85);
     tensor.values[0] = 10.0f;
@@ -55,7 +55,7 @@ void YoloPostprocessTest::converts2dTensorWithEightyFiveAttributes() {
 }
 
 void YoloPostprocessTest::converts3dDetectionsFirstTensorWithEightyFiveAttributesWithoutLabels() {
-    aitoolkit::runtime::OnnxTensor tensor;
+    aitoolkit::runtime::InferenceTensor tensor;
     tensor.shape = {1, 2, 85};
     tensor.values.resize(1 * 2 * 85);
     tensor.values[0] = 10.0f;
@@ -128,7 +128,7 @@ void YoloPostprocessTest::suppressesOverlappingBoxesWithNms() {
 }
 
 void YoloPostprocessTest::convertsAttrsFirst3dTensorToDetectionMatrix() {
-    aitoolkit::runtime::OnnxTensor tensor;
+    aitoolkit::runtime::InferenceTensor tensor;
     tensor.shape = {1, 8, 2};
     tensor.values = {
         10.0f, 20.0f,
@@ -152,7 +152,7 @@ void YoloPostprocessTest::convertsAttrsFirst3dTensorToDetectionMatrix() {
 }
 
 void YoloPostprocessTest::failsForAmbiguous3dTensorLayout() {
-    aitoolkit::runtime::OnnxTensor tensor;
+    aitoolkit::runtime::InferenceTensor tensor;
     tensor.shape = {1, 7, 20};
     tensor.values.resize(1 * 7 * 20);
 

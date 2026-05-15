@@ -15,7 +15,7 @@
 namespace aitoolkit::services {
 
 core::InferenceSummary InferenceService::runImage(
-    const models::YoloDetectionModel& model,
+    const models::InferenceBackend& model,
     const QString& imagePath) const {
     const QString cleanImagePath = QDir::cleanPath(imagePath);
     const cv::Mat image = imreadUnicode(cleanImagePath, cv::IMREAD_COLOR);
@@ -40,7 +40,7 @@ core::InferenceSummary InferenceService::runImage(
 }
 
 QVector<core::InferenceSummary> InferenceService::runBatch(
-    const models::YoloDetectionModel& model,
+    const models::InferenceBackend& model,
     const QStringList& imagePaths) const {
     QVector<core::InferenceSummary> results;
     results.reserve(imagePaths.size());
@@ -60,7 +60,7 @@ QVector<core::InferenceSummary> InferenceService::runBatch(
 }
 
 QVector<core::InferenceSummary> InferenceService::runVideo(
-    const models::YoloDetectionModel& model,
+    const models::InferenceBackend& model,
     const QString& videoPath,
     const int maxFrames) const {
     const QString cleanPath = QDir::cleanPath(videoPath);

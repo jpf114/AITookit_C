@@ -176,7 +176,7 @@ QVector<DetectionItem> YoloDetectionModel::detect(
         static_cast<int64_t>(prepared.networkSize.width()),
     };
 
-    const std::vector<runtime::OnnxTensor> outputs = backend_.run(prepared.blob, inputShape);
+    const std::vector<runtime::InferenceTensor> outputs = backend_.run(prepared.blob, inputShape);
     if (outputs.empty()) {
         return {};
     }
@@ -251,7 +251,7 @@ YoloPreprocessResult YoloDetectionModel::preprocessImage(
 }
 
 cv::Mat YoloDetectionModel::tensorToDetectionMatrix(
-    const runtime::OnnxTensor& tensor,
+    const runtime::InferenceTensor& tensor,
     const int expectedNumClasses) {
     if (tensor.shape.size() == 2) {
         if (tensor.shape[1] < 5) {

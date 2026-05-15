@@ -9,13 +9,9 @@
 #include <string>
 #include <vector>
 
-namespace aitoolkit::runtime {
+#include "runtime/inference_backend.h"
 
-struct OnnxTensor {
-    std::string name;
-    std::vector<int64_t> shape;
-    std::vector<float> values;
-};
+namespace aitoolkit::runtime {
 
 class OnnxBackend {
 public:
@@ -27,7 +23,7 @@ public:
     const std::vector<std::string>& outputNames() const noexcept;
     const std::vector<int64_t>& inputShape() const noexcept;
 
-    std::vector<OnnxTensor> run(
+    std::vector<InferenceTensor> run(
         const std::vector<float>& inputData,
         const std::vector<int64_t>& inputShape) const;
 

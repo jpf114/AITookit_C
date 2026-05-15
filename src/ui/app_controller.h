@@ -7,7 +7,7 @@
 
 #include "core/settings_store.h"
 #include "core/types.h"
-#include "models/yolo_detection_model.h"
+#include "models/inference_backend.h"
 #include "services/export_service.h"
 #include "services/inference_worker.h"
 #include "services/model_service.h"
@@ -68,7 +68,7 @@ private:
     QThread* inferenceThread_ = nullptr;
 
     core::ModelManifest currentManifest_;
-    std::shared_ptr<models::YoloDetectionModel> currentModel_;
+    std::shared_ptr<models::InferenceBackend> currentModel_;
     QString currentManifestPath_;
     QString currentImagePath_;
     core::InferenceSummary currentSummary_;

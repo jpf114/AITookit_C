@@ -6,6 +6,7 @@
 #include <QJsonObject>
 
 #include "core/json_utils.h"
+#include "models/yolo_detection_model.h"
 
 #include <stdexcept>
 
@@ -28,7 +29,7 @@ core::ModelManifest ModelService::loadManifest(const QString& manifestPath) cons
     return core::loadModelManifest(manifestPath);
 }
 
-std::unique_ptr<models::YoloDetectionModel> ModelService::loadDetectionModel(const QString& manifestPath) const {
+std::unique_ptr<models::InferenceBackend> ModelService::loadDetectionModel(const QString& manifestPath) const {
     const core::ModelManifest manifest = loadManifest(manifestPath);
     validateDetectionManifest(manifest);
     return std::make_unique<models::YoloDetectionModel>(manifest);

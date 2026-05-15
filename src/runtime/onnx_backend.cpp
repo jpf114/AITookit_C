@@ -96,7 +96,7 @@ const std::vector<int64_t>& OnnxBackend::inputShape() const noexcept {
     return inputShape_;
 }
 
-std::vector<OnnxTensor> OnnxBackend::run(
+std::vector<InferenceTensor> OnnxBackend::run(
     const std::vector<float>& inputData,
     const std::vector<int64_t>& inputShape) const {
     if (!session_) {
@@ -149,7 +149,7 @@ std::vector<OnnxTensor> OnnxBackend::run(
         throw std::runtime_error(QStringLiteral("ONNX inference failed: %1").arg(QString::fromUtf8(error.what())).toStdString());
     }
 
-    std::vector<OnnxTensor> tensors;
+    std::vector<InferenceTensor> tensors;
     tensors.reserve(outputValues.size());
     for (std::size_t index = 0; index < outputValues.size(); ++index) {
         Ort::Value& value = outputValues.at(index);
@@ -166,7 +166,7 @@ std::vector<OnnxTensor> OnnxBackend::run(
         const std::size_t tensorElementCount = tensorInfo.GetElementCount();
         const float* rawValues = value.GetTensorData<float>();
 
-        OnnxTensor tensor;
+        InferenceTensor tensor;
         if (index < outputNames_.size()) {
             tensor.name = outputNames_.at(index);
         }

@@ -6,7 +6,7 @@
 #include <QVector>
 
 #include "core/types.h"
-#include "models/yolo_detection_model.h"
+#include "models/inference_backend.h"
 
 namespace aitoolkit::services {
 
@@ -16,7 +16,7 @@ class InferenceWorker : public QObject {
 public:
     explicit InferenceWorker(QObject* parent = nullptr);
 
-    void setModel(std::shared_ptr<models::YoloDetectionModel> model);
+    void setModel(std::shared_ptr<models::InferenceBackend> model);
     void setThresholds(double confidenceThreshold, double nmsThreshold);
 
 public slots:
@@ -35,7 +35,7 @@ signals:
 
 private:
     QMutex mutex_;
-    std::shared_ptr<models::YoloDetectionModel> model_;
+    std::shared_ptr<models::InferenceBackend> model_;
     double confidenceThreshold_ = -1.0;
     double nmsThreshold_ = -1.0;
     std::atomic<bool> cancelled_{false};

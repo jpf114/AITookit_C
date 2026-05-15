@@ -6,6 +6,7 @@
 
 #include <stdexcept>
 
+#include "models/yolo_detection_model.h"
 #include "services/unicode_io.h"
 
 namespace aitoolkit::ui {

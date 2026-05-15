@@ -9,6 +9,7 @@
 
 #include "core/model_manifest.h"
 #include "core/types.h"
+#include "models/inference_backend.h"
 #include "runtime/onnx_backend.h"
 
 namespace aitoolkit::models {
@@ -19,21 +20,21 @@ struct YoloPreprocessResult {
     QSize networkSize;
 };
 
-class YoloDetectionModel {
+class YoloDetectionModel : public InferenceBackend {
 public:
     explicit YoloDetectionModel(core::ModelManifest manifest);
 
-    const core::ModelManifest& manifest() const noexcept;
+    const core::ModelManifest& manifest() const noexcept override;
     QVector<core::DetectionItem> detect(
         const cv::Mat& image,
         double confidenceThreshold = -1.0,
-        double nmsThreshold = -1.0) const;
+        double nmsThreshold = -1.0) const override;
 
     static YoloPreprocessResult preprocessImage(
         const cv::Mat& image,
         const core::ModelManifest& manifest);
     static cv::Mat tensorToDetectionMatrix(
-        const runtime::OnnxTensor& tensor,
+        const runtime::InferenceTensor& tensor,
         int expectedNumClasses = -1);
     static QVector<core::DetectionItem> postprocessDetections(
         const cv::Mat& output,
