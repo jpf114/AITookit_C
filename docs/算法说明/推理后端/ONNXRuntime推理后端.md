@@ -51,7 +51,7 @@
    - 遍历输出值列表
    - 仅处理 float 类型的张量输出
    - 读取张量形状和元素值
-   - 封装为 `OnnxTensor` 结构体
+   - 封装为 `InferenceTensor` 结构体
 
 ### 输入形状验证
 
@@ -69,7 +69,7 @@
 
 ## 数据结构
 
-### OnnxTensor
+### InferenceTensor
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -79,7 +79,7 @@
 
 ## 输出说明
 
-- 输出为 `std::vector<OnnxTensor>`，每个元素对应一个模型输出节点
+- 输出为 `std::vector<InferenceTensor>`，每个元素对应一个模型输出节点
 - 仅包含 float 类型的张量输出
 - 张量数据按行优先顺序存储
 

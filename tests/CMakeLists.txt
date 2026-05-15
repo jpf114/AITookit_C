@@ -73,6 +73,7 @@ if(TARGET test_main_window)
         PRIVATE
             ${CMAKE_SOURCE_DIR}/src/ui/main_window.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/app_controller.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/image_utils.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/nav_panel.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/dialogs/onnx_setup_dialog.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/pages/home_page.cpp
@@ -147,6 +148,7 @@ if(TARGET test_gui_validation)
         PRIVATE
             ${CMAKE_SOURCE_DIR}/src/ui/main_window.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/app_controller.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/image_utils.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/nav_panel.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/dialogs/onnx_setup_dialog.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/pages/home_page.cpp

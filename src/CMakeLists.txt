@@ -134,6 +134,7 @@ ai_collect_existing_sources(
     app/crash_handler.cpp
     ui/main_window.cpp
     ui/app_controller.cpp
+    ui/image_utils.cpp
     ui/nav_panel.cpp
     ui/dialogs/onnx_setup_dialog.cpp
     ui/pages/home_page.cpp

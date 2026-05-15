@@ -8,20 +8,9 @@
 
 #include "models/yolo_detection_model.h"
 #include "services/unicode_io.h"
+#include "ui/image_utils.h"
 
 namespace aitoolkit::ui {
-
-namespace {
-
-QImage loadUsableImage(const QString& imagePath) {
-    if (imagePath.isEmpty()) {
-        return QImage();
-    }
-    const QImage image(imagePath);
-    return image.isNull() ? QImage() : image;
-}
-
-}
 
 AppController::AppController(QObject* parent)
     : QObject(parent) {
@@ -31,6 +20,7 @@ AppController::AppController(QObject* parent)
     inferenceThread_->start();
 
     connect(inferenceWorker_, &services::InferenceWorker::imageResultReady, this, [this](const core::InferenceSummary& summary) {
+        inferenceRunning_ = false;
         applyInferenceResult(summary);
         emit inferenceCompleted(summary);
     });
@@ -38,6 +28,7 @@ AppController::AppController(QObject* parent)
         emit inferenceProgress(completed, total);
     });
     connect(inferenceWorker_, &services::InferenceWorker::batchFinished, this, [this](const QVector<core::InferenceSummary>& results) {
+        inferenceRunning_ = false;
         if (!results.isEmpty()) {
             applyInferenceResult(results.first());
         }
@@ -47,12 +38,14 @@ AppController::AppController(QObject* parent)
         emit inferenceProgress(frameIndex, totalFrames);
     });
     connect(inferenceWorker_, &services::InferenceWorker::videoFinished, this, [this](const QVector<core::InferenceSummary>& results) {
+        inferenceRunning_ = false;
         if (!results.isEmpty()) {
             applyInferenceResult(results.first());
         }
         emit inferenceCompletedVideo(results);
     });
     connect(inferenceWorker_, &services::InferenceWorker::error, this, [this](const QString& message) {
+        inferenceRunning_ = false;
         emit inferenceError(message);
     });
 }
@@ -144,6 +137,7 @@ void AppController::selectFolder(const QString& folderPath, double confidence, d
         inferenceWorker_->setModel(currentModel_);
         inferenceWorker_->setThresholds(confidence, nms);
         settingsStore_.addRecentInput(folderPath);
+        inferenceRunning_ = true;
         emit inferenceStarted();
         QMetaObject::invokeMethod(inferenceWorker_, "runBatch", Qt::QueuedConnection, Q_ARG(QStringList, imagePaths));
     } catch (const std::exception& e) {
@@ -166,6 +160,7 @@ void AppController::selectVideo(const QString& videoPath, const int maxFrames, d
         inferenceWorker_->setModel(currentModel_);
         inferenceWorker_->setThresholds(confidence, nms);
         settingsStore_.addRecentInput(videoPath);
+        inferenceRunning_ = true;
         emit inferenceStarted();
         QMetaObject::invokeMethod(inferenceWorker_, "runVideo", Qt::QueuedConnection, Q_ARG(QString, videoPath), Q_ARG(int, maxFrames));
     } catch (const std::exception& e) {
@@ -192,6 +187,7 @@ void AppController::runInference(double confidence, double nms) {
         }
         inferenceWorker_->setModel(currentModel_);
         inferenceWorker_->setThresholds(confidence, nms);
+        inferenceRunning_ = true;
         emit inferenceStarted();
         QMetaObject::invokeMethod(inferenceWorker_, "runImage", Qt::QueuedConnection, Q_ARG(QString, currentImagePath_));
     } catch (const std::exception& e) {
@@ -200,6 +196,7 @@ void AppController::runInference(double confidence, double nms) {
 }
 
 void AppController::cancelInference() {
+    inferenceRunning_ = false;
     inferenceWorker_->cancel();
     emit inferenceCancelled();
 }
@@ -262,7 +259,7 @@ bool AppController::isModelLoaded() const {
 }
 
 bool AppController::isRunning() const {
-    return false;
+    return inferenceRunning_;
 }
 
 void AppController::applyInferenceResult(const core::InferenceSummary& summary) {

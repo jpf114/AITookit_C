@@ -15,11 +15,13 @@
 #include <QProcess>
 #include <QShortcut>
 #include <QStackedWidget>
+#include <QStatusBar>
 #include <QUrl>
 #include <QVBoxLayout>
 
 #include "ui/app_controller.h"
 #include "ui/nav_panel.h"
+#include "ui/image_utils.h"
 #include "ui/dialogs/onnx_setup_dialog.h"
 #include "ui/pages/home_page.h"
 #include "ui/pages/inference_page.h"
@@ -29,18 +31,6 @@
 #include "services/unicode_io.h"
 
 namespace aitoolkit::ui {
-
-namespace {
-
-QImage loadUsableImage(const QString& imagePath) {
-    if (imagePath.isEmpty()) {
-        return QImage();
-    }
-    const QImage image(imagePath);
-    return image.isNull() ? QImage() : image;
-}
-
-}
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
@@ -300,20 +290,9 @@ void MainWindow::wireSignals() {
             return;
         }
 
-        if (QFileInfo::exists(outputPath)) {
-            const int answer = QMessageBox::question(
-                this,
-                QStringLiteral("文件已存在"),
-                QStringLiteral("文件 %1 已存在，是否覆盖？").arg(QFileInfo(outputPath).fileName()),
-                QMessageBox::Yes | QMessageBox::No,
-                QMessageBox::No);
-            if (answer != QMessageBox::Yes) {
-                return;
-            }
-        }
-
         controller_->exportJson(outputPath);
         refreshSettingsPage();
+        statusBar()->showMessage(QStringLiteral("JSON 已导出至 %1").arg(QDir::toNativeSeparators(outputPath)), 3000);
     });
     connect(resultsPage_, &ResultsPage::exportImageRequested, this, [this]() {
         if (controller_->currentSummary().inputPath.isEmpty()) {
@@ -343,20 +322,9 @@ void MainWindow::wireSignals() {
             return;
         }
 
-        if (QFileInfo::exists(outputPath)) {
-            const int answer = QMessageBox::question(
-                this,
-                QStringLiteral("文件已存在"),
-                QStringLiteral("文件 %1 已存在，是否覆盖？").arg(QFileInfo(outputPath).fileName()),
-                QMessageBox::Yes | QMessageBox::No,
-                QMessageBox::No);
-            if (answer != QMessageBox::Yes) {
-                return;
-            }
-        }
-
         controller_->exportImage(outputPath);
         refreshSettingsPage();
+        statusBar()->showMessage(QStringLiteral("图片已导出至 %1").arg(QDir::toNativeSeparators(outputPath)), 3000);
     });
     connect(settingsPage_,
             &SettingsPage::defaultExportDirectoryChanged,

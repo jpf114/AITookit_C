@@ -64,8 +64,8 @@ QVector<core::InferenceSummary> InferenceService::runVideo(
     const QString& videoPath,
     const int maxFrames) const {
     const QString cleanPath = QDir::cleanPath(videoPath);
-    cv::VideoCapture capture(cleanPath.toStdString());
-    if (!capture.isOpened()) {
+    cv::VideoCapture capture;
+    if (!openVideoCapture(cleanPath, capture)) {
         throw std::runtime_error(
             QStringLiteral("Failed to open video file: %1").arg(QDir::toNativeSeparators(cleanPath)).toStdString());
     }

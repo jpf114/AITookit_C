@@ -32,13 +32,22 @@ std::vector<char> readFileToBuffer(const QString& filePath) {
 }
 
 int probeVideoFrameCount(const QString& videoPath) {
-    cv::VideoCapture capture(videoPath.toStdString());
-    if (!capture.isOpened()) {
+    cv::VideoCapture capture;
+    if (!openVideoCapture(videoPath, capture)) {
         return -1;
     }
     const int count = static_cast<int>(capture.get(cv::CAP_PROP_FRAME_COUNT));
     capture.release();
     return count;
+}
+
+bool openVideoCapture(const QString& videoPath, cv::VideoCapture& capture) {
+#ifdef Q_OS_WIN
+    capture.open(videoPath.toUtf8().constData());
+#else
+    capture.open(videoPath.toStdString());
+#endif
+    return capture.isOpened();
 }
 
 }  // namespace aitoolkit::services

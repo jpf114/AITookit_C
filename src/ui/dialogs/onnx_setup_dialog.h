@@ -24,6 +24,7 @@ public:
 
 private:
     void updateOkButtonState();
+    void tryAutoDetectInputSize(const QString& onnxPath);
 
     QLineEdit* nameEdit_ = nullptr;
     QSpinBox* widthSpin_ = nullptr;

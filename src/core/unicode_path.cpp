@@ -3,11 +3,7 @@
 namespace aitoolkit::core {
 
 std::string toNativePath(const QString& filePath) {
-#ifdef Q_OS_WIN
-    return filePath.toStdString();
-#else
-    return filePath.toStdString();
-#endif
+    return filePath.toUtf8().toStdString();
 }
 
 #ifdef Q_OS_WIN

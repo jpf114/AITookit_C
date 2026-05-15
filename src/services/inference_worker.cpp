@@ -158,8 +158,8 @@ void InferenceWorker::runVideo(const QString& videoPath, const int maxFrames) {
 
     try {
         const QString cleanPath = QDir::cleanPath(videoPath);
-        cv::VideoCapture capture(cleanPath.toStdString());
-        if (!capture.isOpened()) {
+        cv::VideoCapture capture;
+        if (!openVideoCapture(cleanPath, capture)) {
             emit error(QStringLiteral("Failed to open video file: %1").arg(QDir::toNativeSeparators(cleanPath)));
             return;
         }

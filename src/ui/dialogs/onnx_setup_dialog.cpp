@@ -8,6 +8,8 @@
 #include <QSet>
 #include <QVBoxLayout>
 
+#include <onnxruntime_cxx_api.h>
+
 namespace aitoolkit::ui::dialogs {
 
 OnnxSetupDialog::OnnxSetupDialog(const QString& onnxPath, QWidget* parent)
@@ -67,6 +69,7 @@ OnnxSetupDialog::OnnxSetupDialog(const QString& onnxPath, QWidget* parent)
     mainLayout->addWidget(buttonBox);
 
     updateOkButtonState();
+    tryAutoDetectInputSize(onnxPath);
 }
 
 QString OnnxSetupDialog::modelName() const {
@@ -110,6 +113,33 @@ QStringList OnnxSetupDialog::labels() const {
 
 void OnnxSetupDialog::updateOkButtonState() {
     okButton_->setEnabled(!nameEdit_->text().trimmed().isEmpty());
+}
+
+void OnnxSetupDialog::tryAutoDetectInputSize(const QString& onnxPath) {
+    try {
+        Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "onnx_setup_dialog");
+        Ort::SessionOptions sessionOptions;
+        sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+        sessionOptions.SetIntraOpNumThreads(1);
+
+        const Ort::Session session(env, onnxPath.toStdWString().c_str(), sessionOptions);
+        if (session.GetInputCount() == 0) {
+            return;
+        }
+
+        const Ort::TypeInfo typeInfo = session.GetInputTypeInfo(0);
+        const auto shape = typeInfo.GetTensorTypeAndShapeInfo().GetShape();
+
+        if (shape.size() >= 3) {
+            const int64_t height = shape[shape.size() - 2];
+            const int64_t width = shape[shape.size() - 1];
+            if (height > 0 && height <= 4096 && width > 0 && width <= 4096) {
+                widthSpin_->setValue(static_cast<int>(width));
+                heightSpin_->setValue(static_cast<int>(height));
+            }
+        }
+    } catch (...) {
+    }
 }
 
 }  // namespace aitoolkit::ui::dialogs

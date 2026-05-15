@@ -72,6 +72,7 @@ private:
     QString currentManifestPath_;
     QString currentImagePath_;
     core::InferenceSummary currentSummary_;
+    bool inferenceRunning_ = false;
 };
 
 }  // namespace aitoolkit::ui
