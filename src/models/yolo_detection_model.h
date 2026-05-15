@@ -29,6 +29,7 @@ public:
         const cv::Mat& image,
         double confidenceThreshold = -1.0,
         double nmsThreshold = -1.0) const override;
+    QString backendName() const noexcept override;
 
     static YoloPreprocessResult preprocessImage(
         const cv::Mat& image,

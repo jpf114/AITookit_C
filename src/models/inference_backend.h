@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QString>
 #include <QVector>
 
 #include <opencv2/core.hpp>
@@ -18,6 +19,9 @@ public:
         const cv::Mat& image,
         double confidenceThreshold = -1.0,
         double nmsThreshold = -1.0) const = 0;
+
+    virtual bool supportsGPU() const { return false; }
+    virtual QString backendName() const = 0;
 };
 
 }  // namespace aitoolkit::models
