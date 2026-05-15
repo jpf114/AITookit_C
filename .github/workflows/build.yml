@@ -1,0 +1,48 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "2025.04.18"
+
+      - name: Configure CMake
+        run: cmake --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'release' }} --output-on-failure
+
+      - name: Package (Release only)
+        if: matrix.build_type == 'Release'
+        run: |
+          cmake --install build/release --config Release
+          cd build/release
+          cpack -G ZIP -C Release
+
+      - name: Upload package
+        if: matrix.build_type == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIToolkit-win64
+          path: build/release/AIToolkit-*.zip
