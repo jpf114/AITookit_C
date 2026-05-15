@@ -4,8 +4,6 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "vcpkg toolchain file")
 endif()
 
-set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "Use shared global vcpkg installation" FORCE)
-
 project(ai-toolkit-c VERSION 0.1.0 LANGUAGES CXX)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -24,7 +22,7 @@ if(MSVC)
 endif()
 
 find_package(Qt6 COMPONENTS Core Gui Widgets Svg REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs videoio)
 find_package(onnxruntime CONFIG REQUIRED)
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/src/CMakeLists.txt")

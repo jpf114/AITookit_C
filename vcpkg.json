@@ -1,6 +1,6 @@
 {
   "name": "ai-toolkit-c",
-  "version-string": "0.1.0",
+  "version": "0.1.0",
   "dependencies": [
     {
       "name": "qtbase",
@@ -10,7 +10,14 @@
       ]
     },
     "qtsvg",
-    "opencv4",
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "imgcodecs",
+        "videoio"
+      ]
+    },
     "onnxruntime",
     "gtest"
   ]
