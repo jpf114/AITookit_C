@@ -1,9 +1,11 @@
 #include "ui/pages/results_page.h"
 
 #include <QAbstractItemView>
+#include <QFileInfo>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QListWidget>
 #include <QPushButton>
 #include <QTableWidget>
 #include <QTableWidgetItem>
@@ -43,6 +45,18 @@ ResultsPage::ResultsPage(QWidget* parent)
     summaryStripLayout->addWidget(exportImageButton, 0);
     summaryStripLayout->addWidget(exportButton, 0);
 
+    auto* contentSplit = new QHBoxLayout();
+    contentSplit->setSpacing(12);
+
+    resultsList_ = new QListWidget(this);
+    resultsList_->setObjectName(QStringLiteral("ResultsList"));
+    resultsList_->setMaximumWidth(220);
+    resultsList_->setSelectionMode(QAbstractItemView::SingleSelection);
+    resultsList_->hide();
+
+    auto* rightColumn = new QVBoxLayout();
+    rightColumn->setSpacing(12);
+
     previewWidget_ = new ImagePreviewWidget(this);
     previewWidget_->setMinimumSize(480, 320);
 
@@ -62,13 +76,19 @@ ResultsPage::ResultsPage(QWidget* parent)
     detectionsTable_->setSelectionMode(QAbstractItemView::NoSelection);
     detectionsTable_->setMinimumHeight(180);
 
+    rightColumn->addWidget(previewWidget_, 1);
+    rightColumn->addWidget(detectionsTable_);
+
+    contentSplit->addWidget(resultsList_);
+    contentSplit->addLayout(rightColumn, 1);
+
     connect(exportButton, &QPushButton::clicked, this, &ResultsPage::exportRequested);
     connect(exportImageButton, &QPushButton::clicked, this, &ResultsPage::exportImageRequested);
+    connect(resultsList_, &QListWidget::currentRowChanged, this, &ResultsPage::showResultAtIndex);
 
     layout->addWidget(title);
     layout->addWidget(summaryStrip_);
-    layout->addWidget(previewWidget_, 1);
-    layout->addWidget(detectionsTable_);
+    layout->addLayout(contentSplit);
 }
 
 void ResultsPage::setImage(const QImage& image) {
@@ -76,6 +96,11 @@ void ResultsPage::setImage(const QImage& image) {
 }
 
 void ResultsPage::setSummary(const core::InferenceSummary& summary) {
+    results_.clear();
+    resultsList_->clear();
+    resultsList_->hide();
+    currentIndex_ = -1;
+
     previewWidget_->setSummary(summary);
 
     if (summary.inputPath.isEmpty()) {
@@ -86,13 +111,76 @@ void ResultsPage::setSummary(const core::InferenceSummary& summary) {
     }
 
     summaryLabel_->setText(
-        QStringLiteral("模型：%1 | 图像：%2×%3 | 目标数：%4 | 耗时：%5 ms")
+        QStringLiteral("\u6a21\u578b\uff1a%1 | \u56fe\u50cf\uff1a%2\u00d7%3 | \u76ee\u6807\u6570\uff1a%4 | \u8017\u65f6\uff1a%5 ms")
             .arg(summary.modelName)
             .arg(summary.imageWidth)
             .arg(summary.imageHeight)
             .arg(summary.detectionCount)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));
 
+    populateTable(summary);
+}
+
+void ResultsPage::setResults(const QVector<core::InferenceSummary>& results) {
+    results_ = results;
+    resultsList_->clear();
+    currentIndex_ = -1;
+
+    if (results.isEmpty()) {
+        resultsList_->hide();
+        return;
+    }
+
+    for (int i = 0; i < results.size(); ++i) {
+        const core::InferenceSummary& s = results.at(i);
+        const QFileInfo info(s.inputPath);
+        QString label = info.fileName();
+        if (label.isEmpty()) {
+            label = QStringLiteral("\u7ed3\u679c %1").arg(i + 1);
+        }
+        auto* item = new QListWidgetItem(label, resultsList_);
+        item->setData(Qt::UserRole, i);
+        item->setToolTip(s.inputPath);
+    }
+
+    resultsList_->setVisible(results.size() > 1);
+    resultsList_->setCurrentRow(0);
+}
+
+void ResultsPage::clearResults() {
+    results_.clear();
+    resultsList_->clear();
+    resultsList_->hide();
+    currentIndex_ = -1;
+    previewWidget_->setImage(QImage());
+    previewWidget_->setSummary({});
+    summaryLabel_->setText(QStringLiteral("\u5f53\u524d\u8fd8\u6ca1\u6709\u63a8\u7406\u7ed3\u679c"));
+    detectionsTable_->clearContents();
+    detectionsTable_->setRowCount(0);
+}
+
+void ResultsPage::showResultAtIndex(const int index) {
+    if (index < 0 || index >= results_.size()) {
+        return;
+    }
+
+    currentIndex_ = index;
+    const core::InferenceSummary& summary = results_.at(index);
+
+    previewWidget_->setSummary(summary);
+
+    summaryLabel_->setText(
+        QStringLiteral("\u6a21\u578b\uff1a%1 | \u56fe\u50cf\uff1a%2\u00d7%3 | \u76ee\u6807\u6570\uff1a%4 | \u8017\u65f6\uff1a%5 ms")
+            .arg(summary.modelName)
+            .arg(summary.imageWidth)
+            .arg(summary.imageHeight)
+            .arg(summary.detectionCount)
+            .arg(QString::number(summary.elapsedMs, 'f', 2)));
+
+    populateTable(summary);
+}
+
+void ResultsPage::populateTable(const core::InferenceSummary& summary) {
     detectionsTable_->clearContents();
     detectionsTable_->setRowCount(summary.detections.size());
     for (int index = 0; index < summary.detections.size(); ++index) {

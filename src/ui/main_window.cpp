@@ -216,6 +216,7 @@ void MainWindow::wireSignals() {
         inferencePage_->setCurrentImagePath(currentImagePath_);
         resultsPage_->setImage(loadUsableImage(currentImagePath_));
         resultsPage_->setSummary(currentSummary_);
+        resultsPage_->setResults(results);
         updateContextPanel();
         showPage(NavPanel::ResultsPageId);
 
@@ -252,6 +253,7 @@ void MainWindow::wireSignals() {
         inferencePage_->setCurrentImagePath(currentImagePath_);
         resultsPage_->setImage(QImage());
         resultsPage_->setSummary(currentSummary_);
+        resultsPage_->setResults(results);
         updateContextPanel();
         showPage(NavPanel::ResultsPageId);
 
