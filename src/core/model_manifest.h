@@ -15,8 +15,8 @@ struct ModelManifest {
     QString decoder;
     int inputWidth = 0;
     int inputHeight = 0;
-    double confidenceThreshold = 0.0;
-    double nmsThreshold = 0.0;
+    double confidenceThreshold = 0.25;
+    double nmsThreshold = 0.45;
     QStringList labels;
     QStringList labelsInline;
 };

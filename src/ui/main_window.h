@@ -9,7 +9,6 @@
 #include "core/types.h"
 #include "models/yolo_detection_model.h"
 #include "services/export_service.h"
-#include "services/inference_service.h"
 #include "services/inference_worker.h"
 #include "services/model_service.h"
 
@@ -43,7 +42,7 @@ private:
     void handleOnnxFileSelected(const QString& onnxPath);
     void handleImageSelected(const QString& imagePath);
     void handleFolderSelected(const QString& folderPath);
-    void handleVideoSelected(const QString& videoPath);
+    void handleVideoSelected(const QString& videoPath, int maxFrames);
     void handleRunRequested();
     void handleExportRequested();
     void handleExportImageRequested();
@@ -69,7 +68,6 @@ private:
     SettingsPage* settingsPage_ = nullptr;
 
     services::ModelService modelService_;
-    services::InferenceService inferenceService_;
     services::ExportService exportService_;
     core::SettingsStore settingsStore_;
 
@@ -77,7 +75,7 @@ private:
     QThread* inferenceThread_ = nullptr;
 
     core::ModelManifest currentManifest_;
-    std::unique_ptr<models::YoloDetectionModel> currentModel_;
+    std::shared_ptr<models::YoloDetectionModel> currentModel_;
     QString currentManifestPath_;
     QString currentImagePath_;
     core::InferenceSummary currentSummary_;

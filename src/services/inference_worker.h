@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QMutex>
 #include <QObject>
 #include <QString>
 #include <QVector>
@@ -15,7 +16,8 @@ class InferenceWorker : public QObject {
 public:
     explicit InferenceWorker(QObject* parent = nullptr);
 
-    void setModel(std::shared_ptr<const models::YoloDetectionModel> model);
+    void setModel(std::shared_ptr<models::YoloDetectionModel> model);
+    void setThresholds(double confidenceThreshold, double nmsThreshold);
 
 public slots:
     void runImage(const QString& imagePath);
@@ -32,7 +34,10 @@ signals:
     void error(const QString& message);
 
 private:
-    std::shared_ptr<const models::YoloDetectionModel> model_;
+    QMutex mutex_;
+    std::shared_ptr<models::YoloDetectionModel> model_;
+    double confidenceThreshold_ = -1.0;
+    double nmsThreshold_ = -1.0;
     std::atomic<bool> cancelled_{false};
 };
 

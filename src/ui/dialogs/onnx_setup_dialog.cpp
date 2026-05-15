@@ -2,10 +2,11 @@
 
 #include <QFileInfo>
 #include <QFormLayout>
-#include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QSet>
+#include <QVBoxLayout>
 
 namespace aitoolkit::ui::dialogs {
 
@@ -20,10 +21,12 @@ OnnxSetupDialog::OnnxSetupDialog(const QString& onnxPath, QWidget* parent)
     nameEdit_ = new QLineEdit(baseName, this);
     widthSpin_ = new QSpinBox(this);
     widthSpin_->setRange(32, 4096);
+    widthSpin_->setSingleStep(32);
     widthSpin_->setValue(640);
 
     heightSpin_ = new QSpinBox(this);
     heightSpin_->setRange(32, 4096);
+    heightSpin_->setSingleStep(32);
     heightSpin_->setValue(640);
 
     confSpin_ = new QDoubleSpinBox(this);
@@ -91,7 +94,18 @@ QStringList OnnxSetupDialog::labels() const {
     if (text.isEmpty()) {
         return {};
     }
-    return text.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    QStringList raw = text.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    QStringList result;
+    QSet<QString> seen;
+    for (QString& label : raw) {
+        label = label.trimmed();
+        if (label.isEmpty() || seen.contains(label)) {
+            continue;
+        }
+        seen.insert(label);
+        result.append(label);
+    }
+    return result;
 }
 
 void OnnxSetupDialog::updateOkButtonState() {

@@ -49,6 +49,7 @@ ai_add_qt_test_if_exists(test_main_window.cpp)
 ai_add_qt_test_if_exists(test_models_page.cpp)
 ai_add_qt_test_if_exists(test_results_page.cpp)
 ai_add_qt_test_if_exists(test_settings_page.cpp)
+ai_add_qt_test_if_exists(test_gui_validation.cpp)
 
 if(TARGET test_yolo_postprocess)
     target_link_libraries(
@@ -137,4 +138,28 @@ endif()
 
 if(ai_toolkit_test_targets)
     add_custom_target(ai_toolkit_tests DEPENDS ${ai_toolkit_test_targets})
+endif()
+
+if(TARGET test_gui_validation)
+    target_sources(
+        test_gui_validation
+        PRIVATE
+            ${CMAKE_SOURCE_DIR}/src/ui/main_window.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/nav_panel.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/dialogs/onnx_setup_dialog.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/pages/home_page.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/pages/models_page.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/pages/inference_page.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/pages/results_page.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/pages/settings_page.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/widgets/image_preview_widget.cpp
+    )
+    target_link_libraries(
+        test_gui_validation
+        PRIVATE
+            ai_services
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::Svg
+    )
 endif()

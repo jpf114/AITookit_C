@@ -86,8 +86,10 @@ void ResultsPage::setSummary(const core::InferenceSummary& summary) {
     }
 
     summaryLabel_->setText(
-        QStringLiteral("\u6a21\u578b\uff1a%1 | \u76ee\u6807\u6570\uff1a%2 | \u8017\u65f6\uff1a%3 ms")
+        QStringLiteral("模型：%1 | 图像：%2×%3 | 目标数：%4 | 耗时：%5 ms")
             .arg(summary.modelName)
+            .arg(summary.imageWidth)
+            .arg(summary.imageHeight)
             .arg(summary.detectionCount)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));
 

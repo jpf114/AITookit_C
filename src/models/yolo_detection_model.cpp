@@ -72,6 +72,27 @@ QString labelForClassId(const ModelManifest& manifest, const int classId) {
     return classId >= 0 ? QStringLiteral("class_%1").arg(classId) : QString();
 }
 
+QColor colorForClassId(const int classId) {
+    static const QColor palette[] = {
+        QColor(239, 68, 68),
+        QColor(59, 130, 246),
+        QColor(34, 197, 94),
+        QColor(249, 115, 22),
+        QColor(168, 85, 247),
+        QColor(236, 72, 153),
+        QColor(20, 184, 166),
+        QColor(234, 179, 8),
+        QColor(99, 102, 241),
+        QColor(244, 63, 94),
+    };
+    static constexpr int kPaletteSize = sizeof(palette) / sizeof(palette[0]);
+
+    if (classId < 0) {
+        return QColor(239, 68, 68);
+    }
+    return palette[classId % kPaletteSize];
+}
+
 std::vector<int> runNms(const std::vector<CandidateDetection>& candidates, const float threshold) {
     std::vector<int> sortedIndices(candidates.size());
     for (int index = 0; index < static_cast<int>(candidates.size()); ++index) {
@@ -143,7 +164,10 @@ const ModelManifest& YoloDetectionModel::manifest() const noexcept {
     return manifest_;
 }
 
-QVector<DetectionItem> YoloDetectionModel::detect(const cv::Mat& image) const {
+QVector<DetectionItem> YoloDetectionModel::detect(
+    const cv::Mat& image,
+    const double confidenceThreshold,
+    const double nmsThreshold) const {
     const YoloPreprocessResult prepared = preprocessImage(image, manifest_);
     const std::vector<int64_t> inputShape{
         1,
@@ -159,7 +183,13 @@ QVector<DetectionItem> YoloDetectionModel::detect(const cv::Mat& image) const {
 
     const int expectedNumClasses = manifest_.labels.isEmpty() ? -1 : manifest_.labels.size();
     const cv::Mat outputMatrix = tensorToDetectionMatrix(outputs.front(), expectedNumClasses);
-    return postprocessDetections(outputMatrix, prepared.networkSize, manifest_, prepared.originalSize);
+    return postprocessDetections(
+        outputMatrix,
+        prepared.networkSize,
+        manifest_,
+        prepared.originalSize,
+        confidenceThreshold,
+        nmsThreshold);
 }
 
 YoloPreprocessResult YoloDetectionModel::preprocessImage(
@@ -270,7 +300,9 @@ QVector<DetectionItem> YoloDetectionModel::postprocessDetections(
     const cv::Mat& output,
     const QSize& networkSize,
     const ModelManifest& manifest,
-    const QSize& originalSize) {
+    const QSize& originalSize,
+    const double confidenceThresholdOverride,
+    const double nmsThresholdOverride) {
     if (output.empty()) {
         return {};
     }
@@ -287,8 +319,10 @@ QVector<DetectionItem> YoloDetectionModel::postprocessDetections(
         throw std::runtime_error("Original image size must be greater than zero");
     }
 
-    const float confidenceThreshold = static_cast<float>(manifest.confidenceThreshold);
-    const float nmsThreshold = static_cast<float>(manifest.nmsThreshold);
+    const float confidenceThreshold = static_cast<float>(
+        confidenceThresholdOverride >= 0.0 ? confidenceThresholdOverride : manifest.confidenceThreshold);
+    const float nmsThreshold = static_cast<float>(
+        nmsThresholdOverride >= 0.0 ? nmsThresholdOverride : manifest.nmsThreshold);
 
     std::map<int, std::vector<CandidateDetection>> groupedCandidates;
     for (int row = 0; row < output.rows; ++row) {
@@ -324,6 +358,7 @@ QVector<DetectionItem> YoloDetectionModel::postprocessDetections(
         candidate.item.label = labelForClassId(manifest, classId);
         candidate.item.confidence = combinedConfidence;
         candidate.item.boundingBox = candidate.box;
+        candidate.item.renderColor = colorForClassId(classId);
         groupedCandidates[classId].push_back(std::move(candidate));
     }
 

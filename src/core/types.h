@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QColor>
 #include <QRectF>
 #include <QString>
 #include <QVector>
@@ -11,6 +12,7 @@ struct DetectionItem {
     QString label;
     float confidence = 0.0f;
     QRectF boundingBox;
+    QColor renderColor;
 };
 
 struct InferenceSummary {
@@ -18,6 +20,8 @@ struct InferenceSummary {
     QString inputPath;
     int detectionCount = 0;
     double elapsedMs = 0.0;
+    int imageWidth = 0;
+    int imageHeight = 0;
     QVector<DetectionItem> detections;
 };
 

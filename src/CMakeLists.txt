@@ -85,8 +85,10 @@ ai_define_module(
         core/json_utils.cpp
         core/model_manifest.cpp
         core/settings_store.cpp
+        core/unicode_path.cpp
     LINK_LIBS
         Qt6::Core
+        Qt6::Gui
 )
 
 ai_define_module(
@@ -116,6 +118,7 @@ ai_define_module(
         services/inference_service.cpp
         services/inference_worker.cpp
         services/export_service.cpp
+        services/unicode_io.cpp
     LINK_LIBS
         ai_core
         ai_models

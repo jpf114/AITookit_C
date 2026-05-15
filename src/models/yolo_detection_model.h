@@ -24,7 +24,10 @@ public:
     explicit YoloDetectionModel(core::ModelManifest manifest);
 
     const core::ModelManifest& manifest() const noexcept;
-    QVector<core::DetectionItem> detect(const cv::Mat& image) const;
+    QVector<core::DetectionItem> detect(
+        const cv::Mat& image,
+        double confidenceThreshold = -1.0,
+        double nmsThreshold = -1.0) const;
 
     static YoloPreprocessResult preprocessImage(
         const cv::Mat& image,
@@ -36,7 +39,9 @@ public:
         const cv::Mat& output,
         const QSize& networkSize,
         const core::ModelManifest& manifest,
-        const QSize& originalSize);
+        const QSize& originalSize,
+        double confidenceThreshold = -1.0,
+        double nmsThreshold = -1.0);
 
 private:
     core::ModelManifest manifest_;

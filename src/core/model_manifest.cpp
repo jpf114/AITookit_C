@@ -161,12 +161,12 @@ ModelManifest loadModelManifest(const QString& manifestPath) {
         object,
         cleanManifestPath,
         QStringLiteral("confidence_threshold"),
-        0.0);
+        0.25);
     manifest.nmsThreshold = optionalNumericField(
         object,
         cleanManifestPath,
         QStringLiteral("nms_threshold"),
-        0.0);
+        0.45);
     manifest.labelsInline = optionalStringArrayField(object, cleanManifestPath, QStringLiteral("labels_inline"));
 
     if (!QFileInfo::exists(manifest.modelPath)) {

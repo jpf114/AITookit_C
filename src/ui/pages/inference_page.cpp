@@ -1,10 +1,13 @@
 #include "ui/pages/inference_page.h"
 
+#include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QLabel>
+#include <QProgressBar>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -52,9 +55,27 @@ InferencePage::InferencePage(QWidget* parent)
     auto* openVideoButton = new QPushButton(QStringLiteral("\u9009\u62e9\u89c6\u9891"), this);
     openVideoButton->setObjectName(QStringLiteral("SecondaryButton"));
 
+    auto* maxFramesLabel = new QLabel(QStringLiteral("\u6700\u5927\u5e27\u6570\uff1a"), this);
+    maxFramesSpin_ = new QSpinBox(this);
+    maxFramesSpin_->setRange(0, 100000);
+    maxFramesSpin_->setValue(0);
+    maxFramesSpin_->setSpecialValueText(QStringLiteral("\u5168\u90e8"));
+    maxFramesSpin_->setToolTip(QStringLiteral("\u8bbe\u7f6e\u4e3a 0 \u8868\u793a\u5904\u7406\u89c6\u9891\u7684\u6240\u6709\u5e27"));
+
     runButton_ = new QPushButton(QStringLiteral("\u5f00\u59cb\u68c0\u6d4b"), this);
     runButton_->setObjectName(QStringLiteral("PrimaryButton"));
     runButton_->setEnabled(false);
+
+    cancelButton_ = new QPushButton(QStringLiteral("\u53d6\u6d88"), this);
+    cancelButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    cancelButton_->setVisible(false);
+
+    progressBar_ = new QProgressBar(this);
+    progressBar_->setObjectName(QStringLiteral("InferenceProgressBar"));
+    progressBar_->setVisible(false);
+    progressBar_->setMinimum(0);
+    progressBar_->setMaximum(100);
+    progressBar_->setTextVisible(true);
 
     imagePathLabel_ = new QLabel(QStringLiteral("\u5f53\u524d\u672a\u9009\u62e9\u56fe\u50cf"), this);
     imagePathLabel_->setObjectName(QStringLiteral("InferenceImagePathLabel"));
@@ -73,7 +94,39 @@ InferencePage::InferencePage(QWidget* parent)
     actionLayout->addWidget(openButton);
     actionLayout->addWidget(openFolderButton);
     actionLayout->addWidget(openVideoButton);
+
+    auto* maxFramesRow = new QHBoxLayout();
+    maxFramesRow->addWidget(maxFramesLabel);
+    maxFramesRow->addWidget(maxFramesSpin_, 1);
+    actionLayout->addLayout(maxFramesRow);
+
+    auto* confLabel = new QLabel(QStringLiteral("置信度阈值："), this);
+    confSpin_ = new QDoubleSpinBox(this);
+    confSpin_->setRange(0.0, 1.0);
+    confSpin_->setSingleStep(0.05);
+    confSpin_->setDecimals(2);
+    confSpin_->setValue(0.25);
+
+    auto* confRow = new QHBoxLayout();
+    confRow->addWidget(confLabel);
+    confRow->addWidget(confSpin_, 1);
+    actionLayout->addLayout(confRow);
+
+    auto* nmsLabel = new QLabel(QStringLiteral("NMS 阈值："), this);
+    nmsSpin_ = new QDoubleSpinBox(this);
+    nmsSpin_->setRange(0.0, 1.0);
+    nmsSpin_->setSingleStep(0.05);
+    nmsSpin_->setDecimals(2);
+    nmsSpin_->setValue(0.45);
+
+    auto* nmsRow = new QHBoxLayout();
+    nmsRow->addWidget(nmsLabel);
+    nmsRow->addWidget(nmsSpin_, 1);
+    actionLayout->addLayout(nmsRow);
+
     actionLayout->addWidget(runButton_);
+    actionLayout->addWidget(cancelButton_);
+    actionLayout->addWidget(progressBar_);
     actionLayout->addWidget(imagePathLabel_);
     actionLayout->addWidget(readinessLabel_);
     actionLayout->addStretch(1);
@@ -108,10 +161,11 @@ InferencePage::InferencePage(QWidget* parent)
             QString(),
             QStringLiteral("Videos (*.mp4 *.avi *.mkv *.mov *.wmv)"));
         if (!path.isEmpty()) {
-            emit videoSelected(path);
+            emit videoSelected(path, maxFramesSpin_->value());
         }
     });
     connect(runButton_, &QPushButton::clicked, this, &InferencePage::runRequested);
+    connect(cancelButton_, &QPushButton::clicked, this, &InferencePage::cancelRequested);
 
     shellLayout->addWidget(title);
     shellLayout->addWidget(lead);
@@ -126,21 +180,83 @@ void InferencePage::setCurrentImagePath(const QString& imagePath) {
     } else {
         const QImage image(imagePath);
         hasValidImage_ = !image.isNull();
-        imagePathLabel_->setText(
-            hasValidImage_
-                ? QStringLiteral("\u5f53\u524d\u56fe\u50cf\uff1a%1").arg(imagePath)
-                : QStringLiteral("\u5f53\u524d\u672a\u9009\u62e9\u56fe\u50cf"));
+
+        if (hasValidImage_) {
+            static constexpr int kMaxImageDim = 4096;
+            static constexpr int kMinImageDim = 32;
+
+            if (image.width() > kMaxImageDim || image.height() > kMaxImageDim) {
+                hasValidImage_ = false;
+                imagePathLabel_->setText(
+                    QStringLiteral("图像尺寸过大（%1×%2），最大支持 %3×%3")
+                        .arg(image.width())
+                        .arg(image.height())
+                        .arg(kMaxImageDim));
+            } else if (image.width() < kMinImageDim || image.height() < kMinImageDim) {
+                hasValidImage_ = false;
+                imagePathLabel_->setText(
+                    QStringLiteral("图像尺寸过小（%1×%2），最小支持 %3×%3")
+                        .arg(image.width())
+                        .arg(image.height())
+                        .arg(kMinImageDim));
+            } else {
+                imagePathLabel_->setText(QStringLiteral("当前图像：%1").arg(imagePath));
+            }
+        } else {
+            imagePathLabel_->setText(QStringLiteral("当前未选择图像"));
+        }
+
         previewWidget_->setImage(hasValidImage_ ? image : QImage());
     }
 
     readinessLabel_->setText(readinessText(modelReady_, hasValidImage_));
-    runButton_->setEnabled(modelReady_ && hasValidImage_);
+    updateRunButtonState();
 }
 
 void InferencePage::setModelReady(const bool ready) {
     modelReady_ = ready;
     readinessLabel_->setText(readinessText(modelReady_, hasValidImage_));
-    runButton_->setEnabled(modelReady_ && hasValidImage_);
+    updateRunButtonState();
+}
+
+void InferencePage::setRunning(const bool running) {
+    running_ = running;
+    runButton_->setVisible(!running);
+    cancelButton_->setVisible(running);
+    progressBar_->setVisible(running);
+    confSpin_->setEnabled(!running);
+    nmsSpin_->setEnabled(!running);
+    if (running) {
+        progressBar_->setValue(0);
+    }
+    updateRunButtonState();
+}
+
+void InferencePage::setProgress(const int current, const int total) {
+    if (total > 0) {
+        progressBar_->setMaximum(total);
+        progressBar_->setValue(current);
+    } else {
+        progressBar_->setMaximum(0);
+        progressBar_->setValue(0);
+    }
+}
+
+void InferencePage::updateRunButtonState() {
+    runButton_->setEnabled(modelReady_ && hasValidImage_ && !running_);
+}
+
+void InferencePage::setDefaultThresholds(const double confidence, const double nms) {
+    confSpin_->setValue(confidence);
+    nmsSpin_->setValue(nms);
+}
+
+double InferencePage::confidenceThreshold() const {
+    return confSpin_->value();
+}
+
+double InferencePage::nmsThreshold() const {
+    return nmsSpin_->value();
 }
 
 }  // namespace aitoolkit::ui

@@ -202,3 +202,120 @@ QStatusBar {
     background-color: #ffffff;
     border-top: 1px solid #e2e5ea;
 }
+
+QProgressBar#InferenceProgressBar {
+    border: 1px solid #d3dde8;
+    border-radius: 6px;
+    background-color: #f5f6f8;
+    min-height: 20px;
+    text-align: center;
+    color: #4f637a;
+    font-size: 12px;
+}
+
+QProgressBar#InferenceProgressBar::chunk {
+    background-color: #2e7ec9;
+    border-radius: 5px;
+}
+
+QDialog {
+    background-color: #ffffff;
+}
+
+QSpinBox,
+QDoubleSpinBox {
+    border: 1px solid #d3dde8;
+    border-radius: 6px;
+    background-color: #fdfeff;
+    min-height: 36px;
+    padding: 0 12px;
+}
+
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border-color: #2f7cf6;
+}
+
+QTextEdit {
+    border: 1px solid #d3dde8;
+    border-radius: 6px;
+    background-color: #fdfeff;
+}
+
+QTextEdit:focus {
+    border-color: #2f7cf6;
+}
+
+QScrollBar:vertical {
+    background-color: transparent;
+    width: 8px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #c4cdd8;
+    border-radius: 4px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #a8b5c4;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QScrollBar:horizontal {
+    background-color: transparent;
+    height: 8px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #c4cdd8;
+    border-radius: 4px;
+    min-width: 30px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: #a8b5c4;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+QToolTip {
+    background-color: #1e2a36;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+QMessageBox {
+    background-color: #ffffff;
+}
+
+QMessageBox QLabel {
+    color: #15253a;
+    font-size: 13px;
+}
+
+QMessageBox QPushButton {
+    min-width: 80px;
+}

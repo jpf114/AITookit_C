@@ -39,15 +39,28 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
     const double xScale = targetRect.width() / static_cast<double>(image_.width());
     const double yScale = targetRect.height() / static_cast<double>(image_.height());
 
-    painter.setPen(QPen(QColor(QStringLiteral("#ef4444")), 2.0));
     for (const core::DetectionItem& item : summary_.detections) {
+        const QColor color = item.renderColor.isValid() ? item.renderColor : QColor(QStringLiteral("#ef4444"));
         QRectF box(
             targetRect.left() + (item.boundingBox.left() * xScale),
             targetRect.top() + (item.boundingBox.top() * yScale),
             item.boundingBox.width() * xScale,
             item.boundingBox.height() * yScale);
+
+        painter.setPen(QPen(color, 2.0));
         painter.drawRect(box);
-        painter.drawText(box.topLeft() + QPointF(4.0, 16.0), item.label);
+
+        const QString labelText = QStringLiteral("%1 %2%")
+            .arg(item.label)
+            .arg(QString::number(item.confidence * 100.0, 'f', 0));
+
+        QRectF labelRect = painter.fontMetrics().boundingRect(labelText);
+        labelRect.moveTopLeft(box.topLeft() + QPointF(2.0, -labelRect.height() - 2.0));
+
+        painter.fillRect(labelRect.adjusted(-2, -1, 2, 1), color);
+        painter.setPen(QColor(QStringLiteral("#ffffff")));
+        painter.drawText(labelRect, labelText);
+        painter.setPen(QPen(color, 2.0));
     }
 }
 

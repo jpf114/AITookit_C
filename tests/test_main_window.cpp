@@ -49,7 +49,7 @@ QString writeManifestFile(const QString& directoryPath, const QString& baseName,
 
 QString writeImageFile(const QString& directoryPath, const QString& fileName) {
     const QString imagePath = QDir(directoryPath).filePath(fileName);
-    QImage image(8, 8, QImage::Format_ARGB32);
+    QImage image(64, 64, QImage::Format_ARGB32);
     image.fill(Qt::red);
     return image.save(imagePath) ? imagePath : QString();
 }

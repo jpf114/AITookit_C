@@ -170,6 +170,12 @@ void MainWindow::wireSignals() {
     connect(inferencePage_, &InferencePage::folderSelected, this, &MainWindow::handleFolderSelected);
     connect(inferencePage_, &InferencePage::videoSelected, this, &MainWindow::handleVideoSelected);
     connect(inferencePage_, &InferencePage::runRequested, this, &MainWindow::handleRunRequested);
+    connect(inferencePage_, &InferencePage::cancelRequested, this, [this]() {
+        inferenceWorker_->cancel();
+        inferencePage_->setRunning(false);
+        runStatusLabel_->setText(QStringLiteral("已取消"));
+        nextStepLabel_->setText(QStringLiteral("可重新开始检测。"));
+    });
     connect(resultsPage_, &ResultsPage::exportRequested, this, &MainWindow::handleExportRequested);
     connect(resultsPage_, &ResultsPage::exportImageRequested, this, &MainWindow::handleExportImageRequested);
     connect(settingsPage_,
@@ -182,13 +188,16 @@ void MainWindow::wireSignals() {
         showPage(NavPanel::InferencePageId);
     });
     connect(inferenceWorker_, &services::InferenceWorker::imageResultReady, this, [this](const core::InferenceSummary& summary) {
+        inferencePage_->setRunning(false);
         applyInferenceResult(summary);
         showPage(NavPanel::ResultsPageId);
     });
     connect(inferenceWorker_, &services::InferenceWorker::batchProgress, this, [this](int completed, int total) {
+        inferencePage_->setProgress(completed, total);
         runStatusLabel_->setText(QStringLiteral("批量推理 %1/%2…").arg(completed).arg(total));
     });
     connect(inferenceWorker_, &services::InferenceWorker::batchFinished, this, [this](const QVector<core::InferenceSummary>& results) {
+        inferencePage_->setRunning(false);
         if (results.isEmpty()) {
             return;
         }
@@ -215,6 +224,7 @@ void MainWindow::wireSignals() {
                 .arg(QString::number(totalElapsedMs, 'f', 1)));
     });
     connect(inferenceWorker_, &services::InferenceWorker::videoProgress, this, [this](int frameIndex, int totalFrames) {
+        inferencePage_->setProgress(frameIndex, totalFrames);
         if (totalFrames > 0) {
             runStatusLabel_->setText(QStringLiteral("视频推理 %1/%2…").arg(frameIndex).arg(totalFrames));
         } else {
@@ -222,6 +232,7 @@ void MainWindow::wireSignals() {
         }
     });
     connect(inferenceWorker_, &services::InferenceWorker::videoFinished, this, [this](const QVector<core::InferenceSummary>& results) {
+        inferencePage_->setRunning(false);
         if (results.isEmpty()) {
             QMessageBox::information(this, QStringLiteral("无帧数据"), QStringLiteral("未能从视频中读取任何帧。"));
             return;
@@ -249,6 +260,7 @@ void MainWindow::wireSignals() {
                 .arg(QString::number(totalElapsedMs, 'f', 1)));
     });
     connect(inferenceWorker_, &services::InferenceWorker::error, this, [this](const QString& message) {
+        inferencePage_->setRunning(false);
         runStatusLabel_->setText(QStringLiteral("推理失败"));
         nextStepLabel_->setText(QStringLiteral("请检查模型和输入后重试。"));
         QMessageBox::critical(this, QStringLiteral("推理失败"), message);
@@ -318,6 +330,9 @@ void MainWindow::handleModelManifestSelected(const QString& manifestPath) {
         settingsStore_.addRecentModel(currentManifestPath_);
         modelsPage_->setCurrentManifest(currentManifest_);
         inferencePage_->setModelReady(true);
+        inferencePage_->setDefaultThresholds(
+            currentManifest_.confidenceThreshold,
+            currentManifest_.nmsThreshold);
         refreshSettingsPage();
         updateContextPanel();
         showPage(NavPanel::InferencePageId);
@@ -345,7 +360,7 @@ void MainWindow::handleOnnxFileSelected(const QString& onnxPath) {
 
         currentManifest_ = manifest;
         currentManifestPath_ = manifest.manifestPath;
-        currentModel_ = std::make_unique<models::YoloDetectionModel>(manifest);
+        currentModel_ = std::make_shared<models::YoloDetectionModel>(manifest);
 
         modelsPage_->setCurrentManifest(manifest);
         settingsStore_.addRecentModel(manifest.manifestPath);
@@ -401,7 +416,10 @@ void MainWindow::handleFolderSelected(const QString& folderPath) {
             imagePaths.append(entry.absoluteFilePath());
         }
 
-        inferenceWorker_->setModel(std::shared_ptr<const models::YoloDetectionModel>(currentModel_.get(), [](auto*) {}));
+        inferenceWorker_->setModel(currentModel_);
+        inferenceWorker_->setThresholds(inferencePage_->confidenceThreshold(), inferencePage_->nmsThreshold());
+        inferencePage_->setRunning(true);
+        inferencePage_->setProgress(0, entries.size());
         runStatusLabel_->setText(QStringLiteral("批量推理 0/%1…").arg(entries.size()));
         nextStepLabel_->setText(QStringLiteral("请等待推理完成。"));
         settingsStore_.addRecentInput(folderPath);
@@ -412,7 +430,7 @@ void MainWindow::handleFolderSelected(const QString& folderPath) {
     }
 }
 
-void MainWindow::handleVideoSelected(const QString& videoPath) {
+void MainWindow::handleVideoSelected(const QString& videoPath, const int maxFrames) {
     if (currentManifestPath_.isEmpty()) {
         QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单，再进行视频推理。"));
         return;
@@ -424,12 +442,15 @@ void MainWindow::handleVideoSelected(const QString& videoPath) {
             currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
         }
 
-        inferenceWorker_->setModel(std::shared_ptr<const models::YoloDetectionModel>(currentModel_.get(), [](auto*) {}));
+        inferenceWorker_->setModel(currentModel_);
+        inferenceWorker_->setThresholds(inferencePage_->confidenceThreshold(), inferencePage_->nmsThreshold());
+        inferencePage_->setRunning(true);
+        inferencePage_->setProgress(0, 0);
         runStatusLabel_->setText(QStringLiteral("视频推理准备中…"));
         nextStepLabel_->setText(QStringLiteral("请等待推理完成。"));
         settingsStore_.addRecentInput(videoPath);
         refreshSettingsPage();
-        QMetaObject::invokeMethod(inferenceWorker_, "runVideo", Qt::QueuedConnection, Q_ARG(QString, videoPath), Q_ARG(int, 0));
+        QMetaObject::invokeMethod(inferenceWorker_, "runVideo", Qt::QueuedConnection, Q_ARG(QString, videoPath), Q_ARG(int, maxFrames));
     } catch (const std::exception& error) {
         QMessageBox::critical(this, QStringLiteral("视频推理失败"), QString::fromUtf8(error.what()));
     }
@@ -454,7 +475,9 @@ void MainWindow::handleRunRequested() {
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
         }
-        inferenceWorker_->setModel(std::shared_ptr<const models::YoloDetectionModel>(currentModel_.get(), [](auto*) {}));
+        inferenceWorker_->setModel(currentModel_);
+        inferenceWorker_->setThresholds(inferencePage_->confidenceThreshold(), inferencePage_->nmsThreshold());
+        inferencePage_->setRunning(true);
         runStatusLabel_->setText(QStringLiteral("\u63a8\u7406\u4e2d\u2026"));
         nextStepLabel_->setText(QStringLiteral("\u8bf7\u7b49\u5f85\u63a8\u7406\u5b8c\u6210\u3002"));
         QMetaObject::invokeMethod(inferenceWorker_, "runImage", Qt::QueuedConnection, Q_ARG(QString, currentImagePath_));
@@ -483,6 +506,18 @@ void MainWindow::handleExportRequested() {
         QStringLiteral("JSON Files (*.json)"));
     if (outputPath.isEmpty()) {
         return;
+    }
+
+    if (QFileInfo::exists(outputPath)) {
+        const int answer = QMessageBox::question(
+            this,
+            QStringLiteral("文件已存在"),
+            QStringLiteral("文件 %1 已存在，是否覆盖？").arg(QFileInfo(outputPath).fileName()),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        if (answer != QMessageBox::Yes) {
+            return;
+        }
     }
 
     try {
@@ -525,6 +560,18 @@ void MainWindow::handleExportImageRequested() {
         QStringLiteral("PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp)"));
     if (outputPath.isEmpty()) {
         return;
+    }
+
+    if (QFileInfo::exists(outputPath)) {
+        const int answer = QMessageBox::question(
+            this,
+            QStringLiteral("文件已存在"),
+            QStringLiteral("文件 %1 已存在，是否覆盖？").arg(QFileInfo(outputPath).fileName()),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        if (answer != QMessageBox::Yes) {
+            return;
+        }
     }
 
     try {
