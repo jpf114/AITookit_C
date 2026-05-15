@@ -5,6 +5,7 @@
 
 #include "core/types.h"
 
+class QComboBox;
 class QLabel;
 class QListWidget;
 class QTableWidget;
@@ -31,13 +32,17 @@ signals:
 private:
     void showResultAtIndex(int index);
     void populateTable(const core::InferenceSummary& summary);
+    void populateCategoryFilter(const QVector<core::DetectionItem>& detections);
+    void applyCategoryFilter();
 
     QLabel* summaryLabel_ = nullptr;
     QWidget* summaryStrip_ = nullptr;
     ImagePreviewWidget* previewWidget_ = nullptr;
     QTableWidget* detectionsTable_ = nullptr;
     QListWidget* resultsList_ = nullptr;
+    QComboBox* categoryFilter_ = nullptr;
     QVector<core::InferenceSummary> results_;
+    QVector<core::DetectionItem> currentDetections_;
     int currentIndex_ = -1;
 };
 

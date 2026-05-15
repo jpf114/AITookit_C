@@ -1,12 +1,14 @@
 #include "ui/pages/results_page.h"
 
 #include <QAbstractItemView>
+#include <QComboBox>
 #include <QFileInfo>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
 #include <QPushButton>
+#include <QSet>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
@@ -45,6 +47,12 @@ ResultsPage::ResultsPage(QWidget* parent)
     summaryStripLayout->addWidget(exportImageButton, 0);
     summaryStripLayout->addWidget(exportButton, 0);
 
+    categoryFilter_ = new QComboBox(this);
+    categoryFilter_->addItem(QStringLiteral("全部类别"));
+    categoryFilter_->setMinimumWidth(150);
+    connect(categoryFilter_, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &ResultsPage::applyCategoryFilter);
+
     auto* contentSplit = new QHBoxLayout();
     contentSplit->setSpacing(12);
 
@@ -76,7 +84,15 @@ ResultsPage::ResultsPage(QWidget* parent)
     detectionsTable_->setSelectionMode(QAbstractItemView::NoSelection);
     detectionsTable_->setMinimumHeight(180);
 
+    auto* tableHeader = new QHBoxLayout();
+    tableHeader->setSpacing(8);
+    auto* filterLabel = new QLabel(QStringLiteral("类别筛选："), this);
+    tableHeader->addWidget(filterLabel);
+    tableHeader->addWidget(categoryFilter_);
+    tableHeader->addStretch();
+
     rightColumn->addWidget(previewWidget_, 1);
+    rightColumn->addLayout(tableHeader);
     rightColumn->addWidget(detectionsTable_);
 
     contentSplit->addWidget(resultsList_);
@@ -157,6 +173,11 @@ void ResultsPage::clearResults() {
     summaryLabel_->setText(QStringLiteral("\u5f53\u524d\u8fd8\u6ca1\u6709\u63a8\u7406\u7ed3\u679c"));
     detectionsTable_->clearContents();
     detectionsTable_->setRowCount(0);
+    categoryFilter_->blockSignals(true);
+    categoryFilter_->clear();
+    categoryFilter_->addItem(QStringLiteral("全部类别"));
+    categoryFilter_->blockSignals(false);
+    currentDetections_.clear();
 }
 
 void ResultsPage::showResultAtIndex(const int index) {
@@ -181,6 +202,9 @@ void ResultsPage::showResultAtIndex(const int index) {
 }
 
 void ResultsPage::populateTable(const core::InferenceSummary& summary) {
+    currentDetections_ = summary.detections;
+    populateCategoryFilter(summary.detections);
+
     detectionsTable_->clearContents();
     detectionsTable_->setRowCount(summary.detections.size());
     for (int index = 0; index < summary.detections.size(); ++index) {
@@ -197,6 +221,57 @@ void ResultsPage::populateTable(const core::InferenceSummary& summary) {
                     .arg(QString::number(detection.boundingBox.y(), 'f', 1))
                     .arg(QString::number(detection.boundingBox.width(), 'f', 1))
                     .arg(QString::number(detection.boundingBox.height(), 'f', 1))));
+    }
+}
+
+void ResultsPage::populateCategoryFilter(const QVector<core::DetectionItem>& detections) {
+    categoryFilter_->blockSignals(true);
+    const QString currentSelection = categoryFilter_->currentText();
+    categoryFilter_->clear();
+    categoryFilter_->addItem(QStringLiteral("全部类别"));
+
+    QSet<QString> seenLabels;
+    for (const auto& item : detections) {
+        if (!seenLabels.contains(item.label)) {
+            seenLabels.insert(item.label);
+            categoryFilter_->addItem(item.label);
+        }
+    }
+
+    const int index = categoryFilter_->findText(currentSelection);
+    if (index >= 0) {
+        categoryFilter_->setCurrentIndex(index);
+    }
+    categoryFilter_->blockSignals(false);
+}
+
+void ResultsPage::applyCategoryFilter() {
+    if (currentDetections_.isEmpty()) {
+        return;
+    }
+
+    const QString selectedCategory = categoryFilter_->currentText();
+    const bool showAll = selectedCategory == QStringLiteral("全部类别");
+
+    QVector<core::DetectionItem> filtered;
+    for (const auto& item : currentDetections_) {
+        if (showAll || item.label == selectedCategory) {
+            filtered.append(item);
+        }
+    }
+
+    detectionsTable_->setRowCount(0);
+    for (const auto& item : filtered) {
+        const int row = detectionsTable_->rowCount();
+        detectionsTable_->insertRow(row);
+        detectionsTable_->setItem(row, 0, new QTableWidgetItem(QString::number(item.classId)));
+        detectionsTable_->setItem(row, 1, new QTableWidgetItem(item.label));
+        detectionsTable_->setItem(row, 2, new QTableWidgetItem(QStringLiteral("%1%").arg(item.confidence * 100, 0, 'f', 1)));
+        detectionsTable_->setItem(row, 3, new QTableWidgetItem(QStringLiteral("(%1, %2, %3 x %4)")
+            .arg(item.boundingBox.x(), 0, 'f', 0)
+            .arg(item.boundingBox.y(), 0, 'f', 0)
+            .arg(item.boundingBox.width(), 0, 'f', 0)
+            .arg(item.boundingBox.height(), 0, 'f', 0)));
     }
 }
 
