@@ -143,7 +143,7 @@ InferencePage::InferencePage(QWidget* parent)
             this,
             QStringLiteral("\u9009\u62e9\u56fe\u50cf"),
             QString(),
-            QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp)"));
+            QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp)"));
         if (!path.isEmpty()) {
             emit imageSelected(path);
         }
@@ -161,7 +161,7 @@ InferencePage::InferencePage(QWidget* parent)
             this,
             QStringLiteral("\u9009\u62e9\u89c6\u9891"),
             QString(),
-            QStringLiteral("Videos (*.mp4 *.avi *.mkv *.mov *.wmv)"));
+            QStringLiteral("Videos (*.mp4 *.avi *.mkv *.mov *.wmv *.webm *.flv)"));
         if (!path.isEmpty()) {
             emit videoSelected(path, maxFramesSpin_->value());
         }

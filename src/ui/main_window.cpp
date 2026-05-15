@@ -466,6 +466,9 @@ void MainWindow::handleFolderSelected(const QString& folderPath) {
         QStringLiteral("*.jpg"),
         QStringLiteral("*.jpeg"),
         QStringLiteral("*.bmp"),
+        QStringLiteral("*.tif"),
+        QStringLiteral("*.tiff"),
+        QStringLiteral("*.webp"),
     };
     const QFileInfoList entries = dir.entryInfoList(nameFilters, QDir::Files | QDir::Readable, QDir::Name);
     if (entries.isEmpty()) {
@@ -648,7 +651,7 @@ void MainWindow::setupShortcuts() {
             this,
             QStringLiteral("选择图像"),
             QString(),
-            QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp)"));
+            QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp)"));
         if (!path.isEmpty()) {
             handleImageSelected(path);
             showPage(NavPanel::InferencePageId);
@@ -668,6 +671,9 @@ void MainWindow::handleDroppedUrls(const QList<QUrl>& urls) {
         QStringLiteral("jpg"),
         QStringLiteral("jpeg"),
         QStringLiteral("bmp"),
+        QStringLiteral("tif"),
+        QStringLiteral("tiff"),
+        QStringLiteral("webp"),
     };
     static const QStringList kVideoSuffixes = {
         QStringLiteral("mp4"),
@@ -675,6 +681,8 @@ void MainWindow::handleDroppedUrls(const QList<QUrl>& urls) {
         QStringLiteral("mkv"),
         QStringLiteral("mov"),
         QStringLiteral("wmv"),
+        QStringLiteral("webm"),
+        QStringLiteral("flv"),
     };
 
     for (const QUrl& url : urls) {
@@ -726,7 +734,7 @@ void MainWindow::handleExportImageRequested() {
         initialDirectory.isEmpty()
             ? QString()
             : QDir(initialDirectory).filePath(QStringLiteral("result.png")),
-        QStringLiteral("PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp)"));
+        QStringLiteral("PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp);;TIFF (*.tif *.tiff)"));
     if (outputPath.isEmpty()) {
         return;
     }
