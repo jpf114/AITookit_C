@@ -44,6 +44,8 @@ public:
         double confidenceThreshold = -1.0,
         double nmsThreshold = -1.0);
 
+    static void registerBuiltinDecoders();
+
 private:
     core::ModelManifest manifest_;
     runtime::OnnxBackend backend_;

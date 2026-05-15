@@ -44,6 +44,7 @@ endfunction()
 ai_add_qt_test_if_exists(test_model_manifest.cpp)
 ai_add_qt_test_if_exists(test_settings_store.cpp)
 ai_add_qt_test_if_exists(test_yolo_postprocess.cpp)
+ai_add_qt_test_if_exists(test_postprocess_registry.cpp)
 ai_add_qt_test_if_exists(test_export_service.cpp)
 ai_add_qt_test_if_exists(test_main_window.cpp)
 ai_add_qt_test_if_exists(test_models_page.cpp)
@@ -54,6 +55,14 @@ ai_add_qt_test_if_exists(test_gui_validation.cpp)
 if(TARGET test_yolo_postprocess)
     target_link_libraries(
         test_yolo_postprocess
+        PRIVATE
+            ai_models
+    )
+endif()
+
+if(TARGET test_postprocess_registry)
+    target_link_libraries(
+        test_postprocess_registry
         PRIVATE
             ai_models
     )

@@ -1,4 +1,5 @@
 #include "models/yolo_detection_model.h"
+#include "models/postprocess_registry.h"
 
 #include <QRectF>
 
@@ -155,6 +156,7 @@ bool isRecognizedAttributeCount(const int dimension, const int expectedNumClasse
 YoloDetectionModel::YoloDetectionModel(ModelManifest manifest)
     : manifest_(std::move(manifest)),
       backend_(manifest_.modelPath) {
+    registerBuiltinDecoders();
     if (manifest_.inputWidth <= 0 || manifest_.inputHeight <= 0) {
         throw modelError(QStringLiteral("YOLO input dimensions must be greater than zero"));
     }
@@ -177,19 +179,27 @@ QVector<DetectionItem> YoloDetectionModel::detect(
     };
 
     const std::vector<runtime::InferenceTensor> outputs = backend_.run(prepared.blob, inputShape);
-    if (outputs.empty()) {
-        return {};
+
+    std::string decoderName = manifest_.decoder.toStdString();
+    auto decoder = PostprocessRegistry::instance().getDecoder(decoderName);
+    if (!decoder) {
+        decoder = PostprocessRegistry::instance().getDecoder("yolo_v8");
     }
 
-    const int expectedNumClasses = manifest_.labels.isEmpty() ? -1 : manifest_.labels.size();
-    const cv::Mat outputMatrix = tensorToDetectionMatrix(outputs.front(), expectedNumClasses);
-    return postprocessDetections(
-        outputMatrix,
+    if (!decoder) {
+        throw std::runtime_error("No postprocess decoder registered for: " + decoderName);
+    }
+
+    PostprocessInput ppInput{
+        std::move(outputs),
         prepared.networkSize,
-        manifest_,
         prepared.originalSize,
-        confidenceThreshold,
-        nmsThreshold);
+        confidenceThreshold < 0 ? manifest_.confidenceThreshold : confidenceThreshold,
+        nmsThreshold < 0 ? manifest_.nmsThreshold : nmsThreshold,
+        manifest_
+    };
+
+    return decoder(ppInput);
 }
 
 YoloPreprocessResult YoloDetectionModel::preprocessImage(
@@ -379,6 +389,26 @@ QVector<DetectionItem> YoloDetectionModel::postprocessDetections(
         });
 
     return results;
+}
+
+void YoloDetectionModel::registerBuiltinDecoders() {
+    static bool registered = false;
+    if (registered) {
+        return;
+    }
+    registered = true;
+
+    PostprocessRegistry::instance().registerDecoder("yolo_v8",
+        [](const PostprocessInput& input) -> QVector<core::DetectionItem> {
+            if (input.tensors.empty()) {
+                return {};
+            }
+            const cv::Mat output = YoloDetectionModel::tensorToDetectionMatrix(
+                input.tensors.front());
+            return YoloDetectionModel::postprocessDetections(
+                output, input.networkSize, input.manifest,
+                input.originalSize, input.confidenceThreshold, input.nmsThreshold);
+        });
 }
 
 }  // namespace aitoolkit::models
