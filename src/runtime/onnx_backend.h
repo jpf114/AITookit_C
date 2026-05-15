@@ -22,6 +22,7 @@ public:
     const std::vector<std::string>& inputNames() const noexcept;
     const std::vector<std::string>& outputNames() const noexcept;
     const std::vector<int64_t>& inputShape() const noexcept;
+    void warmup();
 
     std::vector<InferenceTensor> run(
         const std::vector<float>& inputData,

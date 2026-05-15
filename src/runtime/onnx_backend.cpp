@@ -205,4 +205,17 @@ std::vector<int64_t> OnnxBackend::readInputShape(const Ort::Session& session) {
     return typeInfo.GetTensorTypeAndShapeInfo().GetShape();
 }
 
+void OnnxBackend::warmup() {
+    if (!session_ || inputShape_.empty()) {
+        return;
+    }
+
+    try {
+        const std::size_t count = elementCount(inputShape_);
+        const std::vector<float> zeros(count, 0.0f);
+        (void)run(zeros, inputShape_);
+    } catch (const std::exception&) {
+    }
+}
+
 }  // namespace aitoolkit::runtime

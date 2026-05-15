@@ -160,10 +160,15 @@ YoloDetectionModel::YoloDetectionModel(ModelManifest manifest)
     if (manifest_.inputWidth <= 0 || manifest_.inputHeight <= 0) {
         throw modelError(QStringLiteral("YOLO input dimensions must be greater than zero"));
     }
+    backend_.warmup();
 }
 
 const ModelManifest& YoloDetectionModel::manifest() const noexcept {
     return manifest_;
+}
+
+QString YoloDetectionModel::backendName() const noexcept {
+    return QStringLiteral("ONNX Runtime");
 }
 
 QVector<DetectionItem> YoloDetectionModel::detect(
