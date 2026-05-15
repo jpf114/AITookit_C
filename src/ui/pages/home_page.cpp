@@ -35,8 +35,13 @@ HomePage::HomePage(QWidget* parent)
     auto* selectImageBtn = new QPushButton(QStringLiteral("\u9009\u62e9\u56fe\u50cf"), this);
     selectImageBtn->setObjectName(QStringLiteral("SecondaryButton"));
 
+    auto* downloadBtn = new QPushButton(QStringLiteral("\u4e0b\u8f7d\u793a\u4f8b\u6a21\u578b"), this);
+    downloadBtn->setObjectName(QStringLiteral("SecondaryButton"));
+    downloadBtn->setToolTip(QStringLiteral("\u4e0b\u8f7d YOLOv8n COCO \u793a\u4f8b\u6a21\u578b\uff08\u7ea6 6MB\uff09"));
+
     actionsLayout->addWidget(loadModelBtn);
     actionsLayout->addWidget(selectImageBtn);
+    actionsLayout->addWidget(downloadBtn);
     actionsLayout->addStretch(1);
 
     auto* recentSection = new QWidget(this);
@@ -82,6 +87,7 @@ HomePage::HomePage(QWidget* parent)
 
     connect(loadModelBtn, &QPushButton::clicked, this, &HomePage::loadModelClicked);
     connect(selectImageBtn, &QPushButton::clicked, this, &HomePage::selectImageClicked);
+    connect(downloadBtn, &QPushButton::clicked, this, &HomePage::downloadSampleModelClicked);
     connect(recentModelsList_, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
         emit recentModelActivated(item->data(Qt::UserRole).toString());
     });

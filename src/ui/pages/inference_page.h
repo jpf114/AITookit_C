@@ -27,6 +27,7 @@ public:
 
     double confidenceThreshold() const;
     double nmsThreshold() const;
+    bool isRunning() const;
 
 signals:
     void imageSelected(const QString& imagePath);

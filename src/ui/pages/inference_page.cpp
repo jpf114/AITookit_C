@@ -106,18 +106,20 @@ InferencePage::InferencePage(QWidget* parent)
     confSpin_->setSingleStep(0.05);
     confSpin_->setDecimals(2);
     confSpin_->setValue(0.25);
+    confSpin_->setToolTip(QStringLiteral("低于此置信度的检测结果将被过滤。值越高，保留的结果越少但越准确。"));
 
     auto* confRow = new QHBoxLayout();
     confRow->addWidget(confLabel);
     confRow->addWidget(confSpin_, 1);
     actionLayout->addLayout(confRow);
 
-    auto* nmsLabel = new QLabel(QStringLiteral("NMS 阈值："), this);
+    auto* nmsLabel = new QLabel(QStringLiteral("重叠过滤阈值（NMS）："), this);
     nmsSpin_ = new QDoubleSpinBox(this);
     nmsSpin_->setRange(0.0, 1.0);
     nmsSpin_->setSingleStep(0.05);
     nmsSpin_->setDecimals(2);
     nmsSpin_->setValue(0.45);
+    nmsSpin_->setToolTip(QStringLiteral("重叠度过高的检测框将被合并。值越低，重叠框越少；值越高，保留更多可能重叠的框。"));
 
     auto* nmsRow = new QHBoxLayout();
     nmsRow->addWidget(nmsLabel);
@@ -257,6 +259,10 @@ double InferencePage::confidenceThreshold() const {
 
 double InferencePage::nmsThreshold() const {
     return nmsSpin_->value();
+}
+
+bool InferencePage::isRunning() const {
+    return running_;
 }
 
 }  // namespace aitoolkit::ui

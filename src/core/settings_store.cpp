@@ -9,6 +9,8 @@ namespace {
 constexpr auto kRecentModelsKey = "recent/models";
 constexpr auto kRecentInputsKey = "recent/inputs";
 constexpr auto kDefaultExportDirectoryKey = "export/defaultDirectory";
+constexpr auto kLastModelManifestKey = "state/lastModelManifest";
+constexpr auto kWindowGeometryKey = "state/windowGeometry";
 
 }  // namespace
 
@@ -44,6 +46,24 @@ void SettingsStore::setDefaultExportDirectory(const QString& directoryPath) {
     settings_.setValue(
         QString::fromLatin1(kDefaultExportDirectoryKey),
         QDir::cleanPath(directoryPath.trimmed()));
+    settings_.sync();
+}
+
+QString SettingsStore::lastModelManifestPath() const {
+    return settings_.value(QString::fromLatin1(kLastModelManifestKey)).toString().trimmed();
+}
+
+QByteArray SettingsStore::windowGeometry() const {
+    return settings_.value(QString::fromLatin1(kWindowGeometryKey)).toByteArray();
+}
+
+void SettingsStore::setLastModelManifestPath(const QString& path) {
+    settings_.setValue(QString::fromLatin1(kLastModelManifestKey), QDir::cleanPath(path.trimmed()));
+    settings_.sync();
+}
+
+void SettingsStore::setWindowGeometry(const QByteArray& geometry) {
+    settings_.setValue(QString::fromLatin1(kWindowGeometryKey), geometry);
     settings_.sync();
 }
 

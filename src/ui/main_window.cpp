@@ -1,5 +1,6 @@
 #include "ui/main_window.h"
 
+#include <QCloseEvent>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -8,6 +9,7 @@
 #include <QImage>
 #include <QLabel>
 #include <QMessageBox>
+#include <QProcess>
 #include <QStackedWidget>
 #include <QVBoxLayout>
 
@@ -38,6 +40,11 @@ MainWindow::MainWindow(QWidget* parent)
     setWindowTitle(QStringLiteral("AI \u68c0\u6d4b\u5de5\u5177"));
     resize(1440, 900);
 
+    const QByteArray savedGeometry = settingsStore_.windowGeometry();
+    if (!savedGeometry.isEmpty()) {
+        restoreGeometry(savedGeometry);
+    }
+
     inferenceThread_ = new QThread(this);
     inferenceWorker_ = new services::InferenceWorker();
     inferenceWorker_->moveToThread(inferenceThread_);
@@ -47,9 +54,11 @@ MainWindow::MainWindow(QWidget* parent)
     wireSignals();
     refreshSettingsPage();
     updateContextPanel();
+    restoreLastModel();
 }
 
 MainWindow::~MainWindow() {
+    settingsStore_.setWindowGeometry(saveGeometry());
     inferenceWorker_->cancel();
     inferenceThread_->quit();
     inferenceThread_->wait();
@@ -159,6 +168,7 @@ void MainWindow::wireSignals() {
     connect(navPanel_, &NavPanel::pageRequested, this, &MainWindow::showPage);
     connect(homePage_, &HomePage::loadModelClicked, this, [this]() { showPage(NavPanel::ModelsPageId); });
     connect(homePage_, &HomePage::selectImageClicked, this, [this]() { showPage(NavPanel::InferencePageId); });
+    connect(homePage_, &HomePage::downloadSampleModelClicked, this, &MainWindow::handleDownloadSampleModel);
     connect(homePage_, &HomePage::recentModelActivated, this, &MainWindow::handleModelManifestSelected);
     connect(homePage_, &HomePage::recentInputActivated, this, [this](const QString& imagePath) {
         handleImageSelected(imagePath);
@@ -328,6 +338,7 @@ void MainWindow::handleModelManifestSelected(const QString& manifestPath) {
         resultsPage_->setSummary(currentSummary_);
         resultsPage_->setImage(loadUsableImage(currentImagePath_));
         settingsStore_.addRecentModel(currentManifestPath_);
+        settingsStore_.setLastModelManifestPath(currentManifestPath_);
         modelsPage_->setCurrentManifest(currentManifest_);
         inferencePage_->setModelReady(true);
         inferencePage_->setDefaultThresholds(
@@ -364,6 +375,7 @@ void MainWindow::handleOnnxFileSelected(const QString& onnxPath) {
 
         modelsPage_->setCurrentManifest(manifest);
         settingsStore_.addRecentModel(manifest.manifestPath);
+        settingsStore_.setLastModelManifestPath(manifest.manifestPath);
         refreshSettingsPage();
         updateContextPanel();
     } catch (const std::exception& error) {
@@ -371,6 +383,54 @@ void MainWindow::handleOnnxFileSelected(const QString& onnxPath) {
     }
 
     dialog->deleteLater();
+}
+
+void MainWindow::handleDownloadSampleModel() {
+    const QString scriptPath = QCoreApplication::applicationDirPath() + QStringLiteral("/../scripts/download_sample_model.ps1");
+    const QString altScriptPath = QDir::cleanPath(
+        QCoreApplication::applicationDirPath() + QStringLiteral("/../../scripts/download_sample_model.ps1"));
+
+    QString resolvedScript;
+    if (QFileInfo::exists(scriptPath)) {
+        resolvedScript = scriptPath;
+    } else if (QFileInfo::exists(altScriptPath)) {
+        resolvedScript = altScriptPath;
+    } else {
+        QMessageBox::information(
+            this,
+            QStringLiteral("下载示例模型"),
+            QStringLiteral("未找到下载脚本。请手动执行：\n\npowershell -ExecutionPolicy Bypass -File scripts/download_sample_model.ps1"));
+        return;
+    }
+
+    const QString modelsDir = QDir::cleanPath(
+        QCoreApplication::applicationDirPath() + QStringLiteral("/../../models"));
+    const QString manifestPath = modelsDir + QStringLiteral("/yolov8n.json");
+
+    if (QFileInfo::exists(manifestPath)) {
+        const auto reply = QMessageBox::question(
+            this,
+            QStringLiteral("下载示例模型"),
+            QStringLiteral("示例模型清单已存在，是否重新下载？"),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        if (reply == QMessageBox::No) {
+            handleModelManifestSelected(manifestPath);
+            return;
+        }
+    }
+
+    QMessageBox::information(
+        this,
+        QStringLiteral("下载示例模型"),
+        QStringLiteral("即将打开 PowerShell 窗口下载 YOLOv8n 模型（约 6MB）。\n下载完成后请点击\"加载模型\"并选择 models/yolov8n.json。"));
+
+    const QString command = QStringLiteral(
+        "Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File \"%1\" -ModelsDir \"%2\"' -Wait");
+    QProcess::startDetached(QStringLiteral("powershell"),
+                             {QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
+                              QStringLiteral("-File"), resolvedScript,
+                              QStringLiteral("-ModelsDir"), modelsDir});
 }
 
 void MainWindow::handleImageSelected(const QString& imagePath) {
@@ -532,6 +592,29 @@ void MainWindow::handleExportRequested() {
 void MainWindow::handleDefaultExportDirectoryChanged(const QString& directoryPath) {
     settingsStore_.setDefaultExportDirectory(directoryPath);
     refreshSettingsPage();
+}
+
+void MainWindow::restoreLastModel() {
+    const QString lastPath = settingsStore_.lastModelManifestPath();
+    if (!lastPath.isEmpty() && QFileInfo::exists(lastPath)) {
+        handleModelManifestSelected(lastPath);
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent* event) {
+    if (inferencePage_->isRunning()) {
+        const auto reply = QMessageBox::question(
+            this,
+            QStringLiteral("确认退出"),
+            QStringLiteral("推理正在进行中，退出将丢失当前进度。是否确认退出？"),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        if (reply == QMessageBox::No) {
+            event->ignore();
+            return;
+        }
+    }
+    event->accept();
 }
 
 void MainWindow::handleExportImageRequested() {

@@ -40,6 +40,7 @@ private:
     void showPage(int pageId);
     void handleModelManifestSelected(const QString& manifestPath);
     void handleOnnxFileSelected(const QString& onnxPath);
+    void handleDownloadSampleModel();
     void handleImageSelected(const QString& imagePath);
     void handleFolderSelected(const QString& folderPath);
     void handleVideoSelected(const QString& videoPath, int maxFrames);
@@ -47,8 +48,15 @@ private:
     void handleExportRequested();
     void handleExportImageRequested();
     void handleDefaultExportDirectoryChanged(const QString& directoryPath);
+
+    void restoreLastModel();
+
     void applyInferenceResult(const core::InferenceSummary& summary);
 
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
+private:
     NavPanel* navPanel_ = nullptr;
     QStackedWidget* pageStack_ = nullptr;
     QWidget* contextPanel_ = nullptr;

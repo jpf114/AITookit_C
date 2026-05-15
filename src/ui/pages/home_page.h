@@ -19,6 +19,7 @@ public:
 signals:
     void loadModelClicked();
     void selectImageClicked();
+    void downloadSampleModelClicked();
     void recentModelActivated(const QString& path);
     void recentInputActivated(const QString& path);
 
