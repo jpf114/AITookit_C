@@ -1,22 +1,32 @@
 #include "ui/widgets/image_preview_widget.h"
 
+#include <QApplication>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPen>
+#include <QWheelEvent>
 
 namespace aitoolkit::ui {
 
 ImagePreviewWidget::ImagePreviewWidget(QWidget* parent)
     : QWidget(parent) {
     setAutoFillBackground(true);
+    setMouseTracking(true);
 }
 
 void ImagePreviewWidget::setImage(const QImage& image) {
     image_ = image;
-    update();
+    resetView();
 }
 
 void ImagePreviewWidget::setSummary(const core::InferenceSummary& summary) {
     summary_ = summary;
+    update();
+}
+
+void ImagePreviewWidget::resetView() {
+    zoomLevel_ = 1.0;
+    panOffset_ = QPointF();
     update();
 }
 
@@ -33,7 +43,7 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
         return;
     }
 
-    const QRectF targetRect = imageTargetRect();
+    const QRectF targetRect = scaledImageRect();
     painter.drawImage(targetRect, image_);
 
     const double xScale = targetRect.width() / static_cast<double>(image_.width());
@@ -62,9 +72,79 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
         painter.drawText(labelRect, labelText);
         painter.setPen(QPen(color, 2.0));
     }
+
+    if (zoomLevel_ > 1.0001) {
+        painter.setPen(QColor(QStringLiteral("#94a3b8")));
+        painter.setBrush(Qt::NoBrush);
+        const QFont oldFont = painter.font();
+        QFont smallFont = oldFont;
+        smallFont.setPointSize(oldFont.pointSize() - 1);
+        painter.setFont(smallFont);
+        painter.drawText(
+            rect().adjusted(8, 8, -8, -8),
+            Qt::AlignBottom | Qt::AlignLeft,
+            QStringLiteral("%1%  双击重置").arg(static_cast<int>(zoomLevel_ * 100)));
+    }
 }
 
-QRectF ImagePreviewWidget::imageTargetRect() const {
+void ImagePreviewWidget::wheelEvent(QWheelEvent* event) {
+    if (image_.isNull()) {
+        return;
+    }
+
+    const double factor = event->angleDelta().y() > 0 ? 1.15 : 1.0 / 1.15;
+    const double newZoom = zoomLevel_ * factor;
+
+    if (newZoom < 0.1 || newZoom > 50.0) {
+        return;
+    }
+
+    const QPointF mousePos = event->position();
+    const QPointF imagePoint = (mousePos - panOffset_) / zoomLevel_;
+
+    zoomLevel_ = newZoom;
+
+    panOffset_ = mousePos - imagePoint * zoomLevel_;
+    update();
+
+    event->accept();
+}
+
+void ImagePreviewWidget::mousePressEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton && !image_.isNull()) {
+        panning_ = true;
+        lastPanPos_ = event->position();
+        setCursor(Qt::ClosedHandCursor);
+        event->accept();
+    }
+}
+
+void ImagePreviewWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (panning_) {
+        const QPointF delta = event->position() - lastPanPos_;
+        panOffset_ += delta;
+        lastPanPos_ = event->position();
+        update();
+        event->accept();
+    }
+}
+
+void ImagePreviewWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton && panning_) {
+        panning_ = false;
+        setCursor(Qt::ArrowCursor);
+        event->accept();
+    }
+}
+
+void ImagePreviewWidget::mouseDoubleClickEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton) {
+        resetView();
+        event->accept();
+    }
+}
+
+QRectF ImagePreviewWidget::fitRect() const {
     if (image_.isNull()) {
         return {};
     }
@@ -77,6 +157,26 @@ QRectF ImagePreviewWidget::imageTargetRect() const {
     return QRectF(
         (width() - scaledSize.width()) * 0.5,
         (height() - scaledSize.height()) * 0.5,
+        scaledSize.width(),
+        scaledSize.height());
+}
+
+QRectF ImagePreviewWidget::scaledImageRect() const {
+    if (image_.isNull()) {
+        return {};
+    }
+
+    const QRectF base = fitRect();
+    const QSizeF sourceSize = image_.size();
+    const double baseScale = std::min(base.width() / sourceSize.width(), base.height() / sourceSize.height());
+    const double totalScale = baseScale * zoomLevel_;
+
+    const QSizeF scaledSize(sourceSize.width() * totalScale, sourceSize.height() * totalScale);
+    const QPointF center = rect().center() + panOffset_;
+
+    return QRectF(
+        center.x() - scaledSize.width() * 0.5,
+        center.y() - scaledSize.height() * 0.5,
         scaledSize.width(),
         scaledSize.height());
 }
