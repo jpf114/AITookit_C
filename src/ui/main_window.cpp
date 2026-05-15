@@ -25,6 +25,7 @@
 #include "ui/pages/models_page.h"
 #include "ui/pages/results_page.h"
 #include "ui/pages/settings_page.h"
+#include "services/unicode_io.h"
 
 namespace aitoolkit::ui {
 namespace {
@@ -506,6 +507,21 @@ void MainWindow::handleVideoSelected(const QString& videoPath, const int maxFram
     if (currentManifestPath_.isEmpty()) {
         QMessageBox::warning(this, QStringLiteral("缺少模型"), QStringLiteral("请先加载模型清单，再进行视频推理。"));
         return;
+    }
+
+    if (maxFrames <= 0) {
+        const int totalFrames = services::probeVideoFrameCount(videoPath);
+        if (totalFrames > 1000) {
+            const auto reply = QMessageBox::question(
+                this,
+                QStringLiteral("大视频预警"),
+                QStringLiteral("该视频共有 %1 帧，处理可能需要较长时间。是否继续？").arg(totalFrames),
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No);
+            if (reply == QMessageBox::No) {
+                return;
+            }
+        }
     }
 
     try {

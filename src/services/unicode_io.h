@@ -12,4 +12,6 @@ cv::Mat imreadUnicode(const QString& filePath, int flags);
 
 std::vector<char> readFileToBuffer(const QString& filePath);
 
+int probeVideoFrameCount(const QString& videoPath);
+
 }  // namespace aitoolkit::services
