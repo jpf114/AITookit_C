@@ -1,22 +1,22 @@
 param(
-    [string]$OutputDir = (Join-Path $PSScriptRoot "..\models"),
+    [string]$ModelsDir = (Join-Path $PSScriptRoot "..\models"),
     [string]$ModelName = "yolov8n",
     [string]$ModelUrl = "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx"
 )
 
 $ErrorActionPreference = "Stop"
 
-$OutputDir = [System.IO.Path]::GetFullPath($OutputDir)
+$ModelsDir = [System.IO.Path]::GetFullPath($ModelsDir)
 
-if (-not (Test-Path $OutputDir)) {
-    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
-    Write-Host "Created directory: $OutputDir"
+if (-not (Test-Path $ModelsDir)) {
+    New-Item -ItemType Directory -Path $ModelsDir -Force | Out-Null
+    Write-Host "Created directory: $ModelsDir"
 }
 
 $onnxFileName = "$ModelName.onnx"
-$onnxFilePath = Join-Path $OutputDir $onnxFileName
+$onnxFilePath = Join-Path $ModelsDir $onnxFileName
 $jsonFileName = "$ModelName.json"
-$jsonFilePath = Join-Path $OutputDir $jsonFileName
+$jsonFilePath = Join-Path $ModelsDir $jsonFileName
 
 $cocoLabels = @(
     "person","bicycle","car","motorcycle","airplane","bus","train","truck","boat",
