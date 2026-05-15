@@ -6,6 +6,7 @@
 #include "core/model_manifest.h"
 
 class QLabel;
+class QListWidget;
 
 namespace aitoolkit::ui {
 
@@ -25,8 +26,10 @@ signals:
 private:
     QLabel* manifestPathLabel_ = nullptr;
     QLabel* manifestSummaryLabel_ = nullptr;
+    QListWidget* labelsList_ = nullptr;
     QWidget* loadSection_ = nullptr;
     QWidget* summarySection_ = nullptr;
+    QWidget* labelsSection_ = nullptr;
 };
 
 }  // namespace aitoolkit::ui
