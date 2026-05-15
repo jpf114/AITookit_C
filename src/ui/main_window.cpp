@@ -346,6 +346,31 @@ void MainWindow::wireSignals() {
         refreshSettingsPage();
         statusBar()->showMessage(QStringLiteral("图片已导出至 %1").arg(QDir::toNativeSeparators(outputPath)), 3000);
     });
+    connect(resultsPage_, &ResultsPage::exportBatchJsonRequested, this, [this]() {
+        const auto results = controller_->currentBatchResults();
+        if (results.isEmpty()) {
+            QMessageBox::information(this, QStringLiteral("暂无结果"), QStringLiteral("没有可导出的批量结果。"));
+            return;
+        }
+
+        QString initialDirectory = controller_->settingsStore().defaultExportDirectory();
+        const QString outputPath = QFileDialog::getSaveFileName(
+            this,
+            QStringLiteral("批量导出 JSON"),
+            initialDirectory.isEmpty()
+                ? QString()
+                : QDir(initialDirectory).filePath(QStringLiteral("batch_results.json")),
+            QStringLiteral("JSON (*.json)"));
+        if (outputPath.isEmpty()) {
+            return;
+        }
+
+        if (controller_->exportService().exportBatchJson(results, outputPath)) {
+            statusBar()->showMessage(QStringLiteral("批量结果已导出至 %1").arg(QDir::toNativeSeparators(outputPath)), 3000);
+        } else {
+            QMessageBox::warning(this, QStringLiteral("导出失败"), QStringLiteral("无法写入文件：%1").arg(outputPath));
+        }
+    });
     connect(settingsPage_,
             &SettingsPage::defaultExportDirectoryChanged,
             this,

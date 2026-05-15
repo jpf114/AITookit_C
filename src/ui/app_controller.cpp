@@ -22,6 +22,7 @@ AppController::AppController(QObject* parent)
 
     connect(inferenceWorker_, &services::InferenceWorker::imageResultReady, this, [this](const core::InferenceSummary& summary) {
         inferenceRunning_ = false;
+        batchResults_.clear();
         applyInferenceResult(summary);
         emit inferenceCompleted(summary);
     });
@@ -30,6 +31,7 @@ AppController::AppController(QObject* parent)
     });
     connect(inferenceWorker_, &services::InferenceWorker::batchFinished, this, [this](const QVector<core::InferenceSummary>& results) {
         inferenceRunning_ = false;
+        batchResults_ = results;
         if (!results.isEmpty()) {
             applyInferenceResult(results.first());
         }
@@ -40,6 +42,7 @@ AppController::AppController(QObject* parent)
     });
     connect(inferenceWorker_, &services::InferenceWorker::videoFinished, this, [this](const QVector<core::InferenceSummary>& results) {
         inferenceRunning_ = false;
+        batchResults_ = results;
         if (!results.isEmpty()) {
             applyInferenceResult(results.first());
         }
@@ -296,6 +299,10 @@ QString AppController::currentImagePath() const {
 
 core::InferenceSummary AppController::currentSummary() const {
     return currentSummary_;
+}
+
+QVector<core::InferenceSummary> AppController::currentBatchResults() const {
+    return batchResults_;
 }
 
 core::SettingsStore& AppController::settingsStore() {

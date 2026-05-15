@@ -1,6 +1,8 @@
 #include "services/export_service.h"
 
+#include <QFile>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QPainter>
 #include <QPen>
@@ -9,7 +11,7 @@
 
 namespace aitoolkit::services {
 
-void ExportService::exportJson(const QString& filePath, const core::InferenceSummary& summary) const {
+QJsonObject ExportService::summaryToJson(const core::InferenceSummary& summary) const {
     QJsonArray detections;
     for (const core::DetectionItem& detection : summary.detections) {
         QJsonObject boundingBox;
@@ -34,7 +36,27 @@ void ExportService::exportJson(const QString& filePath, const core::InferenceSum
     root.insert(QStringLiteral("detection_count"), summary.detectionCount);
     root.insert(QStringLiteral("elapsed_ms"), summary.elapsedMs);
     root.insert(QStringLiteral("detections"), detections);
-    core::writeJsonObject(filePath, root);
+    return root;
+}
+
+void ExportService::exportJson(const QString& filePath, const core::InferenceSummary& summary) const {
+    core::writeJsonObject(filePath, summaryToJson(summary));
+}
+
+bool ExportService::exportBatchJson(const QVector<core::InferenceSummary>& results, const QString& outputPath) const {
+    QJsonArray array;
+    for (const core::InferenceSummary& summary : results) {
+        array.append(summaryToJson(summary));
+    }
+
+    QJsonDocument doc(array);
+    QFile file(outputPath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        return false;
+    }
+    file.write(doc.toJson());
+    file.close();
+    return true;
 }
 
 void ExportService::exportRenderedImage(

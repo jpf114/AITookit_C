@@ -32,6 +32,10 @@ ResultsPage::ResultsPage(QWidget* parent)
     auto* exportImageButton = new QPushButton(QStringLiteral("\u5bfc\u51fa\u56fe\u7247"), this);
     exportImageButton->setObjectName(QStringLiteral("SecondaryButton"));
 
+    exportBatchBtn_ = new QPushButton(QStringLiteral("\u6279\u91cf\u5bfc\u51fa JSON"), this);
+    exportBatchBtn_->setObjectName(QStringLiteral("SecondaryButton"));
+    exportBatchBtn_->hide();
+
     summaryStrip_ = new QWidget(this);
     summaryStrip_->setObjectName(QStringLiteral("ResultsSummaryStrip"));
 
@@ -44,6 +48,7 @@ ResultsPage::ResultsPage(QWidget* parent)
     summaryLabel_->setWordWrap(true);
 
     summaryStripLayout->addWidget(summaryLabel_, 1);
+    summaryStripLayout->addWidget(exportBatchBtn_, 0);
     summaryStripLayout->addWidget(exportImageButton, 0);
     summaryStripLayout->addWidget(exportButton, 0);
 
@@ -100,6 +105,7 @@ ResultsPage::ResultsPage(QWidget* parent)
 
     connect(exportButton, &QPushButton::clicked, this, &ResultsPage::exportRequested);
     connect(exportImageButton, &QPushButton::clicked, this, &ResultsPage::exportImageRequested);
+    connect(exportBatchBtn_, &QPushButton::clicked, this, &ResultsPage::exportBatchJsonRequested);
     connect(resultsList_, &QListWidget::currentRowChanged, this, &ResultsPage::showResultAtIndex);
 
     layout->addWidget(title);
@@ -116,6 +122,7 @@ void ResultsPage::setSummary(const core::InferenceSummary& summary) {
     resultsList_->clear();
     resultsList_->hide();
     currentIndex_ = -1;
+    exportBatchBtn_->hide();
 
     previewWidget_->setSummary(summary);
 
@@ -160,6 +167,7 @@ void ResultsPage::setResults(const QVector<core::InferenceSummary>& results) {
     }
 
     resultsList_->setVisible(results.size() > 1);
+    exportBatchBtn_->setVisible(results.size() > 1);
     resultsList_->setCurrentRow(0);
 }
 
@@ -167,6 +175,7 @@ void ResultsPage::clearResults() {
     results_.clear();
     resultsList_->clear();
     resultsList_->hide();
+    exportBatchBtn_->hide();
     currentIndex_ = -1;
     previewWidget_->setImage(QImage());
     previewWidget_->setSummary({});

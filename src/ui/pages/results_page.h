@@ -8,6 +8,7 @@
 class QComboBox;
 class QLabel;
 class QListWidget;
+class QPushButton;
 class QTableWidget;
 
 namespace aitoolkit::ui {
@@ -28,6 +29,7 @@ public:
 signals:
     void exportRequested();
     void exportImageRequested();
+    void exportBatchJsonRequested();
 
 private:
     void showResultAtIndex(int index);
@@ -41,6 +43,7 @@ private:
     QTableWidget* detectionsTable_ = nullptr;
     QListWidget* resultsList_ = nullptr;
     QComboBox* categoryFilter_ = nullptr;
+    QPushButton* exportBatchBtn_ = nullptr;
     QVector<core::InferenceSummary> results_;
     QVector<core::DetectionItem> currentDetections_;
     int currentIndex_ = -1;

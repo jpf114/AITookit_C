@@ -38,6 +38,7 @@ public:
     QString currentManifestPath() const;
     QString currentImagePath() const;
     core::InferenceSummary currentSummary() const;
+    QVector<core::InferenceSummary> currentBatchResults() const;
     core::SettingsStore& settingsStore();
     services::ModelService& modelService();
     services::ExportService& exportService();
@@ -73,6 +74,7 @@ private:
     QString currentManifestPath_;
     QString currentImagePath_;
     core::InferenceSummary currentSummary_;
+    QVector<core::InferenceSummary> batchResults_;
     bool inferenceRunning_ = false;
 };
 
