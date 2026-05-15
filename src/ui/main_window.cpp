@@ -1,6 +1,7 @@
 #include "ui/main_window.h"
 
 #include <QCloseEvent>
+#include <QCoreApplication>
 #include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -182,29 +183,39 @@ void MainWindow::wireSignals() {
         const QString modelsDir = QDir::cleanPath(
             QCoreApplication::applicationDirPath() + QStringLiteral("/../../models"));
         const QString manifestPath = modelsDir + QStringLiteral("/yolov8n.json");
+        const QString onnxPath = modelsDir + QStringLiteral("/yolov8n.onnx");
 
-        if (QFileInfo::exists(manifestPath)) {
-            const auto reply = QMessageBox::question(
-                this,
-                QStringLiteral("下载示例模型"),
-                QStringLiteral("示例模型清单已存在，是否重新下载？"),
-                QMessageBox::Yes | QMessageBox::No,
-                QMessageBox::No);
-            if (reply == QMessageBox::No) {
-                controller_->loadModelManifest(manifestPath);
-                return;
-            }
+        if (QFileInfo::exists(manifestPath) && QFileInfo::exists(onnxPath)) {
+            controller_->loadModelManifest(manifestPath);
+            return;
         }
 
         QMessageBox::information(
             this,
             QStringLiteral("下载示例模型"),
-            QStringLiteral("即将打开 PowerShell 窗口下载 YOLOv8n 模型（约 6MB）。\n下载完成后请点击\"加载模型\"并选择 models/yolov8n.json。"));
+            QStringLiteral("即将下载 YOLOv8n 模型（约 6MB），请稍候..."));
 
-        QProcess::startDetached(QStringLiteral("powershell"),
-                                 {QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
-                                  QStringLiteral("-File"), resolvedScript,
-                                  QStringLiteral("-ModelsDir"), modelsDir});
+        auto* downloadProcess = new QProcess(this);
+        connect(downloadProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                this, [this, downloadProcess, manifestPath, onnxPath](int, QProcess::ExitStatus) {
+            downloadProcess->deleteLater();
+
+            if (QFileInfo::exists(manifestPath) && QFileInfo::exists(onnxPath)) {
+                controller_->loadModelManifest(manifestPath);
+                statusBar()->showMessage(QStringLiteral("示例模型下载完成并已加载"), 5000);
+            } else {
+                QMessageBox::warning(
+                    this,
+                    QStringLiteral("下载失败"),
+                    QStringLiteral("模型下载未完成。请检查网络连接后重试，或手动下载模型文件。"));
+            }
+        });
+
+        downloadProcess->start(
+            QStringLiteral("powershell"),
+            {QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
+             QStringLiteral("-File"), resolvedScript,
+             QStringLiteral("-ModelsDir"), modelsDir});
     });
     connect(homePage_, &HomePage::recentModelActivated, this, [this](const QString& path) {
         controller_->loadModelManifest(path);
