@@ -131,6 +131,7 @@ ai_collect_existing_sources(
     ai_toolkit_c_sources
     app/main.cpp
     app/app_bootstrap.cpp
+    app/crash_handler.cpp
     ui/main_window.cpp
     ui/nav_panel.cpp
     ui/dialogs/onnx_setup_dialog.cpp
@@ -157,6 +158,10 @@ target_link_libraries(
         Qt6::Widgets
         Qt6::Svg
 )
+
+if(WIN32)
+    target_link_libraries(ai_toolkit_c PRIVATE DbgHelp)
+endif()
 ai_copy_qt_windows_platform_plugin(ai_toolkit_c)
 
 install(TARGETS ai_toolkit_c RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
