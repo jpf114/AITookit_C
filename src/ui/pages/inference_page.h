@@ -27,6 +27,7 @@ public:
 
     double confidenceThreshold() const;
     double nmsThreshold() const;
+    int maxFrames() const;
     bool isRunning() const;
 
 signals:

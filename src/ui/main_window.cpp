@@ -2,6 +2,8 @@
 
 #include <QCloseEvent>
 #include <QDir>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFrame>
@@ -9,8 +11,11 @@
 #include <QImage>
 #include <QLabel>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QProcess>
+#include <QShortcut>
 #include <QStackedWidget>
+#include <QUrl>
 #include <QVBoxLayout>
 
 #include "ui/nav_panel.h"
@@ -39,6 +44,7 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
     setWindowTitle(QStringLiteral("AI \u68c0\u6d4b\u5de5\u5177"));
     resize(1440, 900);
+    setAcceptDrops(true);
 
     const QByteArray savedGeometry = settingsStore_.windowGeometry();
     if (!savedGeometry.isEmpty()) {
@@ -52,6 +58,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     buildShell();
     wireSignals();
+    setupShortcuts();
     refreshSettingsPage();
     updateContextPanel();
     restoreLastModel();
@@ -617,6 +624,83 @@ void MainWindow::closeEvent(QCloseEvent* event) {
         }
     }
     event->accept();
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent* event) {
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent* event) {
+    const QList<QUrl> urls = event->mimeData()->urls();
+    if (urls.isEmpty()) {
+        return;
+    }
+    event->acceptProposedAction();
+    handleDroppedUrls(urls);
+}
+
+void MainWindow::setupShortcuts() {
+    auto* shortcutOpen = new QShortcut(QKeySequence::Open, this);
+    connect(shortcutOpen, &QShortcut::activated, this, [this]() {
+        const QString path = QFileDialog::getOpenFileName(
+            this,
+            QStringLiteral("选择图像"),
+            QString(),
+            QStringLiteral("Images (*.png *.jpg *.jpeg *.bmp)"));
+        if (!path.isEmpty()) {
+            handleImageSelected(path);
+            showPage(NavPanel::InferencePageId);
+        }
+    });
+
+    auto* shortcutSave = new QShortcut(QKeySequence::Save, this);
+    connect(shortcutSave, &QShortcut::activated, this, &MainWindow::handleExportRequested);
+
+    auto* shortcutQuit = new QShortcut(QKeySequence::Quit, this);
+    connect(shortcutQuit, &QShortcut::activated, this, &QWidget::close);
+}
+
+void MainWindow::handleDroppedUrls(const QList<QUrl>& urls) {
+    static const QStringList kImageSuffixes = {
+        QStringLiteral("png"),
+        QStringLiteral("jpg"),
+        QStringLiteral("jpeg"),
+        QStringLiteral("bmp"),
+    };
+    static const QStringList kVideoSuffixes = {
+        QStringLiteral("mp4"),
+        QStringLiteral("avi"),
+        QStringLiteral("mkv"),
+        QStringLiteral("mov"),
+        QStringLiteral("wmv"),
+    };
+
+    for (const QUrl& url : urls) {
+        if (!url.isLocalFile()) {
+            continue;
+        }
+
+        const QString localPath = url.toLocalFile();
+        const QFileInfo info(localPath);
+
+        if (info.isDir()) {
+            handleFolderSelected(localPath);
+            return;
+        }
+
+        const QString suffix = info.suffix().toLower();
+        if (kImageSuffixes.contains(suffix)) {
+            handleImageSelected(localPath);
+            showPage(NavPanel::InferencePageId);
+            return;
+        }
+        if (kVideoSuffixes.contains(suffix)) {
+            handleVideoSelected(localPath, inferencePage_->maxFrames());
+            return;
+        }
+    }
 }
 
 void MainWindow::handleExportImageRequested() {

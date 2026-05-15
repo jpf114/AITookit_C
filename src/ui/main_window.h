@@ -13,6 +13,7 @@
 #include "services/model_service.h"
 
 class QLabel;
+class QShortcut;
 class QStackedWidget;
 class QWidget;
 
@@ -50,11 +51,14 @@ private:
     void handleDefaultExportDirectoryChanged(const QString& directoryPath);
 
     void restoreLastModel();
-
+    void setupShortcuts();
     void applyInferenceResult(const core::InferenceSummary& summary);
+    void handleDroppedUrls(const QList<QUrl>& urls);
 
 protected:
     void closeEvent(QCloseEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
 
 private:
     NavPanel* navPanel_ = nullptr;

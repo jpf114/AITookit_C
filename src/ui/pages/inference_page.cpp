@@ -261,6 +261,10 @@ double InferencePage::nmsThreshold() const {
     return nmsSpin_->value();
 }
 
+int InferencePage::maxFrames() const {
+    return maxFramesSpin_->value();
+}
+
 bool InferencePage::isRunning() const {
     return running_;
 }
