@@ -220,6 +220,18 @@ void MainWindow::wireSignals() {
     connect(homePage_, &HomePage::recentModelActivated, this, [this](const QString& path) {
         controller_->loadModelManifest(path);
     });
+    connect(homePage_, &HomePage::quickStartClicked, this, [this]() {
+        const QString imagePath = QFileDialog::getOpenFileName(
+            this,
+            QStringLiteral("选择图像"),
+            QString(),
+            QStringLiteral("图像 (*.png *.jpg *.jpeg *.bmp *.tiff *.tif *.webp)"));
+        if (imagePath.isEmpty()) {
+            return;
+        }
+        controller_->selectImage(imagePath);
+        controller_->runInference(-1.0, -1.0);
+    });
     connect(homePage_, &HomePage::recentInputActivated, this, [this](const QString& imagePath) {
         controller_->selectImage(imagePath);
         showPage(NavPanel::InferencePageId);
@@ -352,6 +364,7 @@ void MainWindow::wireSignals() {
         inferencePage_->setDefaultThresholds(manifest.confidenceThreshold, manifest.nmsThreshold);
         resultsPage_->setSummary({});
         resultsPage_->setImage(loadUsableImage(controller_->currentImagePath()));
+        homePage_->setQuickStartVisible(true);
         refreshSettingsPage();
         updateContextPanel();
         showPage(NavPanel::InferencePageId);

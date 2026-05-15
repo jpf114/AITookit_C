@@ -39,9 +39,15 @@ HomePage::HomePage(QWidget* parent)
     downloadBtn->setObjectName(QStringLiteral("SecondaryButton"));
     downloadBtn->setToolTip(QStringLiteral("\u4e0b\u8f7d YOLOv8n COCO \u793a\u4f8b\u6a21\u578b\uff08\u7ea6 6MB\uff09"));
 
+    quickStartBtn_ = new QPushButton(QStringLiteral("\u5feb\u901f\u4f53\u9a8c"), this);
+    quickStartBtn_->setObjectName(QStringLiteral("PrimaryButton"));
+    quickStartBtn_->setToolTip(QStringLiteral("\u4f7f\u7528\u793a\u4f8b\u56fe\u50cf\u6267\u884c\u4e00\u6b21\u76ee\u6807\u68c0\u6d4b"));
+    quickStartBtn_->hide();
+
     actionsLayout->addWidget(loadModelBtn);
     actionsLayout->addWidget(selectImageBtn);
     actionsLayout->addWidget(downloadBtn);
+    actionsLayout->addWidget(quickStartBtn_);
     actionsLayout->addStretch(1);
 
     auto* recentSection = new QWidget(this);
@@ -88,6 +94,7 @@ HomePage::HomePage(QWidget* parent)
     connect(loadModelBtn, &QPushButton::clicked, this, &HomePage::loadModelClicked);
     connect(selectImageBtn, &QPushButton::clicked, this, &HomePage::selectImageClicked);
     connect(downloadBtn, &QPushButton::clicked, this, &HomePage::downloadSampleModelClicked);
+    connect(quickStartBtn_, &QPushButton::clicked, this, &HomePage::quickStartClicked);
     connect(recentModelsList_, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
         emit recentModelActivated(item->data(Qt::UserRole).toString());
     });
@@ -120,6 +127,10 @@ void HomePage::setRecentInputs(const QStringList& paths) {
         item->setData(Qt::UserRole, path);
         item->setToolTip(path);
     }
+}
+
+void HomePage::setQuickStartVisible(const bool visible) {
+    quickStartBtn_->setVisible(visible);
 }
 
 }  // namespace aitoolkit::ui
