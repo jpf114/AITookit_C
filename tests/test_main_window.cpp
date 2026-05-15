@@ -16,6 +16,7 @@
 #include "core/json_utils.h"
 #define private public
 #include "ui/main_window.h"
+#include "ui/app_controller.h"
 #undef private
 #include "ui/pages/inference_page.h"
 #include "ui/pages/results_page.h"
@@ -65,7 +66,7 @@ aitoolkit::core::InferenceSummary makeSummary(const QString& modelName, const QS
 }
 
 void seedCurrentResult(aitoolkit::ui::MainWindow& window, const aitoolkit::core::InferenceSummary& summary) {
-    window.currentSummary_ = summary;
+    window.controller_->applyInferenceResult(summary);
     window.resultsPage_->setSummary(summary);
     window.runStatusLabel_->setText(
         QStringLiteral("\u5df2\u5b8c\u6210\uff0c\u5171 %1 \u4e2a\u76ee\u6807\uff0c\u8017\u65f6 %2 ms")
@@ -85,8 +86,8 @@ void verifyHasResultsState(aitoolkit::ui::MainWindow& window) {
 }
 
 void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
-    QCOMPARE(window.currentSummary_.inputPath, QString());
-    QCOMPARE(window.currentSummary_.detections.size(), 0);
+    QCOMPARE(window.controller_->currentSummary().inputPath, QString());
+    QCOMPARE(window.controller_->currentSummary().detections.size(), 0);
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
     QVERIFY(resultsSummaryLabel != nullptr);
@@ -154,7 +155,7 @@ void MainWindowTest::changingImageClearsStoredAndVisibleResults() {
 
     const auto summary = makeSummary(QStringLiteral("Warehouse Detector"), QStringLiteral("D:/images/first.jpg"));
     seedCurrentResult(window, summary);
-    QVERIFY(!window.currentSummary_.inputPath.isEmpty());
+    QVERIFY(!window.controller_->currentSummary().inputPath.isEmpty());
     verifyHasResultsState(window);
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
@@ -196,7 +197,7 @@ void MainWindowTest::changingModelClearsStoredAndVisibleResults() {
 
     const auto summary = makeSummary(QStringLiteral("Warehouse Detector A"), QStringLiteral("D:/images/first.jpg"));
     seedCurrentResult(window, summary);
-    QVERIFY(!window.currentSummary_.inputPath.isEmpty());
+    QVERIFY(!window.controller_->currentSummary().inputPath.isEmpty());
     verifyHasResultsState(window);
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));

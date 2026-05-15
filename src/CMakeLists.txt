@@ -133,6 +133,7 @@ ai_collect_existing_sources(
     app/app_bootstrap.cpp
     app/crash_handler.cpp
     ui/main_window.cpp
+    ui/app_controller.cpp
     ui/nav_panel.cpp
     ui/dialogs/onnx_setup_dialog.cpp
     ui/pages/home_page.cpp

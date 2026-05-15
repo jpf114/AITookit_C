@@ -1,16 +1,10 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QThread>
 
 #include <memory>
 
-#include "core/settings_store.h"
 #include "core/types.h"
-#include "models/yolo_detection_model.h"
-#include "services/export_service.h"
-#include "services/inference_worker.h"
-#include "services/model_service.h"
 
 class QLabel;
 class QShortcut;
@@ -19,6 +13,7 @@ class QWidget;
 
 namespace aitoolkit::ui {
 
+class AppController;
 class HomePage;
 class InferencePage;
 class ModelsPage;
@@ -39,20 +34,7 @@ private:
     void updateContextPanel();
     void refreshSettingsPage();
     void showPage(int pageId);
-    void handleModelManifestSelected(const QString& manifestPath);
-    void handleOnnxFileSelected(const QString& onnxPath);
-    void handleDownloadSampleModel();
-    void handleImageSelected(const QString& imagePath);
-    void handleFolderSelected(const QString& folderPath);
-    void handleVideoSelected(const QString& videoPath, int maxFrames);
-    void handleRunRequested();
-    void handleExportRequested();
-    void handleExportImageRequested();
-    void handleDefaultExportDirectoryChanged(const QString& directoryPath);
-
-    void restoreLastModel();
     void setupShortcuts();
-    void applyInferenceResult(const core::InferenceSummary& summary);
     void handleDroppedUrls(const QList<QUrl>& urls);
 
 protected:
@@ -61,6 +43,8 @@ protected:
     void dropEvent(QDropEvent* event) override;
 
 private:
+    AppController* controller_ = nullptr;
+
     NavPanel* navPanel_ = nullptr;
     QStackedWidget* pageStack_ = nullptr;
     QWidget* contextPanel_ = nullptr;
@@ -78,19 +62,6 @@ private:
     InferencePage* inferencePage_ = nullptr;
     ResultsPage* resultsPage_ = nullptr;
     SettingsPage* settingsPage_ = nullptr;
-
-    services::ModelService modelService_;
-    services::ExportService exportService_;
-    core::SettingsStore settingsStore_;
-
-    services::InferenceWorker* inferenceWorker_ = nullptr;
-    QThread* inferenceThread_ = nullptr;
-
-    core::ModelManifest currentManifest_;
-    std::shared_ptr<models::YoloDetectionModel> currentModel_;
-    QString currentManifestPath_;
-    QString currentImagePath_;
-    core::InferenceSummary currentSummary_;
 };
 
 }  // namespace aitoolkit::ui
