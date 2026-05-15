@@ -1,5 +1,6 @@
 #include "ui/app_controller.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QImage>
@@ -55,6 +56,61 @@ AppController::~AppController() {
     inferenceThread_->quit();
     inferenceThread_->wait();
     delete inferenceWorker_;
+}
+
+bool AppController::tryLoadDefaultModel() {
+    const QString lastPath = settingsStore_.lastModelManifestPath();
+    if (!lastPath.isEmpty() && QFileInfo::exists(lastPath)) {
+        try {
+            currentManifest_ = modelService_.loadManifest(lastPath);
+            currentModel_.reset();
+            currentManifestPath_ = currentManifest_.manifestPath;
+            currentSummary_ = {};
+            settingsStore_.addRecentModel(currentManifestPath_);
+            emit modelLoaded(currentManifest_);
+            emit contextChanged();
+            return true;
+        } catch (const std::exception&) {
+        }
+    }
+
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    const QStringList searchPaths = {
+        appDir.filePath(QStringLiteral("../models")),
+        appDir.filePath(QStringLiteral("../../models")),
+        appDir.filePath(QStringLiteral("models"))
+    };
+
+    for (const QString& searchPath : searchPaths) {
+        const QDir modelsDir(searchPath);
+        if (!modelsDir.exists()) {
+            continue;
+        }
+
+        const QStringList jsonFiles = modelsDir.entryList(
+            {QStringLiteral("*.json")}, QDir::Files, QDir::Name);
+        for (const QString& jsonFile : jsonFiles) {
+            const QString manifestPath = modelsDir.absoluteFilePath(jsonFile);
+            try {
+                const core::ModelManifest manifest = modelService_.loadManifest(manifestPath);
+                if (!QFileInfo::exists(manifest.modelPath)) {
+                    continue;
+                }
+                currentManifest_ = manifest;
+                currentModel_.reset();
+                currentManifestPath_ = currentManifest_.manifestPath;
+                currentSummary_ = {};
+                settingsStore_.addRecentModel(currentManifestPath_);
+                settingsStore_.setLastModelManifestPath(currentManifestPath_);
+                emit modelLoaded(currentManifest_);
+                emit contextChanged();
+                return true;
+            } catch (const std::exception&) {
+            }
+        }
+    }
+
+    return false;
 }
 
 void AppController::loadModelManifest(const QString& manifestPath) {

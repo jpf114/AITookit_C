@@ -32,6 +32,7 @@ public:
     void exportJson(const QString& outputPath);
     void exportImage(const QString& outputPath);
     void setDefaultExportDirectory(const QString& directoryPath);
+    bool tryLoadDefaultModel();
 
     core::ModelManifest currentManifest() const;
     QString currentManifestPath() const;

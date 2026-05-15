@@ -51,10 +51,7 @@ MainWindow::MainWindow(QWidget* parent)
     refreshSettingsPage();
     updateContextPanel();
 
-    const QString lastPath = controller_->settingsStore().lastModelManifestPath();
-    if (!lastPath.isEmpty() && QFileInfo::exists(lastPath)) {
-        controller_->loadModelManifest(lastPath);
-    }
+    controller_->tryLoadDefaultModel();
 }
 
 MainWindow::~MainWindow() {
