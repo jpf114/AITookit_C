@@ -26,7 +26,7 @@ QString findExistingPath(const QStringList& candidatePaths) {
 void AppBootstrap::initialize(QApplication& app) {
     app.setApplicationName(QStringLiteral("AI 检测工具"));
     app.setApplicationDisplayName(QStringLiteral("AI 检测工具"));
-    app.setApplicationVersion(QStringLiteral("0.1.0"));
+    app.setApplicationVersion(QStringLiteral("0.2.0"));
     app.setOrganizationName(QStringLiteral("MyProject"));
 
     QFile styleFile(applicationStylePath());
