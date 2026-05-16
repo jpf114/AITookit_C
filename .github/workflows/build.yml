@@ -3,6 +3,7 @@ name: Build and Test
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -39,10 +40,35 @@ jobs:
           cmake --install build/release --config Release
           cd build/release
           cpack -G ZIP -C Release
+          cpack -G NSIS -C Release
 
       - name: Upload package
         if: matrix.build_type == 'Release'
         uses: actions/upload-artifact@v4
         with:
           name: AIToolkit-win64
-          path: build/release/AIToolkit-*.zip
+          path: |
+            build/release/AIToolkit-*.zip
+            build/release/AIToolkit-*.exe
+
+  release:
+    needs: build-windows
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: AIToolkit-win64
+          path: ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./artifacts/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
