@@ -53,7 +53,7 @@ void validateInputShapeAgainstModel(
 
 }  // namespace
 
-OnnxBackend::OnnxBackend(const QString& modelPath)
+OnnxBackend::OnnxBackend(const QString& modelPath, const int threadCount)
     : modelPath_(QDir::cleanPath(modelPath)),
       env_(ORT_LOGGING_LEVEL_WARNING, "ai_toolkit_c"),
       sessionOptions_() {
@@ -62,7 +62,7 @@ OnnxBackend::OnnxBackend(const QString& modelPath)
     }
 
     sessionOptions_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
-    sessionOptions_.SetIntraOpNumThreads(1);
+    sessionOptions_.SetIntraOpNumThreads(threadCount > 0 ? threadCount : 1);
 
     try {
         session_ = std::make_unique<Ort::Session>(env_, modelPath_.toStdWString().c_str(), sessionOptions_);

@@ -15,7 +15,7 @@ namespace aitoolkit::runtime {
 
 class OnnxBackend {
 public:
-    explicit OnnxBackend(const QString& modelPath);
+    explicit OnnxBackend(const QString& modelPath, int threadCount = 1);
 
     const QString& modelPath() const noexcept;
     bool isLoaded() const noexcept;

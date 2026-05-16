@@ -11,6 +11,7 @@ constexpr auto kRecentInputsKey = "recent/inputs";
 constexpr auto kDefaultExportDirectoryKey = "export/defaultDirectory";
 constexpr auto kLastModelManifestKey = "state/lastModelManifest";
 constexpr auto kWindowGeometryKey = "state/windowGeometry";
+constexpr auto kInferenceThreadCountKey = "inference/threadCount";
 
 }  // namespace
 
@@ -64,6 +65,15 @@ void SettingsStore::setLastModelManifestPath(const QString& path) {
 
 void SettingsStore::setWindowGeometry(const QByteArray& geometry) {
     settings_.setValue(QString::fromLatin1(kWindowGeometryKey), geometry);
+    settings_.sync();
+}
+
+int SettingsStore::inferenceThreadCount() const {
+    return settings_.value(QString::fromLatin1(kInferenceThreadCountKey), 1).toInt();
+}
+
+void SettingsStore::setInferenceThreadCount(const int count) {
+    settings_.setValue(QString::fromLatin1(kInferenceThreadCountKey), count);
     settings_.sync();
 }
 

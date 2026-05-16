@@ -22,6 +22,12 @@ public:
         double confidenceThreshold,
         double nmsThreshold,
         const QStringList& labels) const;
+
+    void setThreadCount(int count);
+    [[nodiscard]] int threadCount() const { return threadCount_; }
+
+private:
+    int threadCount_ = 1;
 };
 
 }  // namespace aitoolkit::services

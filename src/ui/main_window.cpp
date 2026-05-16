@@ -382,6 +382,10 @@ void MainWindow::wireSignals() {
         controller_->selectImage(imagePath);
         showPage(NavPanel::InferencePageId);
     });
+    connect(settingsPage_, &SettingsPage::inferenceThreadCountChanged, this, [this](int count) {
+        controller_->settingsStore().setInferenceThreadCount(count);
+        controller_->modelService().setThreadCount(count);
+    });
 
     connect(controller_, &AppController::modelLoaded, this, [this](const core::ModelManifest& manifest) {
         modelsPage_->setCurrentManifest(manifest);
@@ -566,6 +570,8 @@ void MainWindow::refreshSettingsPage() {
     settingsPage_->setDefaultExportDirectory(controller_->settingsStore().defaultExportDirectory());
     settingsPage_->setRecentModels(controller_->settingsStore().recentModels());
     settingsPage_->setRecentInputs(controller_->settingsStore().recentInputs());
+    settingsPage_->setInferenceThreadCount(controller_->settingsStore().inferenceThreadCount());
+    controller_->modelService().setThreadCount(controller_->settingsStore().inferenceThreadCount());
     homePage_->setRecentModels(controller_->settingsStore().recentModels());
     homePage_->setRecentInputs(controller_->settingsStore().recentInputs());
 }

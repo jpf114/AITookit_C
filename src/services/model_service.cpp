@@ -32,7 +32,7 @@ core::ModelManifest ModelService::loadManifest(const QString& manifestPath) cons
 std::unique_ptr<models::InferenceBackend> ModelService::loadDetectionModel(const QString& manifestPath) const {
     const core::ModelManifest manifest = loadManifest(manifestPath);
     validateDetectionManifest(manifest);
-    return std::make_unique<models::YoloDetectionModel>(manifest);
+    return std::make_unique<models::YoloDetectionModel>(manifest, threadCount_);
 }
 
 core::ModelManifest ModelService::createManifestFromOnnx(
@@ -73,6 +73,10 @@ core::ModelManifest ModelService::createManifestFromOnnx(
     core::writeJsonObject(manifestPath, root);
 
     return core::loadModelManifest(manifestPath);
+}
+
+void ModelService::setThreadCount(const int count) {
+    threadCount_ = count;
 }
 
 }  // namespace aitoolkit::services

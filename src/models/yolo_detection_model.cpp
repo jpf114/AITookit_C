@@ -153,9 +153,9 @@ bool isRecognizedAttributeCount(const int dimension, const int expectedNumClasse
 
 }  // namespace
 
-YoloDetectionModel::YoloDetectionModel(ModelManifest manifest)
+YoloDetectionModel::YoloDetectionModel(ModelManifest manifest, const int threadCount)
     : manifest_(std::move(manifest)),
-      backend_(manifest_.modelPath) {
+      backend_(manifest_.modelPath, threadCount) {
     registerBuiltinDecoders();
     if (manifest_.inputWidth <= 0 || manifest_.inputHeight <= 0) {
         throw modelError(QStringLiteral("YOLO input dimensions must be greater than zero"));

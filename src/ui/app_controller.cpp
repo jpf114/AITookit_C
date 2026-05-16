@@ -139,7 +139,7 @@ void AppController::loadOnnxFile(const QString& onnxPath, const QString& name, i
 
         currentManifest_ = manifest;
         currentManifestPath_ = manifest.manifestPath;
-        currentModel_ = std::make_shared<models::YoloDetectionModel>(manifest);
+        currentModel_ = std::make_shared<models::YoloDetectionModel>(manifest, modelService_.threadCount());
 
         settingsStore_.addRecentModel(manifest.manifestPath);
         settingsStore_.setLastModelManifestPath(manifest.manifestPath);

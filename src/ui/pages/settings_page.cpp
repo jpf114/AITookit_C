@@ -8,6 +8,7 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QVBoxLayout>
 
 namespace aitoolkit::ui {
@@ -29,6 +30,15 @@ SettingsPage::SettingsPage(QWidget* parent)
     browseButton->setObjectName(QStringLiteral("SecondaryButton"));
     exportRow->addWidget(exportDirectoryEdit_, 1);
     exportRow->addWidget(browseButton);
+
+    auto* threadLabel = new QLabel(QStringLiteral("推理线程数"), this);
+    threadCountSpin_ = new QSpinBox(this);
+    threadCountSpin_->setRange(1, 16);
+    threadCountSpin_->setValue(1);
+    threadCountSpin_->setToolTip(QStringLiteral("ONNX Runtime 推理使用的 CPU 线程数。增加线程数可利用多核 CPU 加速推理。"));
+    auto* threadRow = new QHBoxLayout();
+    threadRow->addWidget(threadCountSpin_);
+    threadRow->addStretch(1);
 
     auto* recentModelsLabel = new QLabel(QStringLiteral("最近模型"), this);
     recentModelsList_ = new QListWidget(this);
@@ -63,6 +73,8 @@ SettingsPage::SettingsPage(QWidget* parent)
             emit defaultExportDirectoryChanged(directoryPath);
         }
     });
+    connect(threadCountSpin_, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, &SettingsPage::inferenceThreadCountChanged);
 
     auto* aboutButton = new QPushButton(QStringLiteral("关于"), this);
     aboutButton->setObjectName(QStringLiteral("SecondaryButton"));
@@ -82,6 +94,8 @@ SettingsPage::SettingsPage(QWidget* parent)
     layout->addWidget(title);
     layout->addWidget(exportLabel);
     layout->addLayout(exportRow);
+    layout->addWidget(threadLabel);
+    layout->addLayout(threadRow);
     layout->addWidget(recentModelsLabel);
     layout->addWidget(recentModelsList_);
     layout->addWidget(recentInputsLabel);
@@ -101,6 +115,12 @@ void SettingsPage::setRecentModels(const QStringList& recentModels) {
 void SettingsPage::setRecentInputs(const QStringList& recentInputs) {
     recentInputsList_->clear();
     recentInputsList_->addItems(recentInputs);
+}
+
+void SettingsPage::setInferenceThreadCount(const int count) {
+    threadCountSpin_->blockSignals(true);
+    threadCountSpin_->setValue(count);
+    threadCountSpin_->blockSignals(false);
 }
 
 }  // namespace aitoolkit::ui
