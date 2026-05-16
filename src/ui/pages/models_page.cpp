@@ -1,10 +1,14 @@
 #include "ui/pages/models_page.h"
 
 #include <QAbstractItemView>
+#include <QCoreApplication>
+#include <QDesktopServices>
+#include <QDir>
 #include <QFileDialog>
 #include <QLabel>
 #include <QListWidget>
 #include <QPushButton>
+#include <QUrl>
 #include <QVBoxLayout>
 
 namespace aitoolkit::ui {
@@ -66,6 +70,10 @@ ModelsPage::ModelsPage(QWidget* parent)
     auto* loadOnnxButton = new QPushButton(QStringLiteral("加载 ONNX 文件"), loadSection_);
     loadOnnxButton->setObjectName(QStringLiteral("SecondaryButton"));
 
+    auto* browseDirButton = new QPushButton(QStringLiteral("浏览模型目录"), loadSection_);
+    browseDirButton->setObjectName(QStringLiteral("SecondaryButton"));
+    browseDirButton->setToolTip(QStringLiteral("在文件管理器中打开 models 目录"));
+
     manifestPathLabel_ = new QLabel(QStringLiteral("当前未选择模型清单"), loadSection_);
     manifestPathLabel_->setObjectName(QStringLiteral("ManifestPathLabel"));
     manifestPathLabel_->setWordWrap(true);
@@ -74,6 +82,7 @@ ModelsPage::ModelsPage(QWidget* parent)
     loadSectionLayout->addWidget(loadHintLabel);
     loadSectionLayout->addWidget(loadButton);
     loadSectionLayout->addWidget(loadOnnxButton);
+    loadSectionLayout->addWidget(browseDirButton);
     loadSectionLayout->addWidget(manifestPathLabel_);
 
     summarySection_ = new QWidget(this);
@@ -129,6 +138,24 @@ ModelsPage::ModelsPage(QWidget* parent)
         if (!path.isEmpty()) {
             emit onnxFileSelected(path);
         }
+    });
+    connect(browseDirButton, &QPushButton::clicked, this, []() {
+        const QDir appDir(QCoreApplication::applicationDirPath());
+        const QStringList searchPaths = {
+            appDir.filePath(QStringLiteral("../models")),
+            appDir.filePath(QStringLiteral("../../models")),
+            appDir.filePath(QStringLiteral("models"))
+        };
+
+        for (const QString& path : searchPaths) {
+            if (QDir(path).exists()) {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+                return;
+            }
+        }
+
+        QDir().mkpath(appDir.filePath(QStringLiteral("../models")));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(appDir.filePath(QStringLiteral("../models"))));
     });
 
     layout->addWidget(title);
