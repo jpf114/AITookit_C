@@ -15,10 +15,11 @@ namespace aitoolkit::runtime {
 
 class OnnxBackend {
 public:
-    explicit OnnxBackend(const QString& modelPath, int threadCount = 1);
+    explicit OnnxBackend(const QString& modelPath, int threadCount = 1, bool useGPU = false);
 
     const QString& modelPath() const noexcept;
     bool isLoaded() const noexcept;
+    bool isUsingGPU() const noexcept;
     const std::vector<std::string>& inputNames() const noexcept;
     const std::vector<std::string>& outputNames() const noexcept;
     const std::vector<int64_t>& inputShape() const noexcept;
@@ -42,6 +43,7 @@ private:
     std::vector<std::string> inputNames_;
     std::vector<std::string> outputNames_;
     std::vector<int64_t> inputShape_;
+    bool useGPU_ = false;
 };
 
 }  // namespace aitoolkit::runtime

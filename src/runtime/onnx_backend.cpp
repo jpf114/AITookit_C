@@ -53,16 +53,30 @@ void validateInputShapeAgainstModel(
 
 }  // namespace
 
-OnnxBackend::OnnxBackend(const QString& modelPath, const int threadCount)
+OnnxBackend::OnnxBackend(const QString& modelPath, const int threadCount, const bool useGPU)
     : modelPath_(QDir::cleanPath(modelPath)),
       env_(ORT_LOGGING_LEVEL_WARNING, "ai_toolkit_c"),
-      sessionOptions_() {
+      sessionOptions_(),
+      useGPU_(useGPU) {
     if (modelPath_.isEmpty()) {
         throw runtimeError(QStringLiteral("ONNX model path must not be empty"));
     }
 
     sessionOptions_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
     sessionOptions_.SetIntraOpNumThreads(threadCount > 0 ? threadCount : 1);
+
+    if (useGPU) {
+#ifdef USE_CUDA
+        try {
+            OrtCUDAProviderOptions cudaOptions;
+            sessionOptions_.AppendExecutionProvider_CUDA(cudaOptions);
+        } catch (const Ort::Exception&) {
+            useGPU_ = false;
+        }
+#else
+        useGPU_ = false;
+#endif
+    }
 
     try {
         session_ = std::make_unique<Ort::Session>(env_, modelPath_.toStdWString().c_str(), sessionOptions_);
@@ -82,6 +96,10 @@ const QString& OnnxBackend::modelPath() const noexcept {
 
 bool OnnxBackend::isLoaded() const noexcept {
     return session_ != nullptr;
+}
+
+bool OnnxBackend::isUsingGPU() const noexcept {
+    return useGPU_;
 }
 
 const std::vector<std::string>& OnnxBackend::inputNames() const noexcept {

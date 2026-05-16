@@ -12,6 +12,7 @@ constexpr auto kDefaultExportDirectoryKey = "export/defaultDirectory";
 constexpr auto kLastModelManifestKey = "state/lastModelManifest";
 constexpr auto kWindowGeometryKey = "state/windowGeometry";
 constexpr auto kInferenceThreadCountKey = "inference/threadCount";
+constexpr auto kUseGPUInferenceKey = "inference/useGPU";
 
 }  // namespace
 
@@ -74,6 +75,15 @@ int SettingsStore::inferenceThreadCount() const {
 
 void SettingsStore::setInferenceThreadCount(const int count) {
     settings_.setValue(QString::fromLatin1(kInferenceThreadCountKey), count);
+    settings_.sync();
+}
+
+bool SettingsStore::useGPUInference() const {
+    return settings_.value(QString::fromLatin1(kUseGPUInferenceKey), false).toBool();
+}
+
+void SettingsStore::setUseGPUInference(const bool useGPU) {
+    settings_.setValue(QString::fromLatin1(kUseGPUInferenceKey), useGPU);
     settings_.sync();
 }
 

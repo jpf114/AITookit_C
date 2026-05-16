@@ -16,7 +16,7 @@ namespace aitoolkit::models {
 
 class ClassificationModel : public InferenceBackend {
 public:
-    explicit ClassificationModel(core::ModelManifest manifest, int threadCount = 1);
+    explicit ClassificationModel(core::ModelManifest manifest, int threadCount = 1, bool useGPU = false);
 
     const core::ModelManifest& manifest() const noexcept override;
     QVector<core::DetectionItem> detect(

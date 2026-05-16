@@ -10,7 +10,8 @@ public:
     QStringList supportedTaskTypes() const override;
     std::unique_ptr<models::InferenceBackend> createModel(
         const core::ModelManifest& manifest,
-        int threadCount = 1) const override;
+        int threadCount = 1,
+        bool useGPU = false) const override;
 };
 
 void registerOnnxRuntimePlugin();

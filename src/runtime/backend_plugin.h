@@ -29,7 +29,8 @@ public:
     virtual QStringList supportedTaskTypes() const = 0;
     virtual std::unique_ptr<models::InferenceBackend> createModel(
         const core::ModelManifest& manifest,
-        int threadCount = 1) const = 0;
+        int threadCount = 1,
+        bool useGPU = false) const = 0;
 };
 
 }  // namespace aitoolkit::runtime

@@ -22,7 +22,7 @@ struct YoloPreprocessResult {
 
 class YoloDetectionModel : public InferenceBackend {
 public:
-    explicit YoloDetectionModel(core::ModelManifest manifest, int threadCount = 1);
+    explicit YoloDetectionModel(core::ModelManifest manifest, int threadCount = 1, bool useGPU = false);
 
     const core::ModelManifest& manifest() const noexcept override;
     QVector<core::DetectionItem> detect(

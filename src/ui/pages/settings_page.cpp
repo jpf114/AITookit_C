@@ -1,5 +1,6 @@
 #include "ui/pages/settings_page.h"
 
+#include <QCheckBox>
 #include <QCoreApplication>
 #include <QFileDialog>
 #include <QHBoxLayout>
@@ -39,6 +40,10 @@ SettingsPage::SettingsPage(QWidget* parent)
     auto* threadRow = new QHBoxLayout();
     threadRow->addWidget(threadCountSpin_);
     threadRow->addStretch(1);
+
+    gpuCheckBox_ = new QCheckBox(QStringLiteral("使用 GPU 加速推理（CUDA）"), this);
+    gpuCheckBox_->setToolTip(QStringLiteral("需要 NVIDIA GPU 和 CUDA 驱动。如果 GPU 不可用，将自动回退到 CPU 推理。"));
+    connect(gpuCheckBox_, &QCheckBox::toggled, this, &SettingsPage::useGPUChanged);
 
     auto* recentModelsLabel = new QLabel(QStringLiteral("最近模型"), this);
     recentModelsList_ = new QListWidget(this);
@@ -96,6 +101,7 @@ SettingsPage::SettingsPage(QWidget* parent)
     layout->addLayout(exportRow);
     layout->addWidget(threadLabel);
     layout->addLayout(threadRow);
+    layout->addWidget(gpuCheckBox_);
     layout->addWidget(recentModelsLabel);
     layout->addWidget(recentModelsList_);
     layout->addWidget(recentInputsLabel);
@@ -121,6 +127,12 @@ void SettingsPage::setInferenceThreadCount(const int count) {
     threadCountSpin_->blockSignals(true);
     threadCountSpin_->setValue(count);
     threadCountSpin_->blockSignals(false);
+}
+
+void SettingsPage::setUseGPU(const bool useGPU) {
+    gpuCheckBox_->blockSignals(true);
+    gpuCheckBox_->setChecked(useGPU);
+    gpuCheckBox_->blockSignals(false);
 }
 
 }  // namespace aitoolkit::ui

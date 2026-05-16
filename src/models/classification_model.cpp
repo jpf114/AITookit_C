@@ -20,9 +20,9 @@ QString resolveOnnxPath(const core::ModelManifest& manifest) {
 
 }  // namespace
 
-ClassificationModel::ClassificationModel(core::ModelManifest manifest, const int threadCount)
+ClassificationModel::ClassificationModel(core::ModelManifest manifest, const int threadCount, const bool useGPU)
     : manifest_(std::move(manifest))
-    , backend_(resolveOnnxPath(manifest_), threadCount) {
+    , backend_(resolveOnnxPath(manifest_), threadCount, useGPU) {
     backend_.warmup();
 }
 

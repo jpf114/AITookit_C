@@ -19,6 +19,7 @@ public:
     [[nodiscard]] QString lastModelManifestPath() const;
     [[nodiscard]] QByteArray windowGeometry() const;
     [[nodiscard]] int inferenceThreadCount() const;
+    [[nodiscard]] bool useGPUInference() const;
 
     void setRecentModels(const QStringList& paths);
     void setRecentInputs(const QStringList& paths);
@@ -26,6 +27,7 @@ public:
     void setLastModelManifestPath(const QString& path);
     void setWindowGeometry(const QByteArray& geometry);
     void setInferenceThreadCount(int count);
+    void setUseGPUInference(bool useGPU);
 
     void addRecentModel(const QString& path, int maxItems = 10);
     void addRecentInput(const QString& path, int maxItems = 10);

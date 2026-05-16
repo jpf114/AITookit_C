@@ -26,8 +26,12 @@ public:
     void setThreadCount(int count);
     [[nodiscard]] int threadCount() const { return threadCount_; }
 
+    void setUseGPU(bool useGPU);
+    [[nodiscard]] bool useGPU() const { return useGPU_; }
+
 private:
     int threadCount_ = 1;
+    bool useGPU_ = false;
 };
 
 }  // namespace aitoolkit::services
