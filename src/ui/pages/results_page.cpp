@@ -133,12 +133,18 @@ void ResultsPage::setSummary(const core::InferenceSummary& summary) {
         return;
     }
 
+    const QString countLabel = summary.taskType == QStringLiteral("classification")
+        ? QStringLiteral("类别数：%1").arg(summary.classifications.size())
+        : summary.taskType == QStringLiteral("segmentation")
+            ? QStringLiteral("实例数：%1").arg(summary.segmentations.size())
+            : QStringLiteral("目标数：%1").arg(summary.detectionCount);
+
     summaryLabel_->setText(
-        QStringLiteral("\u6a21\u578b\uff1a%1 | \u56fe\u50cf\uff1a%2\u00d7%3 | \u76ee\u6807\u6570\uff1a%4 | \u8017\u65f6\uff1a%5 ms")
+        QStringLiteral("模型：%1 | 图像：%2×%3 | %4 | 耗时：%5 ms")
             .arg(summary.modelName)
             .arg(summary.imageWidth)
             .arg(summary.imageHeight)
-            .arg(summary.detectionCount)
+            .arg(countLabel)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));
 
     populateTable(summary);
@@ -199,18 +205,29 @@ void ResultsPage::showResultAtIndex(const int index) {
 
     previewWidget_->setSummary(summary);
 
+    const QString countLabel = summary.taskType == QStringLiteral("classification")
+        ? QStringLiteral("类别数：%1").arg(summary.classifications.size())
+        : summary.taskType == QStringLiteral("segmentation")
+            ? QStringLiteral("实例数：%1").arg(summary.segmentations.size())
+            : QStringLiteral("目标数：%1").arg(summary.detectionCount);
+
     summaryLabel_->setText(
-        QStringLiteral("\u6a21\u578b\uff1a%1 | \u56fe\u50cf\uff1a%2\u00d7%3 | \u76ee\u6807\u6570\uff1a%4 | \u8017\u65f6\uff1a%5 ms")
+        QStringLiteral("模型：%1 | 图像：%2×%3 | %4 | 耗时：%5 ms")
             .arg(summary.modelName)
             .arg(summary.imageWidth)
             .arg(summary.imageHeight)
-            .arg(summary.detectionCount)
+            .arg(countLabel)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));
 
     populateTable(summary);
 }
 
 void ResultsPage::populateTable(const core::InferenceSummary& summary) {
+    if (summary.taskType == QStringLiteral("classification")) {
+        populateClassificationTable(summary);
+        return;
+    }
+
     currentDetections_ = summary.detections;
     populateCategoryFilter(summary.detections);
 
@@ -230,6 +247,31 @@ void ResultsPage::populateTable(const core::InferenceSummary& summary) {
                     .arg(QString::number(detection.boundingBox.y(), 'f', 1))
                     .arg(QString::number(detection.boundingBox.width(), 'f', 1))
                     .arg(QString::number(detection.boundingBox.height(), 'f', 1))));
+    }
+}
+
+void ResultsPage::populateClassificationTable(const core::InferenceSummary& summary) {
+    categoryFilter_->blockSignals(true);
+    categoryFilter_->clear();
+    categoryFilter_->addItem(QStringLiteral("全部类别"));
+    categoryFilter_->blockSignals(false);
+    currentDetections_.clear();
+
+    detectionsTable_->clearContents();
+    detectionsTable_->setHorizontalHeaderLabels({
+        QStringLiteral("排名"),
+        QStringLiteral("标签"),
+        QStringLiteral("置信度"),
+        QStringLiteral(""),
+    });
+    detectionsTable_->setRowCount(summary.classifications.size());
+
+    for (int i = 0; i < summary.classifications.size(); ++i) {
+        const core::ClassificationItem& item = summary.classifications.at(i);
+        detectionsTable_->setItem(i, 0, new QTableWidgetItem(QStringLiteral("#%1").arg(i + 1)));
+        detectionsTable_->setItem(i, 1, new QTableWidgetItem(item.label));
+        detectionsTable_->setItem(i, 2, new QTableWidgetItem(QStringLiteral("%1%").arg(item.confidence * 100, 0, 'f', 1)));
+        detectionsTable_->setItem(i, 3, new QTableWidgetItem());
     }
 }
 

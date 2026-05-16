@@ -34,6 +34,7 @@ signals:
 private:
     void showResultAtIndex(int index);
     void populateTable(const core::InferenceSummary& summary);
+    void populateClassificationTable(const core::InferenceSummary& summary);
     void populateCategoryFilter(const QVector<core::DetectionItem>& detections);
     void applyCategoryFilter();
 

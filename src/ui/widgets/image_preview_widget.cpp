@@ -73,6 +73,43 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
         painter.setPen(QPen(color, 2.0));
     }
 
+    for (const core::SegmentationItem& item : summary_.segmentations) {
+        const QColor color = item.renderColor.isValid() ? item.renderColor : QColor(QStringLiteral("#3b82f6"));
+
+        QRectF box(
+            targetRect.left() + (item.boundingBox.left() * xScale),
+            targetRect.top() + (item.boundingBox.top() * yScale),
+            item.boundingBox.width() * xScale,
+            item.boundingBox.height() * yScale);
+
+        painter.setPen(QPen(color, 2.0));
+        painter.drawRect(box);
+
+        if (!item.mask.isNull()) {
+            QImage scaledMask = item.mask.scaled(
+                static_cast<int>(box.width()),
+                static_cast<int>(box.height()),
+                Qt::IgnoreAspectRatio,
+                Qt::SmoothTransformation);
+
+            QColor maskColor = color;
+            maskColor.setAlpha(80);
+            painter.drawImage(box, scaledMask);
+        }
+
+        const QString labelText = QStringLiteral("%1 %2%")
+            .arg(item.label)
+            .arg(QString::number(item.confidence * 100.0, 'f', 0));
+
+        QRectF labelRect = painter.fontMetrics().boundingRect(labelText);
+        labelRect.moveTopLeft(box.topLeft() + QPointF(2.0, -labelRect.height() - 2.0));
+
+        painter.fillRect(labelRect.adjusted(-2, -1, 2, 1), color);
+        painter.setPen(QColor(QStringLiteral("#ffffff")));
+        painter.drawText(labelRect, labelText);
+        painter.setPen(QPen(color, 2.0));
+    }
+
     if (zoomLevel_ > 1.0001) {
         painter.setPen(QColor(QStringLiteral("#94a3b8")));
         painter.setBrush(Qt::NoBrush);
