@@ -50,6 +50,18 @@ LONG WINAPI unhandledExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
         CloseHandle(file);
     }
 
+    const QString msg = QStringLiteral(
+        "AI 检测工具遇到严重错误，需要关闭。\n\n"
+        "崩溃转储已保存至：\n%1\n\n"
+        "请将此文件发送给开发者以帮助修复问题。"
+    ).arg(dumpPath);
+
+    MessageBoxW(
+        nullptr,
+        reinterpret_cast<LPCWSTR>(msg.utf16()),
+        L"AI \u68c0\u6d4b\u5de5\u5177 - \u5d29\u6e83",
+        MB_OK | MB_ICONERROR | MB_TOPMOST);
+
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
