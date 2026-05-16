@@ -106,6 +106,7 @@ ai_define_module(
         models/yolo_detection_model.cpp
         models/postprocess_registry.cpp
         models/classification_model.cpp
+        models/segmentation_model.cpp
         models/inference_backend.cpp
     LINK_LIBS
         ai_core
