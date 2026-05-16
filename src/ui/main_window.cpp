@@ -406,6 +406,7 @@ void MainWindow::wireSignals() {
         inferencePage_->setProgress(0, 0);
         runStatusLabel_->setText(QStringLiteral("推理中…"));
         nextStepLabel_->setText(QStringLiteral("请等待推理完成。"));
+        statusBar()->showMessage(QStringLiteral("正在推理..."));
     });
     connect(controller_, &AppController::inferenceCompleted, this, [this](const core::InferenceSummary& summary) {
         inferencePage_->setRunning(false);
@@ -415,6 +416,11 @@ void MainWindow::wireSignals() {
         resultsPage_->clearResults();
         updateContextPanel();
         showPage(NavPanel::ResultsPageId);
+        statusBar()->showMessage(
+            QStringLiteral("推理完成 | 目标数：%1 | 耗时：%2 ms")
+                .arg(summary.detectionCount)
+                .arg(summary.elapsedMs, 0, 'f', 1),
+            5000);
     });
     connect(controller_, &AppController::inferenceCompletedBatch, this, [this](const QVector<core::InferenceSummary>& results) {
         inferencePage_->setRunning(false);
@@ -430,10 +436,21 @@ void MainWindow::wireSignals() {
 
         int totalDetections = 0;
         double totalElapsedMs = 0.0;
+        int validCount = 0;
         for (const core::InferenceSummary& s : results) {
             totalDetections += s.detectionCount;
-            totalElapsedMs += s.elapsedMs;
+            if (s.elapsedMs > 0) {
+                totalElapsedMs += s.elapsedMs;
+                ++validCount;
+            }
         }
+        const double avgMs = validCount > 0 ? totalElapsedMs / validCount : 0.0;
+        statusBar()->showMessage(
+            QStringLiteral("批量推理完成 | 图像数：%1 | 平均耗时：%2 ms | 总耗时：%3 ms")
+                .arg(results.size())
+                .arg(avgMs, 0, 'f', 1)
+                .arg(totalElapsedMs, 0, 'f', 1),
+            5000);
         QMessageBox::information(
             this,
             QStringLiteral("批量推理完成"),
@@ -457,10 +474,23 @@ void MainWindow::wireSignals() {
 
         int totalDetections = 0;
         double totalElapsedMs = 0.0;
+        int validCount = 0;
         for (const core::InferenceSummary& s : results) {
             totalDetections += s.detectionCount;
-            totalElapsedMs += s.elapsedMs;
+            if (s.elapsedMs > 0) {
+                totalElapsedMs += s.elapsedMs;
+                ++validCount;
+            }
         }
+        const double avgMs = validCount > 0 ? totalElapsedMs / validCount : 0.0;
+        const double fps = avgMs > 0 ? 1000.0 / avgMs : 0.0;
+        statusBar()->showMessage(
+            QStringLiteral("视频推理完成 | 帧数：%1 | 平均耗时：%2 ms | FPS：%3 | 总耗时：%4 ms")
+                .arg(results.size())
+                .arg(avgMs, 0, 'f', 1)
+                .arg(fps, 0, 'f', 1)
+                .arg(totalElapsedMs, 0, 'f', 1),
+            5000);
         QMessageBox::information(
             this,
             QStringLiteral("视频推理完成"),
@@ -479,6 +509,7 @@ void MainWindow::wireSignals() {
         inferencePage_->setRunning(false);
         runStatusLabel_->setText(QStringLiteral("推理失败"));
         nextStepLabel_->setText(QStringLiteral("请检查模型和输入后重试。"));
+        statusBar()->showMessage(QStringLiteral("推理失败 | %1").arg(message), 5000);
         QMessageBox::critical(this, QStringLiteral("推理失败"), message);
     });
     connect(controller_, &AppController::contextChanged, this, &MainWindow::updateContextPanel);
