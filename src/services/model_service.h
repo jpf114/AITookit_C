@@ -13,7 +13,7 @@ namespace aitoolkit::services {
 class ModelService {
 public:
     core::ModelManifest loadManifest(const QString& manifestPath) const;
-    std::unique_ptr<models::InferenceBackend> loadDetectionModel(const QString& manifestPath) const;
+    std::unique_ptr<models::InferenceBackend> loadModel(const QString& manifestPath) const;
     core::ModelManifest createManifestFromOnnx(
         const QString& onnxPath,
         const QString& modelName,

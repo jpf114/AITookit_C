@@ -184,7 +184,7 @@ void AppController::selectFolder(const QString& folderPath, double confidence, d
     try {
         if (!currentModel_ ||
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
-            currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
+            currentModel_ = modelService_.loadModel(currentManifestPath_);
         }
 
         QStringList imagePaths;
@@ -213,7 +213,7 @@ void AppController::selectVideo(const QString& videoPath, const int maxFrames, d
     try {
         if (!currentModel_ ||
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
-            currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
+            currentModel_ = modelService_.loadModel(currentManifestPath_);
         }
 
         inferenceWorker_->setModel(currentModel_);
@@ -242,7 +242,7 @@ void AppController::runInference(double confidence, double nms) {
     try {
         if (!currentModel_ ||
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
-            currentModel_ = modelService_.loadDetectionModel(currentManifestPath_);
+            currentModel_ = modelService_.loadModel(currentManifestPath_);
         }
         inferenceWorker_->setModel(currentModel_);
         inferenceWorker_->setThresholds(confidence, nms);

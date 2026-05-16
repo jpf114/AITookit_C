@@ -6,33 +6,39 @@
 #include <QJsonObject>
 
 #include "core/json_utils.h"
+#include "models/classification_model.h"
+#include "models/segmentation_model.h"
 #include "models/yolo_detection_model.h"
 
 #include <stdexcept>
 
 namespace aitoolkit::services {
 
-namespace {
-
-void validateDetectionManifest(const aitoolkit::core::ModelManifest& manifest) {
-    if (manifest.taskType.compare(QStringLiteral("detection"), Qt::CaseInsensitive) != 0) {
-        throw std::runtime_error("Only detection manifests are supported");
-    }
-    if (manifest.backendType.compare(QStringLiteral("onnxruntime"), Qt::CaseInsensitive) != 0) {
-        throw std::runtime_error("Only onnxruntime manifests are supported");
-    }
-}
-
-}  // namespace
-
 core::ModelManifest ModelService::loadManifest(const QString& manifestPath) const {
     return core::loadModelManifest(manifestPath);
 }
 
-std::unique_ptr<models::InferenceBackend> ModelService::loadDetectionModel(const QString& manifestPath) const {
+std::unique_ptr<models::InferenceBackend> ModelService::loadModel(const QString& manifestPath) const {
     const core::ModelManifest manifest = loadManifest(manifestPath);
-    validateDetectionManifest(manifest);
-    return std::make_unique<models::YoloDetectionModel>(manifest, threadCount_);
+
+    if (manifest.backendType.compare(QStringLiteral("onnxruntime"), Qt::CaseInsensitive) != 0) {
+        throw std::runtime_error("Only onnxruntime backend is currently supported");
+    }
+
+    if (manifest.taskType.compare(QStringLiteral("detection"), Qt::CaseInsensitive) == 0) {
+        return std::make_unique<models::YoloDetectionModel>(manifest, threadCount_);
+    }
+
+    if (manifest.taskType.compare(QStringLiteral("classification"), Qt::CaseInsensitive) == 0) {
+        return std::make_unique<models::ClassificationModel>(manifest, threadCount_);
+    }
+
+    if (manifest.taskType.compare(QStringLiteral("segmentation"), Qt::CaseInsensitive) == 0) {
+        return std::make_unique<models::SegmentationModel>(manifest, threadCount_);
+    }
+
+    throw std::runtime_error(
+        QStringLiteral("Unsupported task type: %1").arg(manifest.taskType).toStdString());
 }
 
 core::ModelManifest ModelService::createManifestFromOnnx(
