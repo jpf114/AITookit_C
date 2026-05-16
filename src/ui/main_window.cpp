@@ -24,6 +24,7 @@
 #include "ui/nav_panel.h"
 #include "ui/image_utils.h"
 #include "ui/dialogs/onnx_setup_dialog.h"
+#include "ui/dialogs/model_catalog_dialog.h"
 #include "ui/pages/home_page.h"
 #include "ui/pages/inference_page.h"
 #include "ui/pages/models_page.h"
@@ -217,6 +218,81 @@ void MainWindow::wireSignals() {
              QStringLiteral("-File"), resolvedScript,
              QStringLiteral("-ModelsDir"), modelsDir});
     });
+    connect(homePage_, &HomePage::modelCatalogRequested, this, [this]() {
+        const QDir appDir(QCoreApplication::applicationDirPath());
+        const QStringList searchPaths = {
+            appDir.filePath(QStringLiteral("../models")),
+            appDir.filePath(QStringLiteral("../../models")),
+            appDir.filePath(QStringLiteral("models"))
+        };
+
+        QString modelsDir;
+        for (const QString& path : searchPaths) {
+            if (QDir(path).exists()) {
+                modelsDir = path;
+                break;
+            }
+        }
+        if (modelsDir.isEmpty()) {
+            modelsDir = appDir.filePath(QStringLiteral("../models"));
+            QDir().mkpath(modelsDir);
+        }
+
+        ModelCatalogDialog dialog(modelsDir, this);
+        if (dialog.exec() != QDialog::Accepted) {
+            return;
+        }
+
+        const QString url = dialog.selectedModelUrl();
+        const QString fileName = dialog.selectedModelFileName();
+        if (url.isEmpty() || fileName.isEmpty()) {
+            return;
+        }
+
+        statusBar()->showMessage(QStringLiteral("正在下载 %1...").arg(dialog.selectedModelName()));
+
+        auto* downloadProcess = new QProcess(this);
+        const QString scriptPath = QCoreApplication::applicationDirPath() + QStringLiteral("/../scripts/download_sample_model.ps1");
+        const QString altScriptPath = QDir::cleanPath(
+            QCoreApplication::applicationDirPath() + QStringLiteral("/../../scripts/download_sample_model.ps1"));
+
+        QString resolvedScript;
+        if (QFileInfo::exists(scriptPath)) {
+            resolvedScript = scriptPath;
+        } else if (QFileInfo::exists(altScriptPath)) {
+            resolvedScript = altScriptPath;
+        }
+
+        if (resolvedScript.isEmpty()) {
+            QMessageBox::warning(this, QStringLiteral("下载失败"), QStringLiteral("未找到下载脚本。"));
+            return;
+        }
+
+        connect(downloadProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                this, [this, downloadProcess, modelsDir, fileName](int, QProcess::ExitStatus) {
+            downloadProcess->deleteLater();
+
+            const QString onnxPath = modelsDir + QStringLiteral("/") + fileName;
+            const QString jsonFileName = fileName.left(fileName.lastIndexOf('.')) + QStringLiteral(".json");
+            const QString manifestPath = modelsDir + QStringLiteral("/") + jsonFileName;
+
+            if (QFileInfo::exists(manifestPath) && QFileInfo::exists(onnxPath)) {
+                controller_->loadModelManifest(manifestPath);
+                statusBar()->showMessage(QStringLiteral("模型下载完成并已加载"), 5000);
+            } else {
+                QMessageBox::warning(this, QStringLiteral("下载失败"),
+                    QStringLiteral("模型下载未完成。请检查网络连接后重试。"));
+            }
+        });
+
+        downloadProcess->start(
+            QStringLiteral("powershell"),
+            {QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
+             QStringLiteral("-File"), resolvedScript,
+             QStringLiteral("-ModelsDir"), modelsDir,
+             QStringLiteral("-ModelUrl"), url,
+             QStringLiteral("-ModelName"), fileName.left(fileName.lastIndexOf('.'))});
+    });
     connect(homePage_, &HomePage::recentModelActivated, this, [this](const QString& path) {
         controller_->loadModelManifest(path);
     });
@@ -385,6 +461,10 @@ void MainWindow::wireSignals() {
     connect(settingsPage_, &SettingsPage::inferenceThreadCountChanged, this, [this](int count) {
         controller_->settingsStore().setInferenceThreadCount(count);
         controller_->modelService().setThreadCount(count);
+    });
+    connect(settingsPage_, &SettingsPage::useGPUChanged, this, [this](bool useGPU) {
+        controller_->settingsStore().setUseGPUInference(useGPU);
+        controller_->modelService().setUseGPU(useGPU);
     });
 
     connect(controller_, &AppController::modelLoaded, this, [this](const core::ModelManifest& manifest) {
@@ -571,7 +651,9 @@ void MainWindow::refreshSettingsPage() {
     settingsPage_->setRecentModels(controller_->settingsStore().recentModels());
     settingsPage_->setRecentInputs(controller_->settingsStore().recentInputs());
     settingsPage_->setInferenceThreadCount(controller_->settingsStore().inferenceThreadCount());
+    settingsPage_->setUseGPU(controller_->settingsStore().useGPUInference());
     controller_->modelService().setThreadCount(controller_->settingsStore().inferenceThreadCount());
+    controller_->modelService().setUseGPU(controller_->settingsStore().useGPUInference());
     homePage_->setRecentModels(controller_->settingsStore().recentModels());
     homePage_->setRecentInputs(controller_->settingsStore().recentInputs());
 }

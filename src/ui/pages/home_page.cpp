@@ -40,6 +40,10 @@ HomePage::HomePage(QWidget* parent)
     downloadBtn->setObjectName(QStringLiteral("SecondaryButton"));
     downloadBtn->setToolTip(QStringLiteral("\u4e0b\u8f7d YOLOv8n COCO \u793a\u4f8b\u6a21\u578b\uff08\u7ea6 6MB\uff09"));
 
+    auto* catalogButton = new QPushButton(QStringLiteral("\u6a21\u578b\u76ee\u5f55"), this);
+    catalogButton->setObjectName(QStringLiteral("SecondaryButton"));
+    catalogButton->setToolTip(QStringLiteral("\u6d4f\u89c8\u548c\u4e0b\u8f7d\u66f4\u591a\u6a21\u578b"));
+
     quickStartBtn_ = new QPushButton(QStringLiteral("\u5feb\u901f\u4f53\u9a8c"), this);
     quickStartBtn_->setObjectName(QStringLiteral("PrimaryButton"));
     quickStartBtn_->setToolTip(QStringLiteral("\u4f7f\u7528\u793a\u4f8b\u56fe\u50cf\u6267\u884c\u4e00\u6b21\u76ee\u6807\u68c0\u6d4b"));
@@ -48,6 +52,7 @@ HomePage::HomePage(QWidget* parent)
     actionsLayout->addWidget(loadModelBtn);
     actionsLayout->addWidget(selectImageBtn);
     actionsLayout->addWidget(downloadBtn);
+    actionsLayout->addWidget(catalogButton);
     actionsLayout->addWidget(quickStartBtn_);
     actionsLayout->addStretch(1);
 
@@ -95,6 +100,7 @@ HomePage::HomePage(QWidget* parent)
     connect(loadModelBtn, &QPushButton::clicked, this, &HomePage::loadModelClicked);
     connect(selectImageBtn, &QPushButton::clicked, this, &HomePage::selectImageClicked);
     connect(downloadBtn, &QPushButton::clicked, this, &HomePage::downloadSampleModelClicked);
+    connect(catalogButton, &QPushButton::clicked, this, &HomePage::modelCatalogRequested);
     connect(quickStartBtn_, &QPushButton::clicked, this, &HomePage::quickStartClicked);
     connect(recentModelsList_, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
         emit recentModelActivated(item->data(Qt::UserRole).toString());

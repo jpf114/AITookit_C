@@ -143,6 +143,7 @@ ai_collect_existing_sources(
     ui/image_utils.cpp
     ui/nav_panel.cpp
     ui/dialogs/onnx_setup_dialog.cpp
+    ui/dialogs/model_catalog_dialog.cpp
     ui/pages/home_page.cpp
     ui/pages/models_page.cpp
     ui/pages/inference_page.cpp

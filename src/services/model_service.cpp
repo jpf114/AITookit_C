@@ -85,4 +85,8 @@ void ModelService::setThreadCount(const int count) {
     threadCount_ = count;
 }
 
+void ModelService::setUseGPU(const bool useGPU) {
+    useGPU_ = useGPU;
+}
+
 }  // namespace aitoolkit::services

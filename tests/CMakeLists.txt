@@ -85,6 +85,7 @@ if(TARGET test_main_window)
             ${CMAKE_SOURCE_DIR}/src/ui/image_utils.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/nav_panel.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/dialogs/onnx_setup_dialog.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/dialogs/model_catalog_dialog.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/pages/home_page.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/pages/models_page.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/pages/inference_page.cpp
@@ -160,6 +161,7 @@ if(TARGET test_gui_validation)
             ${CMAKE_SOURCE_DIR}/src/ui/image_utils.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/nav_panel.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/dialogs/onnx_setup_dialog.cpp
+            ${CMAKE_SOURCE_DIR}/src/ui/dialogs/model_catalog_dialog.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/pages/home_page.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/pages/models_page.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/pages/inference_page.cpp

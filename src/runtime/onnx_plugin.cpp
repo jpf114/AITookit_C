@@ -14,8 +14,12 @@ BackendInfo OnnxRuntimePlugin::info() const {
     BackendInfo info;
     info.name = QStringLiteral("onnxruntime");
     info.displayName = QStringLiteral("ONNX Runtime");
-    info.version = QStringLiteral("1.x");
+    info.version = QStringLiteral("1.23.2");
+#ifdef USE_CUDA
+    info.supportsGPU = true;
+#else
     info.supportsGPU = false;
+#endif
     info.isAvailable = true;
     return info;
 }
@@ -30,7 +34,8 @@ QStringList OnnxRuntimePlugin::supportedTaskTypes() const {
 
 std::unique_ptr<models::InferenceBackend> OnnxRuntimePlugin::createModel(
     const core::ModelManifest& manifest,
-    const int threadCount) const {
+    const int threadCount,
+    const bool useGPU) const {
     if (manifest.taskType == QStringLiteral("detection")) {
         return std::make_unique<models::YoloDetectionModel>(manifest, threadCount);
     }
