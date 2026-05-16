@@ -74,4 +74,8 @@ set(CPACK_NSIS_DELETE_ICONS_EXTRA
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_NSIS_MODIFY_PATH ON)
 
+if(EXISTS "${CMAKE_SOURCE_DIR}/resources/icons/app_icon.ico")
+    set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\ai_toolkit_c.exe")
+endif()
+
 include(CPack)

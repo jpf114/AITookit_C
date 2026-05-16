@@ -1,0 +1,32 @@
+#include <winver.h>
+
+IDI_ICON1 ICON "app_icon.ico"
+
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+FILEFLAGS 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404B0"
+        BEGIN
+            VALUE "CompanyName", "AIToolkit"
+            VALUE "FileDescription", "AI\345\267\262\346\243\200\346\265\213\345\267\245\345\205\267"
+            VALUE "FileVersion", "1.0.0"
+            VALUE "InternalName", "ai_toolkit_c"
+            VALUE "LegalCopyright", "Copyright 2026 AIToolkit"
+            VALUE "OriginalFilename", "ai_toolkit_c.exe"
+            VALUE "ProductName", "AI\345\267\262\346\243\200\346\265\213\345\267\245\345\205\267"
+            VALUE "ProductVersion", "1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0804, 1200
+    END
+END

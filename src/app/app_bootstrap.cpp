@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QIcon>
 #include <QStringList>
 
 #include "runtime/onnx_plugin.h"
@@ -28,6 +29,11 @@ void AppBootstrap::initialize(QApplication& app) {
     app.setApplicationDisplayName(QStringLiteral("AI 检测工具"));
     app.setApplicationVersion(QStringLiteral("0.2.0"));
     app.setOrganizationName(QStringLiteral("MyProject"));
+
+    QIcon appIcon(QStringLiteral(":/icons/app_icon.png"));
+    if (!appIcon.isNull()) {
+        app.setWindowIcon(appIcon);
+    }
 
     QFile styleFile(applicationStylePath());
     if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {

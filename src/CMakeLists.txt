@@ -152,6 +152,14 @@ ai_collect_existing_sources(
     ui/widgets/image_preview_widget.cpp
 )
 
+if(WIN32 AND EXISTS "${CMAKE_SOURCE_DIR}/resources/icons/app_icon.rc")
+    list(APPEND ai_toolkit_c_sources "${CMAKE_SOURCE_DIR}/resources/icons/app_icon.rc")
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/resources/icons/app_icon.qrc")
+    list(APPEND ai_toolkit_c_sources "${CMAKE_SOURCE_DIR}/resources/icons/app_icon.qrc")
+endif()
+
 if(NOT ai_toolkit_c_sources)
     message(FATAL_ERROR "No sources found for ai_toolkit_c.")
 endif()
