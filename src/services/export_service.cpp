@@ -36,6 +36,42 @@ QJsonObject ExportService::summaryToJson(const core::InferenceSummary& summary) 
     root.insert(QStringLiteral("detection_count"), summary.detectionCount);
     root.insert(QStringLiteral("elapsed_ms"), summary.elapsedMs);
     root.insert(QStringLiteral("detections"), detections);
+
+    if (!summary.classifications.isEmpty()) {
+        QJsonArray classifications;
+        for (const core::ClassificationItem& item : summary.classifications) {
+            QJsonObject obj;
+            obj.insert(QStringLiteral("class_id"), item.classId);
+            obj.insert(QStringLiteral("label"), item.label);
+            obj.insert(QStringLiteral("confidence"), item.confidence);
+            classifications.append(obj);
+        }
+        root.insert(QStringLiteral("classifications"), classifications);
+    }
+
+    if (!summary.segmentations.isEmpty()) {
+        QJsonArray segmentations;
+        for (const core::SegmentationItem& item : summary.segmentations) {
+            QJsonObject boundingBox;
+            boundingBox.insert(QStringLiteral("x"), item.boundingBox.x());
+            boundingBox.insert(QStringLiteral("y"), item.boundingBox.y());
+            boundingBox.insert(QStringLiteral("width"), item.boundingBox.width());
+            boundingBox.insert(QStringLiteral("height"), item.boundingBox.height());
+
+            QJsonObject obj;
+            obj.insert(QStringLiteral("class_id"), item.classId);
+            obj.insert(QStringLiteral("label"), item.label);
+            obj.insert(QStringLiteral("confidence"), item.confidence);
+            obj.insert(QStringLiteral("bounding_box"), boundingBox);
+            segmentations.append(obj);
+        }
+        root.insert(QStringLiteral("segmentations"), segmentations);
+    }
+
+    if (!summary.taskType.isEmpty()) {
+        root.insert(QStringLiteral("task_type"), summary.taskType);
+    }
+
     return root;
 }
 
@@ -83,6 +119,33 @@ void ExportService::exportRenderedImage(
         boxPen.setColor(color);
         painter.setPen(boxPen);
         painter.drawRect(item.boundingBox);
+
+        const QString labelText = QStringLiteral("%1 %2%")
+            .arg(item.label)
+            .arg(QString::number(item.confidence * 100.0, 'f', 0));
+
+        QRectF labelRect = painter.fontMetrics().boundingRect(labelText);
+        labelRect.moveTopLeft(item.boundingBox.topLeft() + QPointF(2.0, -labelRect.height() - 2.0));
+
+        painter.fillRect(labelRect.adjusted(-2, -1, 2, 1), color);
+        painter.setPen(QColor(QStringLiteral("#ffffff")));
+        painter.drawText(labelRect, labelText);
+    }
+
+    for (const core::SegmentationItem& item : summary.segmentations) {
+        const QColor color = item.renderColor.isValid() ? item.renderColor : QColor(QStringLiteral("#3b82f6"));
+        boxPen.setColor(color);
+        painter.setPen(boxPen);
+        painter.drawRect(item.boundingBox);
+
+        if (!item.mask.isNull()) {
+            QImage scaledMask = item.mask.scaled(
+                static_cast<int>(item.boundingBox.width()),
+                static_cast<int>(item.boundingBox.height()),
+                Qt::IgnoreAspectRatio,
+                Qt::SmoothTransformation);
+            painter.drawImage(item.boundingBox, scaledMask);
+        }
 
         const QString labelText = QStringLiteral("%1 %2%")
             .arg(item.label)
