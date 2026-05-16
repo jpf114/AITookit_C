@@ -1,10 +1,12 @@
 #include "ui/pages/settings_page.h"
 
+#include <QCoreApplication>
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 
@@ -62,6 +64,21 @@ SettingsPage::SettingsPage(QWidget* parent)
         }
     });
 
+    auto* aboutButton = new QPushButton(QStringLiteral("关于"), this);
+    aboutButton->setObjectName(QStringLiteral("SecondaryButton"));
+    connect(aboutButton, &QPushButton::clicked, this, [this]() {
+        QMessageBox::about(
+            this,
+            QStringLiteral("关于 AI 检测工具"),
+            QStringLiteral("<h3>AI 检测工具 v%1</h3>"
+                           "<p>基于 ONNX Runtime 的轻量级目标检测桌面应用</p>"
+                           "<p>支持 YOLOv5/YOLOv8/YOLOX 等模型</p>"
+                           "<p>推理后端：%2</p>"
+                           "<p>&copy; 2026 MyProject</p>")
+                .arg(QCoreApplication::applicationVersion())
+                .arg(QStringLiteral("ONNX Runtime")));
+    });
+
     layout->addWidget(title);
     layout->addWidget(exportLabel);
     layout->addLayout(exportRow);
@@ -69,6 +86,7 @@ SettingsPage::SettingsPage(QWidget* parent)
     layout->addWidget(recentModelsList_);
     layout->addWidget(recentInputsLabel);
     layout->addWidget(recentInputsList_, 1);
+    layout->addWidget(aboutButton);
 }
 
 void SettingsPage::setDefaultExportDirectory(const QString& directoryPath) {
