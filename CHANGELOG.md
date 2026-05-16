@@ -1,0 +1,73 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [1.0.0] - 2026-05-16
+
+### Added
+
+- 应用图标（.ico + .rc + .qrc），exe 和窗口显示自定义图标
+- Windows 版本信息嵌入 exe 属性
+- README.md 项目说明文档
+- CHANGELOG.md 版本变更记录
+
+## [0.2.0] - 2026-05-15
+
+### Added
+
+- CUDA Provider 支持，可选 GPU 加速推理，自动回退 CPU
+- GPU 推理设置，设置页新增 GPU 复选框，持久化到 QSettings
+- 模型目录一键下载，ModelCatalogDialog 展示 4 个内置模型
+- 代码去重，提取 InferenceService::runImageFromMat()，净减 60 行重复代码
+- 分类模型支持，ClassificationModel + softmax 后处理
+- 分割模型支持，SegmentationModel + 掩码后处理
+- ModelService 多任务分发，根据 task_type 自动创建检测/分类/分割模型
+- 模型管理增强，新增「浏览模型目录」按钮
+- 后端动态加载架构，BackendPlugin 接口 + BackendRegistry 注册表 + OnnxRuntimePlugin
+- InferenceSummary 扩展，新增 taskType/classifications/segmentations 字段
+- InferenceWorker 多任务路由，根据 taskType 自动选择 detect/classify/segment
+- 分类结果 UI 展示，Top-K 列表 + 摘要文本动态显示
+- 分割结果 UI 展示，图像预览叠加半透明掩码
+- 导出服务多任务适配，JSON 和渲染图片支持分类/分割结果
+- YOLOX 解码器，注册 yolo_x 到 PostprocessRegistry
+- 关于对话框，显示应用名称、版本号和版权信息
+- 推理性能监控，状态栏显示延迟、FPS 和总耗时
+- 推理线程数配置，设置页新增 1-16 线程数控件
+
+## [0.1.0] - 2026-05-14
+
+### Added
+
+- 修复中文路径，使用 QFile + cv::imdecode 替代 cv::imread
+- 修复 NMS 默认值，改为 0.25/0.45
+- 修复线程安全，QMutex 保护 + 参数化阈值
+- 首次运行引导，首页增加「下载示例模型」按钮
+- 自动恢复上次模型，启动时从 QSettings 读取并加载
+- 窗口大小/位置持久化，保存/恢复 geometry
+- 推理期间关闭确认，重写 closeEvent
+- 术语友好化，SpinBox 加 tooltip，术语加中文解释
+- 批量/视频结果浏览，QListWidget 结果列表支持切换查看
+- 拖放支持，拖放图像/视频/文件夹自动路由
+- 键盘快捷键，Ctrl+O/Ctrl+S/Ctrl+Q
+- 图像缩放/平移，滚轮缩放 + 拖拽平移 + 双击重置
+- 格式扩展，图像加 tiff/webp，视频加 webm/flv，导出加 TIFF
+- 大视频预警，超过 1000 帧弹出确认对话框
+- CPack/NSIS 打包，NSIS 安装程序 + ZIP 便携包
+- CI/CD，GitHub Actions 自动构建 + 测试 + 打包
+- 崩溃报告，集成 MiniDump 生成
+- vcpkg manifest 模式，依赖版本锁定
+- 架构重构，提取 AppController 层
+- 推理后端抽象，InferenceBackend 接口 + InferenceTensor
+- 默认模型自动发现，首次启动自动扫描 models/ 目录
+- 下载后自动加载，无需用户手动选择清单文件
+- 快速体验按钮，模型加载后一键推理
+- 后处理策略注册表，PostprocessRegistry 根据 decoder 分发
+- 推理预热，首次推理前用零张量做 dry run
+- 后端能力查询，supportsGPU()/backendName()
+- YOLOv5 解码器，注册 yolo_v5 到 PostprocessRegistry
+- 应用版本号显示，窗口标题和首页显示版本号
+- 模型页信息增强，展示解码器类型和标签列表
+- 检测结果按类别过滤，结果页新增类别下拉框
+- 批量导出功能，一键导出批量/视频推理结果为 JSON 数组
