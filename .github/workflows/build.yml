@@ -22,8 +22,6 @@ jobs:
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: "2025.04.18"
 
       - name: Configure CMake
         run: cmake --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
