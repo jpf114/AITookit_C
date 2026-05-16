@@ -16,14 +16,10 @@ struct DetectionItem {
     QColor renderColor;
 };
 
-struct InferenceSummary {
-    QString modelName;
-    QString inputPath;
-    int detectionCount = 0;
-    double elapsedMs = 0.0;
-    int imageWidth = 0;
-    int imageHeight = 0;
-    QVector<DetectionItem> detections;
+struct ClassificationItem {
+    int classId = -1;
+    QString label;
+    float confidence = 0.0f;
 };
 
 struct SegmentationItem {
@@ -35,10 +31,17 @@ struct SegmentationItem {
     QColor renderColor;
 };
 
-struct ClassificationItem {
-    int classId = -1;
-    QString label;
-    float confidence = 0.0f;
+struct InferenceSummary {
+    QString modelName;
+    QString inputPath;
+    QString taskType;
+    int detectionCount = 0;
+    double elapsedMs = 0.0;
+    int imageWidth = 0;
+    int imageHeight = 0;
+    QVector<DetectionItem> detections;
+    QVector<ClassificationItem> classifications;
+    QVector<SegmentationItem> segmentations;
 };
 
 }  // namespace aitoolkit::core
