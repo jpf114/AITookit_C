@@ -426,6 +426,18 @@ void YoloDetectionModel::registerBuiltinDecoders() {
                 output, input.networkSize, input.manifest,
                 input.originalSize, input.confidenceThreshold, input.nmsThreshold);
         });
+
+    PostprocessRegistry::instance().registerDecoder("yolo_x",
+        [](const PostprocessInput& input) -> QVector<core::DetectionItem> {
+            if (input.tensors.empty()) {
+                return {};
+            }
+            const cv::Mat output = YoloDetectionModel::tensorToDetectionMatrix(
+                input.tensors.front());
+            return YoloDetectionModel::postprocessDetections(
+                output, input.networkSize, input.manifest,
+                input.originalSize, input.confidenceThreshold, input.nmsThreshold);
+        });
 }
 
 }  // namespace aitoolkit::models
