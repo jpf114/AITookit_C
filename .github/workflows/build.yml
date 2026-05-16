@@ -14,14 +14,14 @@ jobs:
       matrix:
         build_type: [Debug, Release]
 
-    env:
-      VCPKG_ROOT: C:\vcpkg
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure CMake
-        run: cmake --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
+        shell: pwsh
+        run: |
+          $env:VCPKG_ROOT = $env:VCPKG_INSTALLATION_ROOT
+          cmake --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
 
       - name: Build
         run: cmake --build --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
