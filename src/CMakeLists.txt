@@ -105,6 +105,8 @@ ai_define_module(
     SOURCES
         models/yolo_detection_model.cpp
         models/postprocess_registry.cpp
+        models/classification_model.cpp
+        models/inference_backend.cpp
     LINK_LIBS
         ai_core
         ai_runtime

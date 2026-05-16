@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QColor>
+#include <QImage>
 #include <QRectF>
 #include <QString>
 #include <QVector>
@@ -23,6 +24,21 @@ struct InferenceSummary {
     int imageWidth = 0;
     int imageHeight = 0;
     QVector<DetectionItem> detections;
+};
+
+struct SegmentationItem {
+    int classId = -1;
+    QString label;
+    float confidence = 0.0f;
+    QRectF boundingBox;
+    QImage mask;
+    QColor renderColor;
+};
+
+struct ClassificationItem {
+    int classId = -1;
+    QString label;
+    float confidence = 0.0f;
 };
 
 }  // namespace aitoolkit::core

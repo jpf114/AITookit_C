@@ -20,6 +20,15 @@ public:
         double confidenceThreshold = -1.0,
         double nmsThreshold = -1.0) const = 0;
 
+    virtual QVector<core::ClassificationItem> classify(
+        const cv::Mat& image,
+        double confidenceThreshold = -1.0) const;
+
+    virtual QVector<core::SegmentationItem> segment(
+        const cv::Mat& image,
+        double confidenceThreshold = -1.0,
+        double nmsThreshold = -1.0) const;
+
     virtual bool supportsGPU() const { return false; }
     virtual QString backendName() const = 0;
 };
