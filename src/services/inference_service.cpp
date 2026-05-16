@@ -14,6 +14,39 @@
 
 namespace aitoolkit::services {
 
+core::InferenceSummary InferenceService::runImageFromMat(
+    const models::InferenceBackend& model,
+    const cv::Mat& image,
+    const QString& inputPath,
+    double confidenceThreshold,
+    double nmsThreshold) const {
+    QElapsedTimer timer;
+    timer.start();
+
+    core::InferenceSummary summary;
+    summary.modelName = model.manifest().name;
+    summary.inputPath = inputPath;
+    summary.taskType = model.manifest().taskType;
+    summary.imageWidth = image.cols;
+    summary.imageHeight = image.rows;
+    summary.elapsedMs = 0.0;
+
+    const QString taskType = model.manifest().taskType.toLower();
+    if (taskType == QStringLiteral("classification")) {
+        summary.classifications = model.classify(image, confidenceThreshold);
+        summary.detectionCount = summary.classifications.size();
+    } else if (taskType == QStringLiteral("segmentation")) {
+        summary.segmentations = model.segment(image, confidenceThreshold, nmsThreshold);
+        summary.detectionCount = summary.segmentations.size();
+    } else {
+        summary.detections = model.detect(image, confidenceThreshold, nmsThreshold);
+        summary.detectionCount = summary.detections.size();
+    }
+
+    summary.elapsedMs = static_cast<double>(timer.nsecsElapsed()) / 1000000.0;
+    return summary;
+}
+
 core::InferenceSummary InferenceService::runImage(
     const models::InferenceBackend& model,
     const QString& imagePath) const {
@@ -23,20 +56,7 @@ core::InferenceSummary InferenceService::runImage(
         throw std::runtime_error(
             QStringLiteral("Failed to read input image: %1").arg(QDir::toNativeSeparators(cleanImagePath)).toStdString());
     }
-
-    QElapsedTimer timer;
-    timer.start();
-    const QVector<core::DetectionItem> detections = model.detect(image, -1.0, -1.0);
-
-    core::InferenceSummary summary;
-    summary.modelName = model.manifest().name;
-    summary.inputPath = QFileInfo(cleanImagePath).absoluteFilePath();
-    summary.imageWidth = image.cols;
-    summary.imageHeight = image.rows;
-    summary.detectionCount = detections.size();
-    summary.elapsedMs = static_cast<double>(timer.nsecsElapsed()) / 1000000.0;
-    summary.detections = detections;
-    return summary;
+    return runImageFromMat(model, image, QFileInfo(cleanImagePath).absoluteFilePath());
 }
 
 QVector<core::InferenceSummary> InferenceService::runBatch(
@@ -83,18 +103,8 @@ QVector<core::InferenceSummary> InferenceService::runVideo(
         }
 
         try {
-            QElapsedTimer timer;
-            timer.start();
-            const QVector<core::DetectionItem> detections = model.detect(frame, -1.0, -1.0);
-
-            core::InferenceSummary summary;
-            summary.modelName = model.manifest().name;
-            summary.inputPath = QStringLiteral("%1 [frame %2]").arg(QFileInfo(cleanPath).absoluteFilePath()).arg(frameIndex);
-            summary.imageWidth = frame.cols;
-            summary.imageHeight = frame.rows;
-            summary.detectionCount = detections.size();
-            summary.elapsedMs = static_cast<double>(timer.nsecsElapsed()) / 1000000.0;
-            summary.detections = detections;
+            const QString framePath = QStringLiteral("%1 [frame %2]").arg(QFileInfo(cleanPath).absoluteFilePath()).arg(frameIndex);
+            auto summary = runImageFromMat(model, frame, framePath);
             results.append(summary);
         } catch (const std::exception&) {
             core::InferenceSummary skipped;

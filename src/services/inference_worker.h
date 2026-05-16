@@ -7,6 +7,7 @@
 
 #include "core/types.h"
 #include "models/inference_backend.h"
+#include "services/inference_service.h"
 
 namespace aitoolkit::services {
 
@@ -35,6 +36,7 @@ signals:
 
 private:
     QMutex mutex_;
+    InferenceService inferenceService_;
     std::shared_ptr<models::InferenceBackend> model_;
     double confidenceThreshold_ = -1.0;
     double nmsThreshold_ = -1.0;

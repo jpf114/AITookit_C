@@ -1,7 +1,6 @@
 #include "services/inference_worker.h"
 
 #include <QDir>
-#include <QElapsedTimer>
 #include <QFileInfo>
 
 #include <opencv2/imgcodecs.hpp>
@@ -54,34 +53,7 @@ void InferenceWorker::runImage(const QString& imagePath) {
             return;
         }
 
-        QElapsedTimer timer;
-        timer.start();
-
-        core::InferenceSummary summary;
-        summary.modelName = model->manifest().name;
-        summary.inputPath = cleanPath;
-        summary.taskType = model->manifest().taskType;
-        summary.imageWidth = image.cols;
-        summary.imageHeight = image.rows;
-        summary.elapsedMs = 0.0;
-
-        const QString taskType = model->manifest().taskType.toLower();
-
-        if (taskType == QStringLiteral("classification")) {
-            const auto results = model->classify(image, confThreshold);
-            summary.classifications = results;
-            summary.detectionCount = results.size();
-        } else if (taskType == QStringLiteral("segmentation")) {
-            const auto results = model->segment(image, confThreshold, nmsThresholdVal);
-            summary.segmentations = results;
-            summary.detectionCount = results.size();
-        } else {
-            const auto results = model->detect(image, confThreshold, nmsThresholdVal);
-            summary.detections = results;
-            summary.detectionCount = results.size();
-        }
-
-        summary.elapsedMs = static_cast<double>(timer.nsecsElapsed()) / 1000000.0;
+        auto summary = inferenceService_.runImageFromMat(*model, image, cleanPath, confThreshold, nmsThresholdVal);
 
         emit imageResultReady(summary);
     } catch (const std::exception& e) {
@@ -128,34 +100,7 @@ void InferenceWorker::runBatch(const QStringList& imagePaths) {
                 continue;
             }
 
-            QElapsedTimer timer;
-            timer.start();
-
-            core::InferenceSummary summary;
-            summary.modelName = model->manifest().name;
-            summary.inputPath = cleanPath;
-            summary.taskType = model->manifest().taskType;
-            summary.imageWidth = image.cols;
-            summary.imageHeight = image.rows;
-            summary.elapsedMs = 0.0;
-
-            const QString taskType = model->manifest().taskType.toLower();
-
-            if (taskType == QStringLiteral("classification")) {
-                const auto results = model->classify(image, confThreshold);
-                summary.classifications = results;
-                summary.detectionCount = results.size();
-            } else if (taskType == QStringLiteral("segmentation")) {
-                const auto results = model->segment(image, confThreshold, nmsThresholdVal);
-                summary.segmentations = results;
-                summary.detectionCount = results.size();
-            } else {
-                const auto results = model->detect(image, confThreshold, nmsThresholdVal);
-                summary.detections = results;
-                summary.detectionCount = results.size();
-            }
-
-            summary.elapsedMs = static_cast<double>(timer.nsecsElapsed()) / 1000000.0;
+            auto summary = inferenceService_.runImageFromMat(*model, image, cleanPath, confThreshold, nmsThresholdVal);
             results.append(summary);
         } catch (const std::exception&) {
             core::InferenceSummary skipped;
@@ -210,34 +155,8 @@ void InferenceWorker::runVideo(const QString& videoPath, const int maxFrames) {
             }
 
             try {
-                QElapsedTimer timer;
-                timer.start();
-
-                core::InferenceSummary summary;
-                summary.modelName = model->manifest().name;
-                summary.inputPath = QStringLiteral("%1 [frame %2]").arg(QFileInfo(cleanPath).absoluteFilePath()).arg(frameIndex);
-                summary.taskType = model->manifest().taskType;
-                summary.imageWidth = frame.cols;
-                summary.imageHeight = frame.rows;
-                summary.elapsedMs = 0.0;
-
-                const QString taskType = model->manifest().taskType.toLower();
-
-                if (taskType == QStringLiteral("classification")) {
-                    const auto results = model->classify(frame, confThreshold);
-                    summary.classifications = results;
-                    summary.detectionCount = results.size();
-                } else if (taskType == QStringLiteral("segmentation")) {
-                    const auto results = model->segment(frame, confThreshold, nmsThresholdVal);
-                    summary.segmentations = results;
-                    summary.detectionCount = results.size();
-                } else {
-                    const auto results = model->detect(frame, confThreshold, nmsThresholdVal);
-                    summary.detections = results;
-                    summary.detectionCount = results.size();
-                }
-
-                summary.elapsedMs = static_cast<double>(timer.nsecsElapsed()) / 1000000.0;
+                const QString framePath = QStringLiteral("%1 [frame %2]").arg(QFileInfo(cleanPath).absoluteFilePath()).arg(frameIndex);
+                auto summary = inferenceService_.runImageFromMat(*model, frame, framePath, confThreshold, nmsThresholdVal);
                 results.append(summary);
             } catch (const std::exception&) {
                 core::InferenceSummary skipped;
