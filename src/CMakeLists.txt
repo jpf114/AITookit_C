@@ -95,6 +95,7 @@ ai_define_module(
     ai_runtime
     SOURCES
         runtime/onnx_backend.cpp
+        runtime/backend_registry.cpp
     LINK_LIBS
         ai_core
         onnxruntime::onnxruntime
@@ -108,6 +109,7 @@ ai_define_module(
         models/classification_model.cpp
         models/segmentation_model.cpp
         models/inference_backend.cpp
+        runtime/onnx_plugin.cpp
     LINK_LIBS
         ai_core
         ai_runtime

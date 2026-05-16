@@ -6,6 +6,8 @@
 #include <QFile>
 #include <QStringList>
 
+#include "runtime/onnx_plugin.h"
+
 namespace aitoolkit::app {
 
 namespace {
@@ -31,6 +33,8 @@ void AppBootstrap::initialize(QApplication& app) {
     if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         app.setStyleSheet(QString::fromUtf8(styleFile.readAll()));
     }
+
+    runtime::registerOnnxRuntimePlugin();
 }
 
 QString AppBootstrap::applicationStylePath() {
