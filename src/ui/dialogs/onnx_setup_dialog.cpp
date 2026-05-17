@@ -65,7 +65,13 @@ OnnxSetupDialog::OnnxSetupDialog(const QString& onnxPath, QWidget* parent)
 
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(new QLabel(QStringLiteral("ONNX 文件：%1").arg(info.fileName()), this));
+    detectionOnlyNoticeLabel_ = new QLabel(
+        QStringLiteral("当前 ONNX 导入仅生成 detection 模型清单；classification / segmentation 请使用现成 JSON 清单。"),
+        this);
+    detectionOnlyNoticeLabel_->setWordWrap(true);
+    detectionOnlyNoticeLabel_->setObjectName(QStringLiteral("OnnxDetectionOnlyNoticeLabel"));
     mainLayout->addLayout(formLayout);
+    mainLayout->addWidget(detectionOnlyNoticeLabel_);
     mainLayout->addWidget(buttonBox);
 
     updateOkButtonState();

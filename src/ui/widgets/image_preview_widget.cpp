@@ -8,6 +8,29 @@
 
 namespace aitoolkit::ui {
 
+namespace {
+
+QImage colorizeMask(const QImage& mask, const QSize& targetSize, QColor color) {
+    QImage alphaMask = mask.scaled(targetSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                           .convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QImage tinted(alphaMask.size(), QImage::Format_ARGB32_Premultiplied);
+    tinted.fill(Qt::transparent);
+
+    for (int y = 0; y < alphaMask.height(); ++y) {
+        const QRgb* alphaRow = reinterpret_cast<const QRgb*>(alphaMask.constScanLine(y));
+        QRgb* tintedRow = reinterpret_cast<QRgb*>(tinted.scanLine(y));
+        for (int x = 0; x < alphaMask.width(); ++x) {
+            QColor pixelColor = color;
+            pixelColor.setAlpha((qAlpha(alphaRow[x]) * color.alpha()) / 255);
+            tintedRow[x] = pixelColor.rgba();
+        }
+    }
+
+    return tinted;
+}
+
+}  // namespace
+
 ImagePreviewWidget::ImagePreviewWidget(QWidget* parent)
     : QWidget(parent) {
     setAutoFillBackground(true);
@@ -86,15 +109,14 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
         painter.drawRect(box);
 
         if (!item.mask.isNull()) {
-            QImage scaledMask = item.mask.scaled(
-                static_cast<int>(box.width()),
-                static_cast<int>(box.height()),
-                Qt::IgnoreAspectRatio,
-                Qt::SmoothTransformation);
-
-            QColor maskColor = color;
-            maskColor.setAlpha(80);
-            painter.drawImage(box, scaledMask);
+            QColor overlayColor = color;
+            overlayColor.setAlpha(80);
+            painter.drawImage(
+                box,
+                colorizeMask(
+                    item.mask,
+                    QSize(static_cast<int>(box.width()), static_cast<int>(box.height())),
+                    overlayColor));
         }
 
         const QString labelText = QStringLiteral("%1 %2%")

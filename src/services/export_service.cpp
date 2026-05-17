@@ -11,6 +11,29 @@
 
 namespace aitoolkit::services {
 
+namespace {
+
+QImage colorizeMask(const QImage& mask, const QSize& targetSize, QColor color) {
+    QImage alphaMask = mask.scaled(targetSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                           .convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    QImage tinted(alphaMask.size(), QImage::Format_ARGB32_Premultiplied);
+    tinted.fill(Qt::transparent);
+
+    for (int y = 0; y < alphaMask.height(); ++y) {
+        const QRgb* alphaRow = reinterpret_cast<const QRgb*>(alphaMask.constScanLine(y));
+        QRgb* tintedRow = reinterpret_cast<QRgb*>(tinted.scanLine(y));
+        for (int x = 0; x < alphaMask.width(); ++x) {
+            QColor pixelColor = color;
+            pixelColor.setAlpha((qAlpha(alphaRow[x]) * color.alpha()) / 255);
+            tintedRow[x] = pixelColor.rgba();
+        }
+    }
+
+    return tinted;
+}
+
+}  // namespace
+
 QJsonObject ExportService::summaryToJson(const core::InferenceSummary& summary) const {
     QJsonArray detections;
     for (const core::DetectionItem& detection : summary.detections) {
@@ -139,12 +162,16 @@ void ExportService::exportRenderedImage(
         painter.drawRect(item.boundingBox);
 
         if (!item.mask.isNull()) {
-            QImage scaledMask = item.mask.scaled(
-                static_cast<int>(item.boundingBox.width()),
-                static_cast<int>(item.boundingBox.height()),
-                Qt::IgnoreAspectRatio,
-                Qt::SmoothTransformation);
-            painter.drawImage(item.boundingBox, scaledMask);
+            QColor overlayColor = color;
+            overlayColor.setAlpha(80);
+            painter.drawImage(
+                item.boundingBox,
+                colorizeMask(
+                    item.mask,
+                    QSize(
+                        static_cast<int>(item.boundingBox.width()),
+                        static_cast<int>(item.boundingBox.height())),
+                    overlayColor));
         }
 
         const QString labelText = QStringLiteral("%1 %2%")

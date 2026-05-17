@@ -1,6 +1,10 @@
 #pragma once
 
+#include <QDir>
+#include <QFileInfo>
 #include <QMainWindow>
+#include <QRegularExpression>
+#include <QStringList>
 
 #include <memory>
 
@@ -29,6 +33,89 @@ public:
     ~MainWindow() override;
 
 private:
+    static QString resolveDownloadScriptPath(const QString& appDirPath) {
+        const QDir appDir(appDirPath);
+        const QStringList candidatePaths = {
+            appDir.filePath(QStringLiteral("../scripts/download_sample_model.ps1")),
+            appDir.filePath(QStringLiteral("../../scripts/download_sample_model.ps1")),
+            appDir.filePath(QStringLiteral("../share/scripts/download_sample_model.ps1")),
+            appDir.filePath(QStringLiteral("../../share/scripts/download_sample_model.ps1")),
+        };
+
+        for (const QString& candidatePath : candidatePaths) {
+            if (QFileInfo::exists(candidatePath)) {
+                return QDir::cleanPath(candidatePath);
+            }
+        }
+
+        return {};
+    }
+    static QString sanitizeExportStem(QString stem) {
+        stem = stem.trimmed();
+        if (stem.isEmpty()) {
+            return QStringLiteral("result");
+        }
+
+        static const QString invalidChars = QStringLiteral("\\/:*?\"<>|");
+        for (const QChar ch : invalidChars) {
+            stem.replace(ch, QChar('_'));
+        }
+
+        stem.replace(QStringLiteral("["), QStringLiteral("_"));
+        stem.replace(QStringLiteral("]"), QStringLiteral(""));
+        stem.replace(QRegularExpression(QStringLiteral("\\s+")), QStringLiteral("_"));
+        stem.replace(QRegularExpression(QStringLiteral("_+")), QStringLiteral("_"));
+        stem.remove(QRegularExpression(QStringLiteral("^_+|_+$")));
+
+        return stem.isEmpty() ? QStringLiteral("result") : stem;
+    }
+    static QString defaultJsonExportFileName(const core::InferenceSummary& summary) {
+        QString fileName = QFileInfo(summary.inputPath).fileName();
+        if (fileName.contains(QStringLiteral("[frame"), Qt::CaseInsensitive)) {
+            fileName.replace(QChar('.'), QChar('_'));
+            return sanitizeExportStem(fileName) + QStringLiteral(".json");
+        }
+
+        fileName = QFileInfo(summary.inputPath).completeBaseName();
+        if (fileName.isEmpty()) {
+            fileName = QFileInfo(summary.inputPath).fileName();
+        }
+        if (fileName.isEmpty()) {
+            fileName = summary.modelName;
+        }
+        return sanitizeExportStem(fileName) + QStringLiteral(".json");
+    }
+    static QString defaultImageExportFileName(const core::InferenceSummary& summary) {
+        QString fileName = QFileInfo(summary.inputPath).fileName();
+        if (fileName.contains(QStringLiteral("[frame"), Qt::CaseInsensitive)) {
+            fileName.replace(QChar('.'), QChar('_'));
+            return sanitizeExportStem(fileName) + QStringLiteral(".png");
+        }
+
+        fileName = QFileInfo(summary.inputPath).completeBaseName();
+        if (fileName.isEmpty()) {
+            fileName = QFileInfo(summary.inputPath).fileName();
+        }
+        if (fileName.isEmpty()) {
+            fileName = summary.modelName;
+        }
+        return sanitizeExportStem(fileName) + QStringLiteral(".png");
+    }
+    static QString defaultBatchJsonExportFileName(const QString& sourcePath) {
+        if (sourcePath.isEmpty()) {
+            return QStringLiteral("batch_results.json");
+        }
+
+        const QFileInfo info(sourcePath);
+        QString stem = info.isDir() ? QDir(sourcePath).dirName() : info.completeBaseName();
+        if (stem.isEmpty()) {
+            stem = info.fileName();
+        }
+        stem = sanitizeExportStem(stem);
+        return stem.isEmpty()
+            ? QStringLiteral("batch_results.json")
+            : stem + QStringLiteral("_batch_results.json");
+    }
     void buildShell();
     void wireSignals();
     void updateContextPanel();

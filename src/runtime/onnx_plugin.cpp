@@ -37,13 +37,13 @@ std::unique_ptr<models::InferenceBackend> OnnxRuntimePlugin::createModel(
     const int threadCount,
     const bool useGPU) const {
     if (manifest.taskType == QStringLiteral("detection")) {
-        return std::make_unique<models::YoloDetectionModel>(manifest, threadCount);
+        return std::make_unique<models::YoloDetectionModel>(manifest, threadCount, useGPU);
     }
     if (manifest.taskType == QStringLiteral("classification")) {
-        return std::make_unique<models::ClassificationModel>(manifest, threadCount);
+        return std::make_unique<models::ClassificationModel>(manifest, threadCount, useGPU);
     }
     if (manifest.taskType == QStringLiteral("segmentation")) {
-        return std::make_unique<models::SegmentationModel>(manifest, threadCount);
+        return std::make_unique<models::SegmentationModel>(manifest, threadCount, useGPU);
     }
     throw std::runtime_error(
         QStringLiteral("ONNX Runtime plugin does not support task type: %1")

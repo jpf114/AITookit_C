@@ -20,7 +20,9 @@ class ModelManifestTest : public QObject {
 private slots:
     void loadsManifestAndResolvesRelativePaths();
     void fallsBackToLabelsFileWhenInlineLabelsAreMissing();
+    void normalizesCaseForManifestIdentifiers();
     void failsWhenRequiredFieldIsMissing();
+    void failsWhenTaskTypeIsUnsupported();
     void failsWhenLabelsFileIsMissing();
     void failsWhenInputDimensionIsFractional();
     void failsWhenThresholdFieldIsNotNumeric();
@@ -129,6 +131,32 @@ void ModelManifestTest::fallsBackToLabelsFileWhenInlineLabelsAreMissing() {
     QCOMPARE(manifest.labels, expectedLabels);
 }
 
+void ModelManifestTest::normalizesCaseForManifestIdentifiers() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    const QString modelPath = QDir(tempDir.path()).filePath("model.onnx");
+    writeTextFile(modelPath, QStringLiteral("dummy-model"));
+
+    const QString manifestPath = QDir(tempDir.path()).filePath("model.json");
+    const QJsonObject manifestObject{
+        {QStringLiteral("name"), QStringLiteral("Case Variant")},
+        {QStringLiteral("task_type"), QStringLiteral("Detection")},
+        {QStringLiteral("backend"), QStringLiteral("OnnxRuntime")},
+        {QStringLiteral("model"), QStringLiteral("model.onnx")},
+        {QStringLiteral("decoder"), QStringLiteral("Yolo_V8")},
+        {QStringLiteral("input_width"), 640},
+        {QStringLiteral("input_height"), 640},
+    };
+
+    aitoolkit::core::writeJsonObject(manifestPath, manifestObject);
+
+    const aitoolkit::core::ModelManifest manifest = aitoolkit::core::loadModelManifest(manifestPath);
+    QCOMPARE(manifest.taskType, QStringLiteral("detection"));
+    QCOMPARE(manifest.backendType, QStringLiteral("onnxruntime"));
+    QCOMPARE(manifest.decoder, QStringLiteral("yolo_v8"));
+}
+
 void ModelManifestTest::failsWhenRequiredFieldIsMissing() {
     QTemporaryDir tempDir;
     QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
@@ -151,6 +179,26 @@ void ModelManifestTest::failsWhenRequiredFieldIsMissing() {
     const QString message = QString::fromStdString(error.what());
     QVERIFY(message.contains(QDir::toNativeSeparators(manifestPath)));
     QVERIFY(message.contains(QStringLiteral("name")));
+}
+
+void ModelManifestTest::failsWhenTaskTypeIsUnsupported() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    const QString modelPath = QDir(tempDir.path()).filePath("model.onnx");
+    writeTextFile(modelPath, QStringLiteral("dummy-model"));
+
+    const QString manifestPath = QDir(tempDir.path()).filePath("model.json");
+    QJsonObject manifestObject = makeBaseManifestObject();
+    manifestObject.insert(QStringLiteral("task_type"), QStringLiteral("tracking"));
+
+    aitoolkit::core::writeJsonObject(manifestPath, manifestObject);
+
+    const std::runtime_error error = expectManifestLoadError(manifestPath);
+    const QString message = QString::fromStdString(error.what());
+    QVERIFY(message.contains(QDir::toNativeSeparators(manifestPath)));
+    QVERIFY(message.contains(QStringLiteral("task_type")));
+    QVERIFY(message.contains(QStringLiteral("unsupported")));
 }
 
 void ModelManifestTest::failsWhenLabelsFileIsMissing() {

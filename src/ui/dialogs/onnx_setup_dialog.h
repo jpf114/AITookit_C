@@ -4,6 +4,7 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
+#include <QLabel>
 #include <QTextEdit>
 #include <QPushButton>
 
@@ -32,6 +33,7 @@ private:
     QDoubleSpinBox* confSpin_ = nullptr;
     QDoubleSpinBox* nmsSpin_ = nullptr;
     QTextEdit* labelsEdit_ = nullptr;
+    QLabel* detectionOnlyNoticeLabel_ = nullptr;
     QPushButton* okButton_ = nullptr;
 };
 

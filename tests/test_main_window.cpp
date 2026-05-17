@@ -109,9 +109,15 @@ private slots:
     void buildsThreePaneShell();
     void changingImageClearsStoredAndVisibleResults();
     void changingModelClearsStoredAndVisibleResults();
+    void completedVideoSummaryKeepsResultFocusedContext();
+    void classificationSummaryUsesTaskAwareContextCopy();
+    void selectingBatchResultUpdatesCurrentExportContext();
+    void exportFileNamesFollowSelectedResult();
+    void batchExportFileNameFollowsSourceContext();
     void recentInputClickReturnsToInferencePage();
     void unreadableRecentInputClearsImageState();
     void recentModelClickLoadsManifestAndReturnsToInferencePage();
+    void resolvesDownloadScriptFromInstalledShareDirectory();
 };
 
 void MainWindowTest::buildsThreePaneShell() {
@@ -212,6 +218,125 @@ void MainWindowTest::changingModelClearsStoredAndVisibleResults() {
         modelsPage, "modelManifestSelected", Qt::DirectConnection, Q_ARG(QString, secondManifestPath)));
 
     verifyClearedResultsState(window);
+}
+
+void MainWindowTest::completedVideoSummaryKeepsResultFocusedContext() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    const QString manifestPath =
+        writeManifestFile(tempDir.path(), QStringLiteral("video_model"), QStringLiteral("Warehouse Detector"));
+    QVERIFY(!manifestPath.isEmpty());
+
+    aitoolkit::ui::MainWindow window;
+    window.controller_->loadModelManifest(manifestPath);
+
+    aitoolkit::core::InferenceSummary summary;
+    summary.modelName = QStringLiteral("Warehouse Detector");
+    summary.inputPath = QStringLiteral("video://frame-001");
+    summary.taskType = QStringLiteral("detection");
+    summary.detectionCount = 4;
+    summary.elapsedMs = 18.5;
+
+    window.controller_->applyInferenceResult(summary);
+    window.controller_->currentImagePath_.clear();
+    emit window.controller_->contextChanged();
+
+    auto* contextImageValue = window.findChild<QLabel*>(QStringLiteral("ContextImageValue"));
+    QVERIFY(contextImageValue != nullptr);
+    QVERIFY(contextImageValue->text().contains(QStringLiteral("视频")));
+
+    auto* contextNextStepValue = window.findChild<QLabel*>(QStringLiteral("ContextNextStepValue"));
+    QVERIFY(contextNextStepValue != nullptr);
+    QVERIFY(contextNextStepValue->text().contains(QStringLiteral("JSON")));
+}
+
+void MainWindowTest::classificationSummaryUsesTaskAwareContextCopy() {
+    aitoolkit::ui::MainWindow window;
+
+    aitoolkit::core::InferenceSummary summary;
+    summary.modelName = QStringLiteral("Classifier");
+    summary.inputPath = QStringLiteral("D:/images/classify.jpg");
+    summary.taskType = QStringLiteral("classification");
+    summary.elapsedMs = 9.5;
+    summary.classifications.append({7, QStringLiteral("tabby"), 0.92f});
+    summary.classifications.append({3, QStringLiteral("tiger"), 0.06f});
+
+    window.controller_->applyInferenceResult(summary);
+
+    auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
+    QVERIFY(contextResultValue != nullptr);
+    QVERIFY(contextResultValue->text().contains(QStringLiteral("2 个类别")));
+    QVERIFY(!contextResultValue->text().contains(QStringLiteral("目标")));
+}
+
+void MainWindowTest::selectingBatchResultUpdatesCurrentExportContext() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    const QString firstImagePath = writeImageFile(tempDir.path(), QStringLiteral("first.png"));
+    const QString secondImagePath = writeImageFile(tempDir.path(), QStringLiteral("second.png"));
+    QVERIFY(!firstImagePath.isEmpty());
+    QVERIFY(!secondImagePath.isEmpty());
+
+    aitoolkit::ui::MainWindow window;
+
+    const auto firstSummary = makeSummary(QStringLiteral("Warehouse Detector"), firstImagePath);
+    const auto secondSummary = makeSummary(QStringLiteral("Warehouse Detector"), secondImagePath);
+
+    window.resultsPage_->setSummary(firstSummary);
+    window.resultsPage_->setResults({firstSummary, secondSummary});
+
+    auto* resultsList = window.findChild<QListWidget*>(QStringLiteral("ResultsList"));
+    QVERIFY(resultsList != nullptr);
+    QCOMPARE(resultsList->currentRow(), 0);
+
+    resultsList->setCurrentRow(1);
+
+    QCOMPARE(window.controller_->currentSummary().inputPath, secondImagePath);
+    QCOMPARE(window.controller_->currentImagePath(), secondImagePath);
+
+    auto* contextImageValue = window.findChild<QLabel*>(QStringLiteral("ContextImageValue"));
+    QVERIFY(contextImageValue != nullptr);
+    QVERIFY(contextImageValue->text().contains(QStringLiteral("second.png")));
+}
+
+void MainWindowTest::exportFileNamesFollowSelectedResult() {
+    aitoolkit::core::InferenceSummary imageSummary;
+    imageSummary.inputPath = QStringLiteral("D:/images/second.png");
+    QCOMPARE(
+        aitoolkit::ui::MainWindow::defaultJsonExportFileName(imageSummary),
+        QStringLiteral("second.json"));
+    QCOMPARE(
+        aitoolkit::ui::MainWindow::defaultImageExportFileName(imageSummary),
+        QStringLiteral("second.png"));
+
+    aitoolkit::core::InferenceSummary videoSummary;
+    videoSummary.inputPath = QStringLiteral("D:/videos/demo.mp4 [frame 12]");
+    QCOMPARE(
+        aitoolkit::ui::MainWindow::defaultJsonExportFileName(videoSummary),
+        QStringLiteral("demo_mp4_frame_12.json"));
+    QCOMPARE(
+        aitoolkit::ui::MainWindow::defaultImageExportFileName(videoSummary),
+        QStringLiteral("demo_mp4_frame_12.png"));
+}
+
+void MainWindowTest::batchExportFileNameFollowsSourceContext() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    const QString folderPath = QDir(tempDir.path()).filePath(QStringLiteral("street-scenes"));
+    QVERIFY(QDir().mkpath(folderPath));
+
+    QCOMPARE(
+        aitoolkit::ui::MainWindow::defaultBatchJsonExportFileName(folderPath),
+        QStringLiteral("street-scenes_batch_results.json"));
+    QCOMPARE(
+        aitoolkit::ui::MainWindow::defaultBatchJsonExportFileName(QStringLiteral("D:/videos/street.mp4")),
+        QStringLiteral("street_batch_results.json"));
+    QCOMPARE(
+        aitoolkit::ui::MainWindow::defaultBatchJsonExportFileName(QString()),
+        QStringLiteral("batch_results.json"));
 }
 
 void MainWindowTest::recentInputClickReturnsToInferencePage() {
@@ -327,6 +452,25 @@ void MainWindowTest::recentModelClickLoadsManifestAndReturnsToInferencePage() {
     auto* manifestSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ManifestSummaryLabel"));
     QVERIFY(manifestSummaryLabel != nullptr);
     QVERIFY(manifestSummaryLabel->text().contains(QStringLiteral("Warehouse Detector")));
+}
+
+void MainWindowTest::resolvesDownloadScriptFromInstalledShareDirectory() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    const QDir root(tempDir.path());
+    QVERIFY(root.mkpath(QStringLiteral("bin")));
+    QVERIFY(root.mkpath(QStringLiteral("share/scripts")));
+
+    const QString scriptPath = root.filePath(QStringLiteral("share/scripts/download_sample_model.ps1"));
+    QFile scriptFile(scriptPath);
+    QVERIFY(scriptFile.open(QIODevice::WriteOnly | QIODevice::Text));
+    scriptFile.write("Write-Host 'ok'");
+    scriptFile.close();
+
+    const QString resolvedPath =
+        aitoolkit::ui::MainWindow::resolveDownloadScriptPath(root.filePath(QStringLiteral("bin")));
+    QCOMPARE(QDir::cleanPath(resolvedPath), QDir::cleanPath(scriptPath));
 }
 
 }  // namespace

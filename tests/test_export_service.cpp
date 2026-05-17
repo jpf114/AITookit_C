@@ -1,6 +1,7 @@
 #include <QtTest>
 
 #include <QJsonArray>
+#include <QImage>
 #include <QJsonObject>
 #include <QTemporaryDir>
 
@@ -14,6 +15,7 @@ class ExportServiceTest : public QObject {
 
 private slots:
     void writesSummaryAsJson();
+    void rendersSegmentationMaskWithInstanceColor();
 };
 
 void ExportServiceTest::writesSummaryAsJson() {
@@ -57,6 +59,41 @@ void ExportServiceTest::writesSummaryAsJson() {
     QCOMPARE(boundingBox.value(QStringLiteral("y")).toDouble(), 20.0);
     QCOMPARE(boundingBox.value(QStringLiteral("width")).toDouble(), 30.0);
     QCOMPARE(boundingBox.value(QStringLiteral("height")).toDouble(), 40.0);
+}
+
+void ExportServiceTest::rendersSegmentationMaskWithInstanceColor() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+
+    QImage sourceImage(24, 24, QImage::Format_RGB32);
+    sourceImage.fill(Qt::black);
+
+    QImage mask(8, 8, QImage::Format_Alpha8);
+    mask.fill(255);
+
+    aitoolkit::core::InferenceSummary summary;
+    summary.taskType = QStringLiteral("segmentation");
+
+    aitoolkit::core::SegmentationItem item;
+    item.classId = 1;
+    item.label = QStringLiteral("lane");
+    item.confidence = 0.87f;
+    item.boundingBox = QRectF(4.0, 4.0, 8.0, 8.0);
+    item.mask = mask;
+    item.renderColor = QColor(QStringLiteral("#ef4444"));
+    summary.segmentations.push_back(item);
+
+    const QString outputPath = tempDir.filePath(QStringLiteral("rendered.png"));
+
+    aitoolkit::services::ExportService service;
+    service.exportRenderedImage(outputPath, sourceImage, summary);
+
+    const QImage rendered(outputPath);
+    QVERIFY2(!rendered.isNull(), "Rendered export image should be readable");
+
+    const QColor centerPixel = rendered.pixelColor(8, 8);
+    QVERIFY2(centerPixel.red() > centerPixel.green(), "Segmentation mask should be tinted by the instance color.");
+    QVERIFY2(centerPixel.red() > centerPixel.blue(), "Segmentation mask should not render as an untinted grayscale patch.");
 }
 
 }  // namespace

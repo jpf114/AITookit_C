@@ -34,6 +34,40 @@
 
 namespace aitoolkit::ui {
 
+namespace {
+
+int summaryResultCount(const core::InferenceSummary& summary) {
+    if (summary.taskType == QStringLiteral("classification")) {
+        return summary.classifications.size();
+    }
+    if (summary.taskType == QStringLiteral("segmentation")) {
+        return summary.segmentations.size();
+    }
+    return summary.detectionCount;
+}
+
+QString summaryResultLabel(const core::InferenceSummary& summary) {
+    if (summary.taskType == QStringLiteral("classification")) {
+        return QStringLiteral("类别数");
+    }
+    if (summary.taskType == QStringLiteral("segmentation")) {
+        return QStringLiteral("实例数");
+    }
+    return QStringLiteral("目标数");
+}
+
+QString summaryResultUnit(const core::InferenceSummary& summary) {
+    if (summary.taskType == QStringLiteral("classification")) {
+        return QStringLiteral("个类别");
+    }
+    if (summary.taskType == QStringLiteral("segmentation")) {
+        return QStringLiteral("个实例");
+    }
+    return QStringLiteral("个目标");
+}
+
+}  // namespace
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
     setWindowTitle(QStringLiteral("AI 检测工具 v%1").arg(QCoreApplication::applicationVersion()));
@@ -164,16 +198,8 @@ void MainWindow::wireSignals() {
     connect(homePage_, &HomePage::loadModelClicked, this, [this]() { showPage(NavPanel::ModelsPageId); });
     connect(homePage_, &HomePage::selectImageClicked, this, [this]() { showPage(NavPanel::InferencePageId); });
     connect(homePage_, &HomePage::downloadSampleModelClicked, this, [this]() {
-        const QString scriptPath = QCoreApplication::applicationDirPath() + QStringLiteral("/../scripts/download_sample_model.ps1");
-        const QString altScriptPath = QDir::cleanPath(
-            QCoreApplication::applicationDirPath() + QStringLiteral("/../../scripts/download_sample_model.ps1"));
-
-        QString resolvedScript;
-        if (QFileInfo::exists(scriptPath)) {
-            resolvedScript = scriptPath;
-        } else if (QFileInfo::exists(altScriptPath)) {
-            resolvedScript = altScriptPath;
-        } else {
+        const QString resolvedScript = resolveDownloadScriptPath(QCoreApplication::applicationDirPath());
+        if (resolvedScript.isEmpty()) {
             QMessageBox::information(
                 this,
                 QStringLiteral("下载示例模型"),
@@ -252,16 +278,7 @@ void MainWindow::wireSignals() {
         statusBar()->showMessage(QStringLiteral("正在下载 %1...").arg(dialog.selectedModelName()));
 
         auto* downloadProcess = new QProcess(this);
-        const QString scriptPath = QCoreApplication::applicationDirPath() + QStringLiteral("/../scripts/download_sample_model.ps1");
-        const QString altScriptPath = QDir::cleanPath(
-            QCoreApplication::applicationDirPath() + QStringLiteral("/../../scripts/download_sample_model.ps1"));
-
-        QString resolvedScript;
-        if (QFileInfo::exists(scriptPath)) {
-            resolvedScript = scriptPath;
-        } else if (QFileInfo::exists(altScriptPath)) {
-            resolvedScript = altScriptPath;
-        }
+        const QString resolvedScript = resolveDownloadScriptPath(QCoreApplication::applicationDirPath());
 
         if (resolvedScript.isEmpty()) {
             QMessageBox::warning(this, QStringLiteral("下载失败"), QStringLiteral("未找到下载脚本。"));
@@ -380,7 +397,7 @@ void MainWindow::wireSignals() {
             QStringLiteral("导出 JSON"),
             initialDirectory.isEmpty()
                 ? QString()
-                : QDir(initialDirectory).filePath(QStringLiteral("result.json")),
+                : QDir(initialDirectory).filePath(defaultJsonExportFileName(controller_->currentSummary())),
             QStringLiteral("JSON Files (*.json)"));
         if (outputPath.isEmpty()) {
             return;
@@ -412,7 +429,7 @@ void MainWindow::wireSignals() {
             QStringLiteral("导出图片"),
             initialDirectory.isEmpty()
                 ? QString()
-                : QDir(initialDirectory).filePath(QStringLiteral("result.png")),
+                : QDir(initialDirectory).filePath(defaultImageExportFileName(controller_->currentSummary())),
             QStringLiteral("PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp);;TIFF (*.tif *.tiff)"));
         if (outputPath.isEmpty()) {
             return;
@@ -435,7 +452,8 @@ void MainWindow::wireSignals() {
             QStringLiteral("批量导出 JSON"),
             initialDirectory.isEmpty()
                 ? QString()
-                : QDir(initialDirectory).filePath(QStringLiteral("batch_results.json")),
+                : QDir(initialDirectory).filePath(
+                      defaultBatchJsonExportFileName(controller_->currentInputSourcePath())),
             QStringLiteral("JSON (*.json)"));
         if (outputPath.isEmpty()) {
             return;
@@ -446,6 +464,11 @@ void MainWindow::wireSignals() {
         } else {
             QMessageBox::warning(this, QStringLiteral("导出失败"), QStringLiteral("无法写入文件：%1").arg(outputPath));
         }
+    });
+    connect(resultsPage_, &ResultsPage::resultSelectionChanged, this, [this](const core::InferenceSummary& summary) {
+        controller_->applyInferenceResult(summary);
+        const QImage previewImage = loadUsableImage(summary.inputPath);
+        inferencePage_->setCurrentImagePath(previewImage.isNull() ? QString() : summary.inputPath);
     });
     connect(settingsPage_,
             &SettingsPage::defaultExportDirectoryChanged,
@@ -501,8 +524,9 @@ void MainWindow::wireSignals() {
         updateContextPanel();
         showPage(NavPanel::ResultsPageId);
         statusBar()->showMessage(
-            QStringLiteral("推理完成 | 目标数：%1 | 耗时：%2 ms")
-                .arg(summary.detectionCount)
+            QStringLiteral("推理完成 | %1：%2 | 耗时：%3 ms")
+                .arg(summaryResultLabel(summary))
+                .arg(summaryResultCount(summary))
                 .arg(summary.elapsedMs, 0, 'f', 1),
             5000);
     });
@@ -538,9 +562,10 @@ void MainWindow::wireSignals() {
         QMessageBox::information(
             this,
             QStringLiteral("批量推理完成"),
-            QStringLiteral("共处理 %1 张图像，检测到 %2 个目标，总耗时 %3 ms。")
+            QStringLiteral("共处理 %1 张图像，得到 %2 %3，总耗时 %4 ms。")
                 .arg(results.size())
                 .arg(totalDetections)
+                .arg(summaryResultUnit(results.first()))
                 .arg(QString::number(totalElapsedMs, 'f', 1)));
     });
     connect(controller_, &AppController::inferenceCompletedVideo, this, [this](const QVector<core::InferenceSummary>& results) {
@@ -578,9 +603,10 @@ void MainWindow::wireSignals() {
         QMessageBox::information(
             this,
             QStringLiteral("视频推理完成"),
-            QStringLiteral("共处理 %1 帧，检测到 %2 个目标，总耗时 %3 ms。")
+            QStringLiteral("共处理 %1 帧，得到 %2 %3，总耗时 %4 ms。")
                 .arg(results.size())
                 .arg(totalDetections)
+                .arg(summaryResultUnit(results.first()))
                 .arg(QString::number(totalElapsedMs, 'f', 1)));
     });
     connect(controller_, &AppController::inferenceProgress, this, [this](int current, int total) {
@@ -620,16 +646,21 @@ void MainWindow::updateContextPanel() {
                     : QStringLiteral("未选择模型清单"));
     imageStatusLabel_->setText(
         hasImage ? QStringLiteral("已选择：%1").arg(imageDisplayName)
-                 : QStringLiteral("未选择图像"));
+                 : hasSummary
+                     ? QStringLiteral("当前结果来自视频或批量推理")
+                     : QStringLiteral("未选择图像"));
     runStatusLabel_->setText(
         hasSummary
-            ? QStringLiteral("已完成，共 %1 个目标，耗时 %2 ms")
-                  .arg(summary.detectionCount)
+            ? QStringLiteral("已完成，共 %1 %2，耗时 %3 ms")
+                  .arg(summaryResultCount(summary))
+                  .arg(summaryResultUnit(summary))
                   .arg(QString::number(summary.elapsedMs, 'f', 2))
             : QStringLiteral("尚未执行检测"));
 
     if (!hasManifest) {
         nextStepLabel_->setText(QStringLiteral("请先加载模型清单。"));
+    } else if (hasSummary) {
+        nextStepLabel_->setText(QStringLiteral("可查看结果明细，或直接导出 JSON。"));
     } else if (!hasImage) {
         nextStepLabel_->setText(QStringLiteral("请选择一张待推理图像。"));
     } else if (!hasSummary) {
@@ -718,7 +749,7 @@ void MainWindow::setupShortcuts() {
             QStringLiteral("导出 JSON"),
             initialDirectory.isEmpty()
                 ? QString()
-                : QDir(initialDirectory).filePath(QStringLiteral("result.json")),
+                : QDir(initialDirectory).filePath(defaultJsonExportFileName(controller_->currentSummary())),
             QStringLiteral("JSON Files (*.json)"));
         if (!outputPath.isEmpty()) {
             controller_->exportJson(outputPath);

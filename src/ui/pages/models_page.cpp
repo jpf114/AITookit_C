@@ -60,7 +60,9 @@ ModelsPage::ModelsPage(QWidget* parent)
     auto* loadSectionTitle = new QLabel(QStringLiteral("加载清单"), loadSection_);
     loadSectionTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
 
-    auto* loadHintLabel = new QLabel(QStringLiteral("支持选择 JSON 模型清单文件。"), loadSection_);
+    auto* loadHintLabel = new QLabel(
+        QStringLiteral("支持选择 JSON 模型清单文件；直接导入 ONNX 目前只生成 detection 清单。"),
+        loadSection_);
     loadHintLabel->setObjectName(QStringLiteral("SectionHint"));
     loadHintLabel->setWordWrap(true);
 

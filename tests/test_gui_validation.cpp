@@ -34,6 +34,7 @@ private slots:
     void testOnnxSetupDialogInputSizeRange();
     void testOnnxSetupDialogEmptyLabels();
     void testOnnxSetupDialogWhitespaceOnlyLabels();
+    void testOnnxSetupDialogShowsDetectionOnlyNotice();
 
     void testInferencePageEmptyState();
     void testInferencePageRunDisabledWithoutImage();
@@ -213,6 +214,21 @@ void GuiValidationTest::testOnnxSetupDialogWhitespaceOnlyLabels() {
     QCOMPARE(labels.size(), 2);
     QCOMPARE(labels[0], QStringLiteral("cat"));
     QCOMPARE(labels[1], QStringLiteral("dog"));
+}
+
+void GuiValidationTest::testOnnxSetupDialogShowsDetectionOnlyNotice() {
+    aitoolkit::ui::dialogs::OnnxSetupDialog dialog(QStringLiteral("test.onnx"));
+
+    bool foundNotice = false;
+    for (auto* label : dialog.findChildren<QLabel*>()) {
+        if (label->text().contains(QStringLiteral("detection"))
+            && label->text().contains(QStringLiteral("ONNX"))) {
+            foundNotice = true;
+            break;
+        }
+    }
+
+    QVERIFY2(foundNotice, "Dialog should clearly state that ONNX import currently creates a detection manifest.");
 }
 
 void GuiValidationTest::testInferencePageEmptyState() {

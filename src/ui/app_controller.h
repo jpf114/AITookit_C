@@ -37,6 +37,7 @@ public:
     core::ModelManifest currentManifest() const;
     QString currentManifestPath() const;
     QString currentImagePath() const;
+    QString currentInputSourcePath() const;
     core::InferenceSummary currentSummary() const;
     QVector<core::InferenceSummary> currentBatchResults() const;
     core::SettingsStore& settingsStore();
@@ -73,9 +74,11 @@ private:
     std::shared_ptr<models::InferenceBackend> currentModel_;
     QString currentManifestPath_;
     QString currentImagePath_;
+    QString currentInputSourcePath_;
     core::InferenceSummary currentSummary_;
     QVector<core::InferenceSummary> batchResults_;
     bool inferenceRunning_ = false;
+    bool inferenceCancellationRequested_ = false;
 };
 
 }  // namespace aitoolkit::ui

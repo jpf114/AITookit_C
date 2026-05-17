@@ -6,9 +6,7 @@
 #include <QJsonObject>
 
 #include "core/json_utils.h"
-#include "models/classification_model.h"
-#include "models/segmentation_model.h"
-#include "models/yolo_detection_model.h"
+#include "runtime/backend_registry.h"
 
 #include <stdexcept>
 
@@ -20,25 +18,21 @@ core::ModelManifest ModelService::loadManifest(const QString& manifestPath) cons
 
 std::unique_ptr<models::InferenceBackend> ModelService::loadModel(const QString& manifestPath) const {
     const core::ModelManifest manifest = loadManifest(manifestPath);
-
-    if (manifest.backendType.compare(QStringLiteral("onnxruntime"), Qt::CaseInsensitive) != 0) {
-        throw std::runtime_error("Only onnxruntime backend is currently supported");
+    runtime::BackendPlugin* const backend =
+        runtime::BackendRegistry::instance().getBackend(manifest.backendType);
+    if (backend == nullptr || !backend->info().isAvailable) {
+        throw std::runtime_error(
+            QStringLiteral("Backend is not available: %1").arg(manifest.backendType).toStdString());
     }
 
-    if (manifest.taskType.compare(QStringLiteral("detection"), Qt::CaseInsensitive) == 0) {
-        return std::make_unique<models::YoloDetectionModel>(manifest, threadCount_);
+    if (!backend->supportedTaskTypes().contains(manifest.taskType, Qt::CaseInsensitive)) {
+        throw std::runtime_error(
+            QStringLiteral("Unsupported task type for backend %1: %2")
+                .arg(manifest.backendType, manifest.taskType)
+                .toStdString());
     }
 
-    if (manifest.taskType.compare(QStringLiteral("classification"), Qt::CaseInsensitive) == 0) {
-        return std::make_unique<models::ClassificationModel>(manifest, threadCount_);
-    }
-
-    if (manifest.taskType.compare(QStringLiteral("segmentation"), Qt::CaseInsensitive) == 0) {
-        return std::make_unique<models::SegmentationModel>(manifest, threadCount_);
-    }
-
-    throw std::runtime_error(
-        QStringLiteral("Unsupported task type: %1").arg(manifest.taskType).toStdString());
+    return backend->createModel(manifest, threadCount_, useGPU_);
 }
 
 core::ModelManifest ModelService::createManifestFromOnnx(

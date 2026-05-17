@@ -21,6 +21,11 @@ AppController::AppController(QObject* parent)
     inferenceThread_->start();
 
     connect(inferenceWorker_, &services::InferenceWorker::imageResultReady, this, [this](const core::InferenceSummary& summary) {
+        if (inferenceCancellationRequested_) {
+            inferenceCancellationRequested_ = false;
+            inferenceRunning_ = false;
+            return;
+        }
         inferenceRunning_ = false;
         batchResults_.clear();
         applyInferenceResult(summary);
@@ -30,6 +35,13 @@ AppController::AppController(QObject* parent)
         emit inferenceProgress(completed, total);
     });
     connect(inferenceWorker_, &services::InferenceWorker::batchFinished, this, [this](const QVector<core::InferenceSummary>& results) {
+        if (inferenceCancellationRequested_) {
+            inferenceCancellationRequested_ = false;
+            inferenceRunning_ = false;
+            batchResults_.clear();
+            emit contextChanged();
+            return;
+        }
         inferenceRunning_ = false;
         batchResults_ = results;
         if (!results.isEmpty()) {
@@ -41,6 +53,13 @@ AppController::AppController(QObject* parent)
         emit inferenceProgress(frameIndex, totalFrames);
     });
     connect(inferenceWorker_, &services::InferenceWorker::videoFinished, this, [this](const QVector<core::InferenceSummary>& results) {
+        if (inferenceCancellationRequested_) {
+            inferenceCancellationRequested_ = false;
+            inferenceRunning_ = false;
+            batchResults_.clear();
+            emit contextChanged();
+            return;
+        }
         inferenceRunning_ = false;
         batchResults_ = results;
         if (!results.isEmpty()) {
@@ -49,6 +68,7 @@ AppController::AppController(QObject* parent)
         emit inferenceCompletedVideo(results);
     });
     connect(inferenceWorker_, &services::InferenceWorker::error, this, [this](const QString& message) {
+        inferenceCancellationRequested_ = false;
         inferenceRunning_ = false;
         emit inferenceError(message);
     });
@@ -69,6 +89,7 @@ bool AppController::tryLoadDefaultModel() {
             currentModel_.reset();
             currentManifestPath_ = currentManifest_.manifestPath;
             currentSummary_ = {};
+            batchResults_.clear();
             settingsStore_.addRecentModel(currentManifestPath_);
             emit modelLoaded(currentManifest_);
             emit contextChanged();
@@ -103,6 +124,7 @@ bool AppController::tryLoadDefaultModel() {
                 currentModel_.reset();
                 currentManifestPath_ = currentManifest_.manifestPath;
                 currentSummary_ = {};
+                batchResults_.clear();
                 settingsStore_.addRecentModel(currentManifestPath_);
                 settingsStore_.setLastModelManifestPath(currentManifestPath_);
                 emit modelLoaded(currentManifest_);
@@ -122,6 +144,7 @@ void AppController::loadModelManifest(const QString& manifestPath) {
         currentModel_.reset();
         currentManifestPath_ = currentManifest_.manifestPath;
         currentSummary_ = {};
+        batchResults_.clear();
         settingsStore_.addRecentModel(currentManifestPath_);
         settingsStore_.setLastModelManifestPath(currentManifestPath_);
         emit modelLoaded(currentManifest_);
@@ -139,7 +162,12 @@ void AppController::loadOnnxFile(const QString& onnxPath, const QString& name, i
 
         currentManifest_ = manifest;
         currentManifestPath_ = manifest.manifestPath;
-        currentModel_ = std::make_shared<models::YoloDetectionModel>(manifest, modelService_.threadCount());
+        currentModel_ = std::make_shared<models::YoloDetectionModel>(
+            manifest,
+            modelService_.threadCount(),
+            modelService_.useGPU());
+        currentSummary_ = {};
+        batchResults_.clear();
 
         settingsStore_.addRecentModel(manifest.manifestPath);
         settingsStore_.setLastModelManifestPath(manifest.manifestPath);
@@ -153,6 +181,7 @@ void AppController::loadOnnxFile(const QString& onnxPath, const QString& name, i
 void AppController::selectImage(const QString& imagePath) {
     const QImage image = loadUsableImage(imagePath);
     currentImagePath_ = image.isNull() ? QString() : imagePath;
+    currentInputSourcePath_ = currentImagePath_;
     currentSummary_ = {};
     settingsStore_.addRecentInput(imagePath);
     emit imageSelected(currentImagePath_, image);
@@ -182,6 +211,7 @@ void AppController::selectFolder(const QString& folderPath, double confidence, d
     }
 
     try {
+        currentInputSourcePath_ = folderPath;
         if (!currentModel_ ||
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadModel(currentManifestPath_);
@@ -196,6 +226,7 @@ void AppController::selectFolder(const QString& folderPath, double confidence, d
         inferenceWorker_->setModel(currentModel_);
         inferenceWorker_->setThresholds(confidence, nms);
         settingsStore_.addRecentInput(folderPath);
+        inferenceCancellationRequested_ = false;
         inferenceRunning_ = true;
         emit inferenceStarted();
         QMetaObject::invokeMethod(inferenceWorker_, "runBatch", Qt::QueuedConnection, Q_ARG(QStringList, imagePaths));
@@ -211,6 +242,7 @@ void AppController::selectVideo(const QString& videoPath, const int maxFrames, d
     }
 
     try {
+        currentInputSourcePath_ = videoPath;
         if (!currentModel_ ||
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadModel(currentManifestPath_);
@@ -219,6 +251,7 @@ void AppController::selectVideo(const QString& videoPath, const int maxFrames, d
         inferenceWorker_->setModel(currentModel_);
         inferenceWorker_->setThresholds(confidence, nms);
         settingsStore_.addRecentInput(videoPath);
+        inferenceCancellationRequested_ = false;
         inferenceRunning_ = true;
         emit inferenceStarted();
         QMetaObject::invokeMethod(inferenceWorker_, "runVideo", Qt::QueuedConnection, Q_ARG(QString, videoPath), Q_ARG(int, maxFrames));
@@ -246,6 +279,7 @@ void AppController::runInference(double confidence, double nms) {
         }
         inferenceWorker_->setModel(currentModel_);
         inferenceWorker_->setThresholds(confidence, nms);
+        inferenceCancellationRequested_ = false;
         inferenceRunning_ = true;
         emit inferenceStarted();
         QMetaObject::invokeMethod(inferenceWorker_, "runImage", Qt::QueuedConnection, Q_ARG(QString, currentImagePath_));
@@ -255,6 +289,7 @@ void AppController::runInference(double confidence, double nms) {
 }
 
 void AppController::cancelInference() {
+    inferenceCancellationRequested_ = true;
     inferenceRunning_ = false;
     inferenceWorker_->cancel();
     emit inferenceCancelled();
@@ -295,6 +330,10 @@ QString AppController::currentManifestPath() const {
 
 QString AppController::currentImagePath() const {
     return currentImagePath_;
+}
+
+QString AppController::currentInputSourcePath() const {
+    return currentInputSourcePath_;
 }
 
 core::InferenceSummary AppController::currentSummary() const {

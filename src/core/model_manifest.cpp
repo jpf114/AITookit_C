@@ -17,6 +17,10 @@ namespace aitoolkit::core {
 
 namespace {
 
+QString normalizedIdentifier(const QString& value) {
+    return value.trimmed().toLower();
+}
+
 std::runtime_error manifestError(const QString& manifestPath, const QString& fieldName, const QString& message) {
     return std::runtime_error(
         QStringLiteral("%1 [%2]: %3")
@@ -92,6 +96,20 @@ QString requireStringField(const QJsonObject& object, const QString& manifestPat
     return text;
 }
 
+QString requireKnownTaskTypeField(const QJsonObject& object, const QString& manifestPath, const QString& fieldName) {
+    const QString taskType = normalizedIdentifier(requireStringField(object, manifestPath, fieldName));
+    if (taskType == QStringLiteral("detection") ||
+        taskType == QStringLiteral("classification") ||
+        taskType == QStringLiteral("segmentation")) {
+        return taskType;
+    }
+
+    throw manifestError(
+        manifestPath,
+        fieldName,
+        QStringLiteral("unsupported task type: %1").arg(taskType));
+}
+
 int requirePositiveIntField(const QJsonObject& object, const QString& manifestPath, const QString& fieldName) {
     const QJsonValue value = object.value(fieldName);
     if (!value.isDouble()) {
@@ -148,13 +166,13 @@ ModelManifest loadModelManifest(const QString& manifestPath) {
     ModelManifest manifest;
     manifest.manifestPath = cleanManifestPath;
     manifest.name = requireStringField(object, cleanManifestPath, QStringLiteral("name"));
-    manifest.taskType = requireStringField(object, cleanManifestPath, QStringLiteral("task_type"));
-    manifest.backendType = requireStringField(object, cleanManifestPath, QStringLiteral("backend"));
+    manifest.taskType = requireKnownTaskTypeField(object, cleanManifestPath, QStringLiteral("task_type"));
+    manifest.backendType = normalizedIdentifier(requireStringField(object, cleanManifestPath, QStringLiteral("backend")));
     manifest.modelPath = resolvePath(
         manifestDir,
         requireStringField(object, cleanManifestPath, QStringLiteral("model")));
     manifest.labelsPath = resolvePath(manifestDir, optionalStringField(object, cleanManifestPath, QStringLiteral("labels")));
-    manifest.decoder = optionalStringField(object, cleanManifestPath, QStringLiteral("decoder"));
+    manifest.decoder = normalizedIdentifier(optionalStringField(object, cleanManifestPath, QStringLiteral("decoder")));
     manifest.inputWidth = requirePositiveIntField(object, cleanManifestPath, QStringLiteral("input_width"));
     manifest.inputHeight = requirePositiveIntField(object, cleanManifestPath, QStringLiteral("input_height"));
     manifest.confidenceThreshold = optionalNumericField(
