@@ -6,7 +6,7 @@
 
 ## 输入与输出
 
-- 输入：RGB 图像（PNG / JPG / BMP）+ ONNX 模型文件
+- 输入：RGB 图像（PNG / JPG / BMP / TIFF / WebP）+ ONNX 模型文件
 - 输出：检测框列表（类别 ID、标签、置信度、边界框坐标）
 
 ## 参数
@@ -16,15 +16,16 @@
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- | --- |
 | name | string | 是 | — | 模型名称 |
-| task_type | string | 是 | — | 任务类型，当前仅支持 `detection` |
+| task_type | string | 是 | — | 任务类型，检测模型为 `detection` |
 | backend | string | 是 | — | 推理后端，当前仅支持 `onnxruntime` |
 | model | string | 是 | — | ONNX 模型文件路径（相对于清单文件） |
 | input_width | int | 是 | — | 模型输入宽度，范围 32–4096，步长 32 |
 | input_height | int | 是 | — | 模型输入高度，范围 32–4096，步长 32 |
-| confidence_threshold | double | 否 | `0.0` | 置信度过滤阈值，范围 0.0–1.0 |
-| nms_threshold | double | 否 | `0.0` | NMS IoU 阈值，范围 0.0–1.0 |
+| confidence_threshold | double | 否 | `0.25` | 置信度过滤阈值，范围 0.0–1.0 |
+| nms_threshold | double | 否 | `0.45` | NMS IoU 阈值，范围 0.0–1.0 |
 | labels | string[] | 否 | `[]` | 类别标签列表 |
 | labels_inline | string[] | 否 | `[]` | 内联标签列表（优先于 labels 文件） |
+| decoder | string | 否 | `yolo_v8` | 后处理解码器：`yolo_v8`、`yolo_v5`、`yolo_x` |
 
 ## 算法内容
 
@@ -68,11 +69,11 @@
 
 ## 处理流程
 
-1. 加载模型：`ModelService::loadDetectionModel()` 解析清单并创建 `YoloDetectionModel`。
+1. 加载模型：`ModelService::loadModel()` 根据 `task_type` 自动创建 `YoloDetectionModel`。
 2. 预处理：`YoloDetectionModel::preprocessImage()` 将图像转为 NCHW 张量。
 3. 推理：`OnnxBackend::run()` 执行 ONNX 模型前向计算。
 4. 张量解析：`YoloDetectionModel::tensorToDetectionMatrix()` 将输出张量转为检测矩阵。
-5. 后处理：`YoloDetectionModel::postprocessDetections()` 执行置信度过滤 + NMS + 坐标缩放。
+5. 后处理：通过 `PostprocessRegistry` 根据 `decoder` 字段分发到对应解码器，执行置信度过滤 + NMS + 坐标缩放。
 6. 结果封装：`InferenceService::runImage()` 封装为 `InferenceSummary`。
 
 ## 输出说明

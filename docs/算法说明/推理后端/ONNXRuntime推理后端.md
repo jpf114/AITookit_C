@@ -16,8 +16,20 @@
 | 参数 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | graph_optimization_level | 枚举 | `ORT_ENABLE_EXTENDED` | 图优化级别 |
-| intra_op_num_threads | int | `1` | 算子内并行线程数 |
+| intra_op_num_threads | int | 用户配置（1–16） | 算子内并行线程数，通过设置页配置 |
 | log_level | 枚举 | `ORT_LOGGING_LEVEL_WARNING` | 日志级别 |
+
+### GPU 加速
+
+| 参数 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| useGPU | bool | `false` | 是否启用 CUDA GPU 加速 |
+| CUDA Provider | — | — | 需安装 CUDA Toolkit，启用 CUDA Provider 后自动注册 |
+
+GPU 加速说明：
+- 启用 GPU 后，ONNX Runtime 会优先使用 CUDA Provider 执行推理
+- 若 CUDA 不可用（未安装 CUDA Toolkit 或 GPU 不支持），自动回退到 CPU 模式并提示用户
+- GPU 模式通过设置页的 GPU 复选框控制，持久化到 QSettings
 
 ## 算法内容
 
@@ -26,9 +38,10 @@
 1. 创建 ONNX Runtime 环境（`Ort::Env`），设置日志级别为 WARNING。
 2. 配置会话选项（`Ort::SessionOptions`）：
    - 图优化级别：`ORT_ENABLE_EXTENDED`（扩展优化，包含算子融合、常量折叠等）
-   - 算子内线程数：1（单线程推理，避免线程竞争）
-3. 创建推理会话（`Ort::Session`），加载模型文件。
-4. 读取模型输入/输出节点名称和输入形状信息。
+   - 算子内线程数：用户配置值（1–16）
+3. 若启用 GPU 且编译时启用了 CUDA 支持（`USE_CUDA` 宏），注册 CUDA Provider。
+4. 创建推理会话（`Ort::Session`），加载模型文件。
+5. 读取模型输入/输出节点名称和输入形状信息。
 
 ### 推理执行
 
@@ -75,7 +88,7 @@
 | --- | --- | --- |
 | name | std::string | 输出节点名称 |
 | shape | std::vector\<int64_t\> | 张量形状 |
-| values | std::vector\<float\> | 张量数据（行优先） |
+| values | std::vector\<float> | 张量数据（行优先） |
 
 ## 输出说明
 
@@ -95,3 +108,4 @@
 - 输入数据不进行拷贝，调用期间需保证输入缓冲区有效
 - ONNX Runtime 在 Windows Debug 模式下可能存在兼容性问题，建议使用 Release 模式
 - 模型文件路径支持中文路径（通过 `toStdWString()` 转换）
+- GPU 加速需要编译时启用 `USE_CUDA` 宏并安装 CUDA Toolkit

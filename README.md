@@ -20,13 +20,12 @@
 - Windows 10/11 x64
 - Visual Studio 2022（MSVC v143）
 - CMake ≥ 3.21
-- [vcpkg](https://vcpkg.io/)（配置 `VCPKG_ROOT` 环境变量）
-- （可选）CUDA Toolkit（GPU 加速）
+- [vcpkg](https://vcpkg.io/)（项目使用 manifest 模式，无需配置全局环境变量）
 
 ### 构建
 
 ```bash
-# 配置
+# 配置（vcpkg manifest 模式会自动安装依赖）
 cmake --preset release
 
 # 编译

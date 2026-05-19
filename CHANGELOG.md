@@ -2,9 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] - 2026-05-16
+## [1.0.0] - 2026-05-19
 
 ### Added
 
@@ -12,6 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Windows 版本信息嵌入 exe 属性
 - README.md 项目说明文档
 - CHANGELOG.md 版本变更记录
+
+### Changed
+
+- 迁移至 vcpkg manifest 模式，添加 builtin-baseline 锁定依赖版本
+- vcpkg.json 添加 ICU 依赖，修复 Qt6Core 启动时 ICU DLL 缺失
+- 运行时依赖脚本优先使用 manifest 路径（build/vcpkg_installed），回退全局 vcpkg
+- VC++ 运行时路径使用 file(TO_CMAKE_PATH) 规范化，修复反斜杠转义问题
+- VC++ 运行时 DLL 逐个检查存在性再安装，避免 vcruntime140_2.dll 不存在时安装失败
+- main.cpp 在 Windows 上强制设置 QT_QPA_PLATFORM=windows，避免 conda 等环境变量干扰
+- 内置 YOLOv8n/v8s 的检测、分类、分割模型及配套清单文件
+- 模型页新增 BuiltinModelEntry 结构，支持按任务类型筛选内置模型
+- CI 配置移除 VCPKG_ROOT 环境变量设置，适配 manifest 模式
+- .gitignore 补充 vcpkg_installed/、*.pt、docs/superpowers/ 等规则
 
 ## [0.2.0] - 2026-05-15
 
