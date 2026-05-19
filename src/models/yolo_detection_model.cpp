@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -143,12 +144,16 @@ bool isRecognizedAttributeCount(const int dimension, const int expectedNumClasse
     if (dimension == 85) {
         return true;
     }
+    if (dimension == 4) {
+        return true;
+    }
 
     if (expectedNumClasses < 0) {
         return false;
     }
 
-    return dimension == resolveExpectedAttributes(expectedNumClasses);
+    return dimension == resolveExpectedAttributes(expectedNumClasses) ||
+           dimension == (4 + expectedNumClasses);
 }
 
 }  // namespace
@@ -317,15 +322,16 @@ QVector<DetectionItem> YoloDetectionModel::postprocessDetections(
     const ModelManifest& manifest,
     const QSize& originalSize,
     const double confidenceThresholdOverride,
-    const double nmsThresholdOverride) {
+    const double nmsThresholdOverride,
+    const bool isYoloV8) {
     if (output.empty()) {
         return {};
     }
     if (output.type() != CV_32F) {
         throw std::runtime_error("YOLO output matrix must have CV_32F type");
     }
-    if (output.cols < 5) {
-        throw std::runtime_error("YOLO output matrix must contain at least 5 columns");
+    if (output.cols < 4) {
+        throw std::runtime_error("YOLO output matrix must contain at least 4 columns");
     }
     if (networkSize.width() <= 0 || networkSize.height() <= 0) {
         throw std::runtime_error("Network size must be greater than zero");
@@ -339,25 +345,42 @@ QVector<DetectionItem> YoloDetectionModel::postprocessDetections(
     const float nmsThreshold = static_cast<float>(
         nmsThresholdOverride >= 0.0 ? nmsThresholdOverride : manifest.nmsThreshold);
 
+    const int bboxCols = 4;
+    const int classStartCol = isYoloV8 ? 4 : 5;
+    const bool hasObjectness = !isYoloV8;
+
     std::map<int, std::vector<CandidateDetection>> groupedCandidates;
     for (int row = 0; row < output.rows; ++row) {
         const float* values = output.ptr<float>(row);
-        const float objectness = values[4];
 
+        float confidence = 0.0f;
         int classId = -1;
-        float classScore = 1.0f;
-        if (output.cols > 5) {
+        float classScore = 0.0f;
+
+        if (hasObjectness && output.cols > 5) {
+            const float objectness = values[4];
             classScore = -std::numeric_limits<float>::infinity();
-            for (int column = 5; column < output.cols; ++column) {
+            for (int column = classStartCol; column < output.cols; ++column) {
                 if (values[column] > classScore) {
                     classScore = values[column];
-                    classId = column - 5;
+                    classId = column - classStartCol;
                 }
             }
+            confidence = objectness * classScore;
+        } else if (isYoloV8 && output.cols > 4) {
+            classScore = -std::numeric_limits<float>::infinity();
+            for (int column = classStartCol; column < output.cols; ++column) {
+                if (values[column] > classScore) {
+                    classScore = values[column];
+                    classId = column - classStartCol;
+                }
+            }
+            confidence = classScore;
+        } else {
+            confidence = hasObjectness ? values[4] : 1.0f;
         }
 
-        const float combinedConfidence = output.cols == 5 ? objectness : objectness * classScore;
-        if (combinedConfidence < confidenceThreshold) {
+        if (confidence < confidenceThreshold) {
             continue;
         }
 
@@ -371,7 +394,7 @@ QVector<DetectionItem> YoloDetectionModel::postprocessDetections(
             originalSize);
         candidate.item.classId = classId;
         candidate.item.label = labelForClassId(manifest, classId);
-        candidate.item.confidence = combinedConfidence;
+        candidate.item.confidence = confidence;
         candidate.item.boundingBox = candidate.box;
         candidate.item.renderColor = colorForClassId(classId);
         groupedCandidates[classId].push_back(std::move(candidate));
@@ -397,47 +420,46 @@ QVector<DetectionItem> YoloDetectionModel::postprocessDetections(
 }
 
 void YoloDetectionModel::registerBuiltinDecoders() {
-    static bool registered = false;
-    if (registered) {
-        return;
-    }
-    registered = true;
+    static std::once_flag onceFlag;
+    std::call_once(onceFlag, []() {
+        PostprocessRegistry::instance().registerDecoder("yolo_v8",
+            [](const PostprocessInput& input) -> QVector<core::DetectionItem> {
+                if (input.tensors.empty()) {
+                    return {};
+                }
+                const int numClasses = static_cast<int>(input.manifest.labels.size());
+                const cv::Mat output = YoloDetectionModel::tensorToDetectionMatrix(
+                    input.tensors.front(), numClasses);
+                return YoloDetectionModel::postprocessDetections(
+                    output, input.networkSize, input.manifest,
+                    input.originalSize, input.confidenceThreshold, input.nmsThreshold,
+                    true);
+            });
 
-    PostprocessRegistry::instance().registerDecoder("yolo_v8",
-        [](const PostprocessInput& input) -> QVector<core::DetectionItem> {
-            if (input.tensors.empty()) {
-                return {};
-            }
-            const cv::Mat output = YoloDetectionModel::tensorToDetectionMatrix(
-                input.tensors.front());
-            return YoloDetectionModel::postprocessDetections(
-                output, input.networkSize, input.manifest,
-                input.originalSize, input.confidenceThreshold, input.nmsThreshold);
-        });
+        PostprocessRegistry::instance().registerDecoder("yolo_v5",
+            [](const PostprocessInput& input) -> QVector<core::DetectionItem> {
+                if (input.tensors.empty()) {
+                    return {};
+                }
+                const cv::Mat output = YoloDetectionModel::tensorToDetectionMatrix(
+                    input.tensors.front());
+                return YoloDetectionModel::postprocessDetections(
+                    output, input.networkSize, input.manifest,
+                    input.originalSize, input.confidenceThreshold, input.nmsThreshold);
+            });
 
-    PostprocessRegistry::instance().registerDecoder("yolo_v5",
-        [](const PostprocessInput& input) -> QVector<core::DetectionItem> {
-            if (input.tensors.empty()) {
-                return {};
-            }
-            const cv::Mat output = YoloDetectionModel::tensorToDetectionMatrix(
-                input.tensors.front());
-            return YoloDetectionModel::postprocessDetections(
-                output, input.networkSize, input.manifest,
-                input.originalSize, input.confidenceThreshold, input.nmsThreshold);
-        });
-
-    PostprocessRegistry::instance().registerDecoder("yolo_x",
-        [](const PostprocessInput& input) -> QVector<core::DetectionItem> {
-            if (input.tensors.empty()) {
-                return {};
-            }
-            const cv::Mat output = YoloDetectionModel::tensorToDetectionMatrix(
-                input.tensors.front());
-            return YoloDetectionModel::postprocessDetections(
-                output, input.networkSize, input.manifest,
-                input.originalSize, input.confidenceThreshold, input.nmsThreshold);
-        });
+        PostprocessRegistry::instance().registerDecoder("yolo_x",
+            [](const PostprocessInput& input) -> QVector<core::DetectionItem> {
+                if (input.tensors.empty()) {
+                    return {};
+                }
+                const cv::Mat output = YoloDetectionModel::tensorToDetectionMatrix(
+                    input.tensors.front());
+                return YoloDetectionModel::postprocessDetections(
+                    output, input.networkSize, input.manifest,
+                    input.originalSize, input.confidenceThreshold, input.nmsThreshold);
+            });
+    });
 }
 
 }  // namespace aitoolkit::models

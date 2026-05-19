@@ -616,7 +616,7 @@ void GuiValidationTest::testModelsPageDefaultState() {
 
     auto* summaryLabel = page.findChild<QLabel*>(QStringLiteral("ManifestSummaryLabel"));
     QVERIFY(summaryLabel != nullptr);
-    QVERIFY(summaryLabel->text().contains(QStringLiteral("加载模型清单")));
+    QVERIFY(summaryLabel->text().contains(QStringLiteral("选择")));
 }
 
 void GuiValidationTest::testModelsPageEmptyManifestPath() {
@@ -624,7 +624,7 @@ void GuiValidationTest::testModelsPageEmptyManifestPath() {
 
     page.setCurrentManifestPath(QStringLiteral("D:/models/model.json"));
     auto* pathLabel = page.findChild<QLabel*>(QStringLiteral("ManifestPathLabel"));
-    QVERIFY(pathLabel->text().contains(QStringLiteral("D:/models/model.json")));
+    QVERIFY(pathLabel->text().contains(QStringLiteral("model.json")));
 
     page.setCurrentManifestPath(QString());
     QVERIFY(pathLabel->text().contains(QStringLiteral("未选择")));
@@ -692,7 +692,7 @@ void GuiValidationTest::testSettingsPageSetRecentInputs() {
 }
 
 QString GuiValidationTest::createTestImage(int width, int height) {
-    QTemporaryFile tempFile(QStringLiteral("aitoolkit_test_XXXXXX.png"));
+    QTemporaryFile tempFile(QStringLiteral("aitoolkit_test_XXXXXX.bmp"));
     tempFile.setAutoRemove(false);
     if (!tempFile.open()) {
         return {};
@@ -702,7 +702,7 @@ QString GuiValidationTest::createTestImage(int width, int height) {
 
     QImage image(width, height, QImage::Format_RGB32);
     image.fill(Qt::red);
-    if (!image.save(filePath, "PNG")) {
+    if (!image.save(filePath, "BMP")) {
         return {};
     }
 

@@ -44,12 +44,21 @@ function(ai_resolve_first_available_target out_var)
 endfunction()
 
 function(ai_copy_qt_windows_platform_plugin target)
-    if(NOT WIN32 OR NOT DEFINED ENV{VCPKG_ROOT})
+    if(NOT WIN32)
         return()
     endif()
 
-    set(qt_platform_plugin
-        "$ENV{VCPKG_ROOT}/installed/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
+    if(EXISTS "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/Qt6/plugins/platforms/qwindows.dll")
+        set(qt_plugins_root "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows")
+        set(qt_platform_plugin
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
+    elseif(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/installed/x64-windows/Qt6/plugins/platforms/qwindows.dll")
+        set(qt_plugins_root "$ENV{VCPKG_ROOT}/installed/x64-windows")
+        set(qt_platform_plugin
+            "$ENV{VCPKG_ROOT}/installed/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
+    else()
+        return()
+    endif()
 
     add_custom_command(
         TARGET ${target}
@@ -60,6 +69,19 @@ function(ai_copy_qt_windows_platform_plugin target)
             "$<TARGET_FILE_DIR:${target}>/platforms/"
         VERBATIM
     )
+
+    set(qt_imageformats_dir "${qt_plugins_root}/Qt6/plugins/imageformats")
+    if(EXISTS "${qt_imageformats_dir}")
+        add_custom_command(
+            TARGET ${target}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${target}>/imageformats"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${qt_imageformats_dir}"
+                "$<TARGET_FILE_DIR:${target}>/imageformats"
+            VERBATIM
+        )
+    endif()
 endfunction()
 
 ai_resolve_first_available_target(ai_opencv_core_target OpenCV::opencv_core opencv_core)

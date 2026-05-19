@@ -43,7 +43,8 @@ public:
         const core::ModelManifest& manifest,
         const QSize& originalSize,
         double confidenceThreshold = -1.0,
-        double nmsThreshold = -1.0);
+        double nmsThreshold = -1.0,
+        bool isYoloV8 = false);
 
     static void registerBuiltinDecoders();
 

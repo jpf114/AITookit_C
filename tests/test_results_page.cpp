@@ -268,15 +268,15 @@ void ResultsPageTest::selectingBatchResultUpdatesPreviewImage() {
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
 
-    const QString firstPath = QDir(tempDir.path()).filePath(QStringLiteral("first.png"));
+    const QString firstPath = QDir(tempDir.path()).filePath(QStringLiteral("first.bmp"));
     QImage firstImage(24, 24, QImage::Format_RGB32);
     firstImage.fill(QColor(QStringLiteral("#ef4444")));
-    QVERIFY(firstImage.save(firstPath));
+    QVERIFY(firstImage.save(firstPath, "BMP"));
 
-    const QString secondPath = QDir(tempDir.path()).filePath(QStringLiteral("second.png"));
+    const QString secondPath = QDir(tempDir.path()).filePath(QStringLiteral("second.bmp"));
     QImage secondImage(24, 24, QImage::Format_RGB32);
     secondImage.fill(QColor(QStringLiteral("#22c55e")));
-    QVERIFY(secondImage.save(secondPath));
+    QVERIFY(secondImage.save(secondPath, "BMP"));
 
     aitoolkit::core::InferenceSummary firstSummary;
     firstSummary.modelName = QStringLiteral("Detector");
@@ -329,10 +329,10 @@ void ResultsPageTest::exportButtonsReflectAvailableResultMedia() {
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
-    const QString imagePath = QDir(tempDir.path()).filePath(QStringLiteral("frame.png"));
+    const QString imagePath = QDir(tempDir.path()).filePath(QStringLiteral("frame.bmp"));
     QImage image(24, 24, QImage::Format_RGB32);
     image.fill(Qt::blue);
-    QVERIFY(image.save(imagePath));
+    QVERIFY(image.save(imagePath, "BMP"));
 
     aitoolkit::core::InferenceSummary imageSummary = videoSummary;
     imageSummary.inputPath = imagePath;
@@ -468,10 +468,10 @@ void ResultsPageTest::exportImageTooltipExplainsWhyItIsDisabled() {
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
-    const QString imagePath = QDir(tempDir.path()).filePath(QStringLiteral("frame.png"));
+    const QString imagePath = QDir(tempDir.path()).filePath(QStringLiteral("frame.bmp"));
     QImage image(24, 24, QImage::Format_RGB32);
     image.fill(Qt::blue);
-    QVERIFY(image.save(imagePath));
+    QVERIFY(image.save(imagePath, "BMP"));
 
     aitoolkit::core::InferenceSummary imageSummary = videoSummary;
     imageSummary.inputPath = imagePath;

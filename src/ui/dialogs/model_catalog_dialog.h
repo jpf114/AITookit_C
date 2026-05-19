@@ -3,6 +3,7 @@
 #include <QDialog>
 #include <QVector>
 
+class QComboBox;
 class QListWidget;
 class QPushButton;
 class QLabel;
@@ -16,6 +17,8 @@ struct CatalogModelEntry {
     QString url;
     QString description;
     int inputSize;
+    QString decoder;
+    QString labelsCategory;
 };
 
 class ModelCatalogDialog : public QDialog {
@@ -27,12 +30,17 @@ public:
     QString selectedModelName() const;
     QString selectedModelUrl() const;
     QString selectedModelFileName() const;
+    QString selectedModelDecoder() const;
+    QString selectedModelLabelsCategory() const;
+    int selectedModelInputSize() const;
     QString modelsDir() const;
 
 private:
     void populateCatalog();
     void updateDescription();
+    void applyFilter(const QString& taskType);
 
+    QComboBox* filterCombo_ = nullptr;
     QListWidget* catalogList_ = nullptr;
     QLabel* descriptionLabel_ = nullptr;
     QPushButton* downloadButton_ = nullptr;

@@ -271,6 +271,8 @@ void MainWindow::wireSignals() {
 
         const QString url = dialog.selectedModelUrl();
         const QString fileName = dialog.selectedModelFileName();
+        const QString decoder = dialog.selectedModelDecoder();
+        const QString labelsCategory = dialog.selectedModelLabelsCategory();
         if (url.isEmpty() || fileName.isEmpty()) {
             return;
         }
@@ -284,6 +286,14 @@ void MainWindow::wireSignals() {
             QMessageBox::warning(this, QStringLiteral("下载失败"), QStringLiteral("未找到下载脚本。"));
             return;
         }
+
+        const QString modelName = fileName.left(fileName.lastIndexOf('.'));
+        const QString selectedName = dialog.selectedModelName();
+        const QString taskType = selectedName.contains(QStringLiteral("-cls"))
+            ? QStringLiteral("classification")
+            : selectedName.contains(QStringLiteral("-seg"))
+                ? QStringLiteral("segmentation")
+                : QStringLiteral("detection");
 
         connect(downloadProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
                 this, [this, downloadProcess, modelsDir, fileName](int, QProcess::ExitStatus) {
@@ -302,13 +312,18 @@ void MainWindow::wireSignals() {
             }
         });
 
-        downloadProcess->start(
-            QStringLiteral("powershell"),
-            {QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
-             QStringLiteral("-File"), resolvedScript,
-             QStringLiteral("-ModelsDir"), modelsDir,
-             QStringLiteral("-ModelUrl"), url,
-             QStringLiteral("-ModelName"), fileName.left(fileName.lastIndexOf('.'))});
+        QStringList args;
+        args << QStringLiteral("-ExecutionPolicy") << QStringLiteral("Bypass")
+             << QStringLiteral("-File") << resolvedScript
+             << QStringLiteral("-ModelsDir") << modelsDir
+             << QStringLiteral("-ModelUrl") << url
+             << QStringLiteral("-ModelName") << modelName
+             << QStringLiteral("-TaskType") << taskType
+             << QStringLiteral("-Decoder") << (decoder.isEmpty() ? QString() : decoder)
+             << QStringLiteral("-LabelsCategory") << (labelsCategory.isEmpty() ? QStringLiteral("coco80") : labelsCategory)
+             << QStringLiteral("-InputSize") << QString::number(dialog.selectedModelInputSize());
+
+        downloadProcess->start(QStringLiteral("powershell"), args);
     });
     connect(homePage_, &HomePage::recentModelActivated, this, [this](const QString& path) {
         controller_->loadModelManifest(path);

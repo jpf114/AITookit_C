@@ -1,6 +1,5 @@
 #include "models/segmentation_model.h"
 
-#include <QDir>
 #include <QImage>
 
 #include <opencv2/imgproc.hpp>
@@ -12,12 +11,6 @@
 namespace aitoolkit::models {
 
 namespace {
-
-QString resolveOnnxPath(const core::ModelManifest& manifest) {
-    const QFileInfo info(manifest.manifestPath);
-    const QDir manifestDir = info.absoluteDir();
-    return QDir::cleanPath(manifestDir.filePath(manifest.modelPath));
-}
 
 QVector<QColor> generateSegmentationColors(int count) {
     QVector<QColor> colors;
@@ -48,7 +41,7 @@ QImage maskToQImage(const cv::Mat& mask, const QSize& targetSize) {
 
 SegmentationModel::SegmentationModel(core::ModelManifest manifest, const int threadCount, const bool useGPU)
     : manifest_(std::move(manifest))
-    , backend_(resolveOnnxPath(manifest_), threadCount, useGPU) {
+    , backend_(manifest_.modelPath, threadCount, useGPU) {
     backend_.warmup();
 }
 

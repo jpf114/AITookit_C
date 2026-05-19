@@ -1,7 +1,5 @@
 #include "models/classification_model.h"
 
-#include <QDir>
-
 #include <opencv2/imgproc.hpp>
 
 #include <algorithm>
@@ -10,19 +8,9 @@
 
 namespace aitoolkit::models {
 
-namespace {
-
-QString resolveOnnxPath(const core::ModelManifest& manifest) {
-    const QFileInfo info(manifest.manifestPath);
-    const QDir manifestDir = info.absoluteDir();
-    return QDir::cleanPath(manifestDir.filePath(manifest.modelPath));
-}
-
-}  // namespace
-
 ClassificationModel::ClassificationModel(core::ModelManifest manifest, const int threadCount, const bool useGPU)
     : manifest_(std::move(manifest))
-    , backend_(resolveOnnxPath(manifest_), threadCount, useGPU) {
+    , backend_(manifest_.modelPath, threadCount, useGPU) {
     backend_.warmup();
 }
 
@@ -55,8 +43,23 @@ QString ClassificationModel::backendName() const noexcept {
 std::vector<float> ClassificationModel::preprocessImage(
     const cv::Mat& image,
     const core::ModelManifest& manifest) {
+    cv::Mat convertedImage;
+    switch (image.channels()) {
+        case 1:
+            cv::cvtColor(image, convertedImage, cv::COLOR_GRAY2RGB);
+            break;
+        case 3:
+            cv::cvtColor(image, convertedImage, cv::COLOR_BGR2RGB);
+            break;
+        case 4:
+            cv::cvtColor(image, convertedImage, cv::COLOR_BGRA2RGB);
+            break;
+        default:
+            throw std::runtime_error("Unsupported channel count for classification preprocessing");
+    }
+
     cv::Mat resized;
-    cv::resize(image, resized, cv::Size(manifest.inputWidth, manifest.inputHeight));
+    cv::resize(convertedImage, resized, cv::Size(manifest.inputWidth, manifest.inputHeight));
 
     cv::Mat floatImg;
     resized.convertTo(floatImg, CV_32F, 1.0 / 255.0);

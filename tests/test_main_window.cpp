@@ -50,9 +50,9 @@ QString writeManifestFile(const QString& directoryPath, const QString& baseName,
 
 QString writeImageFile(const QString& directoryPath, const QString& fileName) {
     const QString imagePath = QDir(directoryPath).filePath(fileName);
-    QImage image(64, 64, QImage::Format_ARGB32);
+    QImage image(64, 64, QImage::Format_RGB32);
     image.fill(Qt::red);
-    return image.save(imagePath) ? imagePath : QString();
+    return image.save(imagePath, "BMP") ? imagePath : QString();
 }
 
 aitoolkit::core::InferenceSummary makeSummary(const QString& modelName, const QString& imagePath) {
@@ -274,8 +274,8 @@ void MainWindowTest::selectingBatchResultUpdatesCurrentExportContext() {
     QTemporaryDir tempDir;
     QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
 
-    const QString firstImagePath = writeImageFile(tempDir.path(), QStringLiteral("first.png"));
-    const QString secondImagePath = writeImageFile(tempDir.path(), QStringLiteral("second.png"));
+    const QString firstImagePath = writeImageFile(tempDir.path(), QStringLiteral("first.bmp"));
+    const QString secondImagePath = writeImageFile(tempDir.path(), QStringLiteral("second.bmp"));
     QVERIFY(!firstImagePath.isEmpty());
     QVERIFY(!secondImagePath.isEmpty());
 
@@ -298,7 +298,7 @@ void MainWindowTest::selectingBatchResultUpdatesCurrentExportContext() {
 
     auto* contextImageValue = window.findChild<QLabel*>(QStringLiteral("ContextImageValue"));
     QVERIFY(contextImageValue != nullptr);
-    QVERIFY(contextImageValue->text().contains(QStringLiteral("second.png")));
+    QVERIFY(contextImageValue->text().contains(QStringLiteral("second.bmp")));
 }
 
 void MainWindowTest::exportFileNamesFollowSelectedResult() {
@@ -345,7 +345,7 @@ void MainWindowTest::recentInputClickReturnsToInferencePage() {
 
     aitoolkit::ui::MainWindow window;
 
-    const QString imagePath = writeImageFile(tempDir.path(), QStringLiteral("example.png"));
+    const QString imagePath = writeImageFile(tempDir.path(), QStringLiteral("example.bmp"));
     QVERIFY(!imagePath.isEmpty());
     auto* stack = window.findChild<QStackedWidget*>();
     QVERIFY(stack != nullptr);
@@ -379,7 +379,7 @@ void MainWindowTest::unreadableRecentInputClearsImageState() {
 
     aitoolkit::ui::MainWindow window;
 
-    const QString imagePath = writeImageFile(tempDir.path(), QStringLiteral("recent.png"));
+    const QString imagePath = writeImageFile(tempDir.path(), QStringLiteral("recent.bmp"));
     QVERIFY(!imagePath.isEmpty());
 
     auto* stack = window.findChild<QStackedWidget*>();
@@ -447,7 +447,7 @@ void MainWindowTest::recentModelClickLoadsManifestAndReturnsToInferencePage() {
 
     auto* manifestPathLabel = window.findChild<QLabel*>(QStringLiteral("ManifestPathLabel"));
     QVERIFY(manifestPathLabel != nullptr);
-    QVERIFY(manifestPathLabel->text().contains(QDir::cleanPath(manifestPath)));
+    QVERIFY(manifestPathLabel->text().contains(QDir::toNativeSeparators(manifestPath)));
 
     auto* manifestSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ManifestSummaryLabel"));
     QVERIFY(manifestSummaryLabel != nullptr);

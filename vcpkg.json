@@ -1,12 +1,15 @@
 {
   "name": "ai-toolkit-c",
   "version": "1.0.0",
+  "builtin-baseline": "256acc64012b23a13041d8705805e1f23b43a024",
   "dependencies": [
     {
       "name": "qtbase",
       "default-features": false,
       "features": [
-        "widgets"
+        "widgets",
+        "testlib",
+        "icu"
       ]
     },
     "qtsvg",
@@ -14,8 +17,10 @@
       "name": "opencv4",
       "default-features": false,
       "features": [
-        "imgcodecs",
-        "videoio"
+        "jpeg",
+        "png",
+        "dshow",
+        "msmf"
       ]
     },
     "onnxruntime"

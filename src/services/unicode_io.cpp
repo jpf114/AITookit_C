@@ -5,7 +5,33 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/videoio.hpp>
 
+#ifdef Q_OS_WIN
+#include <Windows.h>
+#endif
+
 namespace aitoolkit::services {
+
+namespace {
+
+#ifdef Q_OS_WIN
+QString toShortPath(const QString& longPath) {
+    const std::wstring wLongPath = longPath.toStdWString();
+    const DWORD length = GetShortPathNameW(wLongPath.c_str(), nullptr, 0);
+    if (length == 0) {
+        return longPath;
+    }
+
+    std::wstring shortPath(length, L'\0');
+    if (GetShortPathNameW(wLongPath.c_str(), &shortPath[0], length) == 0) {
+        return longPath;
+    }
+
+    shortPath.resize(std::wcslen(shortPath.c_str()));
+    return QString::fromStdWString(shortPath);
+}
+#endif
+
+}
 
 cv::Mat imreadUnicode(const QString& filePath, const int flags) {
     const std::vector<char> buffer = readFileToBuffer(filePath);
@@ -43,7 +69,8 @@ int probeVideoFrameCount(const QString& videoPath) {
 
 bool openVideoCapture(const QString& videoPath, cv::VideoCapture& capture) {
 #ifdef Q_OS_WIN
-    capture.open(videoPath.toUtf8().constData());
+    const QString shortPath = toShortPath(videoPath);
+    capture.open(shortPath.toUtf8().constData());
 #else
     capture.open(videoPath.toStdString());
 #endif

@@ -31,11 +31,60 @@ else()
     message(STATUS "Skipping src: ${CMAKE_SOURCE_DIR}/src/CMakeLists.txt not found yet")
 endif()
 
+if(EXISTS "${CMAKE_SOURCE_DIR}/cmake/copy_runtime_deps.cmake")
+    include("${CMAKE_SOURCE_DIR}/cmake/copy_runtime_deps.cmake")
+endif()
+
 if(EXISTS "${CMAKE_SOURCE_DIR}/tests/CMakeLists.txt")
     enable_testing()
     add_subdirectory(tests)
 else()
     message(STATUS "Skipping tests: ${CMAKE_SOURCE_DIR}/tests/CMakeLists.txt not found yet")
+endif()
+
+if(MSVC)
+    if(DEFINED ENV{VCToolsRedistDir})
+        set(AI_VC_REDIST_DIR "$ENV{VCToolsRedistDir}/x64/Microsoft.VC143.CRT")
+    else()
+        set(_vswhere "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe")
+        if(NOT EXISTS "${_vswhere}")
+            set(_vswhere "$ENV{ProgramFiles\(x86\)}/Microsoft Visual Studio/Installer/vswhere.exe")
+        endif()
+        if(EXISTS "${_vswhere}")
+            execute_process(
+                COMMAND "${_vswhere}" -latest -property installationPath
+                OUTPUT_VARIABLE _vs_install_path
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+            if(_vs_install_path)
+                file(GLOB _vc_versions LIST_DIRECTORIES TRUE "${_vs_install_path}/VC/Redist/MSVC/*")
+                if(_vc_versions)
+                    set(_numeric_versions "")
+                    foreach(_v IN LISTS _vc_versions)
+                        get_filename_component(_vname "${_v}" NAME)
+                        if(_vname MATCHES "^[0-9]")
+                            list(APPEND _numeric_versions "${_v}")
+                        endif()
+                    endforeach()
+                    if(_numeric_versions)
+                        list(SORT _numeric_versions COMPARE NATURAL ORDER DESCENDING)
+                        list(GET _numeric_versions 0 _latest_vc)
+                        set(_candidate "${_latest_vc}/x64/Microsoft.VC143.CRT")
+                        if(EXISTS "${_candidate}")
+                            set(AI_VC_REDIST_DIR "${_candidate}")
+                        endif()
+                    endif()
+                endif()
+            endif()
+        endif()
+    endif()
+    if(DEFINED AI_VC_REDIST_DIR AND EXISTS "${AI_VC_REDIST_DIR}")
+        file(TO_CMAKE_PATH "${AI_VC_REDIST_DIR}" AI_VC_REDIST_DIR)
+        message(STATUS "VC++ runtime found: ${AI_VC_REDIST_DIR}")
+    else()
+        set(AI_VC_REDIST_DIR "")
+        message(WARNING "VC++ runtime not found, install will not include CRT DLLs")
+    endif()
 endif()
 
 configure_file(
@@ -51,6 +100,12 @@ endif()
 install(
     DIRECTORY "${CMAKE_SOURCE_DIR}/scripts/"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/scripts"
+)
+
+install(
+    DIRECTORY "${CMAKE_SOURCE_DIR}/models/"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/models"
+    FILES_MATCHING PATTERN "*.json" PATTERN "*.onnx"
 )
 
 set(CPACK_PACKAGE_NAME "AIToolkit")

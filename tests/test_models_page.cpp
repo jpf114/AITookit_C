@@ -1,5 +1,6 @@
 #include <QtTest>
 
+#include <QDir>
 #include <QLabel>
 
 #include "core/model_manifest.h"
@@ -19,7 +20,7 @@ void ModelsPageTest::showsManifestSummary() {
 
     auto* pageLead = page.findChild<QLabel*>(QStringLiteral("PageLead"));
     QVERIFY(pageLead != nullptr);
-    QCOMPARE(pageLead->text(), QStringLiteral("先加载一个模型清单，再确认模型信息是否符合当前任务。"));
+    QCOMPARE(pageLead->text(), QStringLiteral("选择一个内置模型即可开始推理，也可导入自定义模型。"));
     QVERIFY(pageLead->wordWrap());
 
     aitoolkit::core::ModelManifest manifest;
@@ -34,20 +35,17 @@ void ModelsPageTest::showsManifestSummary() {
 
     page.setCurrentManifest(manifest);
 
-    auto* modelLoadSection = page.findChild<QWidget*>(QStringLiteral("ModelLoadSection"));
-    QVERIFY(modelLoadSection != nullptr);
-
     auto* modelSummarySection = page.findChild<QWidget*>(QStringLiteral("ModelSummarySection"));
     QVERIFY(modelSummarySection != nullptr);
 
     auto* sectionHint = page.findChild<QLabel*>(QStringLiteral("SectionHint"));
     QVERIFY(sectionHint != nullptr);
-    QCOMPARE(sectionHint->text(), QStringLiteral("支持选择 JSON 模型清单文件。"));
+    QCOMPARE(sectionHint->text(), QStringLiteral("支持导入 JSON 模型清单文件或直接导入 ONNX 模型文件。"));
     QVERIFY(sectionHint->wordWrap());
 
     auto* pathLabel = page.findChild<QLabel*>(QStringLiteral("ManifestPathLabel"));
     QVERIFY(pathLabel != nullptr);
-    QVERIFY(pathLabel->text().contains(manifest.manifestPath));
+    QVERIFY(pathLabel->text().contains(QDir::toNativeSeparators(manifest.manifestPath)));
 
     auto* summaryLabel = page.findChild<QLabel*>(QStringLiteral("ManifestSummaryLabel"));
     QVERIFY(summaryLabel != nullptr);

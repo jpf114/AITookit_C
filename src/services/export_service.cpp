@@ -118,12 +118,12 @@ bool ExportService::exportBatchJson(const QVector<core::InferenceSummary>& resul
     return true;
 }
 
-void ExportService::exportRenderedImage(
+bool ExportService::exportRenderedImage(
     const QString& filePath,
     const QImage& image,
     const core::InferenceSummary& summary) const {
     if (image.isNull()) {
-        throw std::runtime_error("Cannot export rendered image: source image is empty");
+        return false;
     }
 
     QImage rendered = image.convertToFormat(QImage::Format_RGB32);
@@ -188,9 +188,7 @@ void ExportService::exportRenderedImage(
 
     painter.end();
 
-    if (!rendered.save(filePath)) {
-        throw std::runtime_error("Failed to save rendered image");
-    }
+    return rendered.save(filePath);
 }
 
 }  // namespace aitoolkit::services

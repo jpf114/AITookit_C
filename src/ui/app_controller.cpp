@@ -7,7 +7,6 @@
 
 #include <stdexcept>
 
-#include "models/yolo_detection_model.h"
 #include "services/unicode_io.h"
 #include "ui/image_utils.h"
 
@@ -162,15 +161,15 @@ void AppController::loadOnnxFile(const QString& onnxPath, const QString& name, i
 
         currentManifest_ = manifest;
         currentManifestPath_ = manifest.manifestPath;
-        currentModel_ = std::make_shared<models::YoloDetectionModel>(
-            manifest,
-            modelService_.threadCount(),
-            modelService_.useGPU());
+        currentModel_ = modelService_.loadModel(manifest.manifestPath);
         currentSummary_ = {};
         batchResults_.clear();
 
         settingsStore_.addRecentModel(manifest.manifestPath);
         settingsStore_.setLastModelManifestPath(manifest.manifestPath);
+        if (modelService_.useGPU() && currentModel_ && !currentModel_->supportsGPU()) {
+            emit inferenceError(QStringLiteral("GPU 推理不可用，已自动回退到 CPU 模式。如需 GPU 加速，请确认已安装 CUDA Toolkit 并使用启用 CUDA 的构建。"));
+        }
         emit modelLoaded(manifest);
         emit contextChanged();
     } catch (const std::exception& e) {
@@ -215,6 +214,9 @@ void AppController::selectFolder(const QString& folderPath, double confidence, d
         if (!currentModel_ ||
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadModel(currentManifestPath_);
+            if (modelService_.useGPU() && currentModel_ && !currentModel_->supportsGPU()) {
+                emit inferenceError(QStringLiteral("GPU 推理不可用，已自动回退到 CPU 模式。"));
+            }
         }
 
         QStringList imagePaths;
@@ -246,6 +248,9 @@ void AppController::selectVideo(const QString& videoPath, const int maxFrames, d
         if (!currentModel_ ||
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadModel(currentManifestPath_);
+            if (modelService_.useGPU() && currentModel_ && !currentModel_->supportsGPU()) {
+                emit inferenceError(QStringLiteral("GPU 推理不可用，已自动回退到 CPU 模式。"));
+            }
         }
 
         inferenceWorker_->setModel(currentModel_);
@@ -276,6 +281,9 @@ void AppController::runInference(double confidence, double nms) {
         if (!currentModel_ ||
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadModel(currentManifestPath_);
+            if (modelService_.useGPU() && currentModel_ && !currentModel_->supportsGPU()) {
+                emit inferenceError(QStringLiteral("GPU 推理不可用，已自动回退到 CPU 模式。"));
+            }
         }
         inferenceWorker_->setModel(currentModel_);
         inferenceWorker_->setThresholds(confidence, nms);
@@ -307,12 +315,11 @@ void AppController::exportJson(const QString& outputPath) {
 
 void AppController::exportImage(const QString& outputPath) {
     const QImage currentImage = loadUsableImage(currentImagePath_);
-    try {
-        exportService_.exportRenderedImage(outputPath, currentImage, currentSummary_);
+    if (exportService_.exportRenderedImage(outputPath, currentImage, currentSummary_)) {
         settingsStore_.setDefaultExportDirectory(QFileInfo(outputPath).absolutePath());
         emit exportCompleted();
-    } catch (const std::exception& e) {
-        emit inferenceError(QString::fromUtf8(e.what()));
+    } else {
+        emit inferenceError(QStringLiteral("无法保存渲染图片至：%1").arg(outputPath));
     }
 }
 

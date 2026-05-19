@@ -1,4 +1,63 @@
-# Placeholder script for future runtime dependency copy logic.
-# This file is intentionally valid so later tasks can extend it safely.
+if(NOT WIN32)
+    return()
+endif()
 
-message(STATUS "copy_runtime_deps.cmake placeholder: no runtime copy actions are defined yet.")
+if(EXISTS "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin")
+    set(vcpkg_bin_dir "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin")
+    set(qt_plugins_dir "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/Qt6/plugins")
+elseif(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/installed/x64-windows/bin")
+    set(vcpkg_bin_dir "$ENV{VCPKG_ROOT}/installed/x64-windows/bin")
+    set(qt_plugins_dir "$ENV{VCPKG_ROOT}/installed/x64-windows/Qt6/plugins")
+else()
+    return()
+endif()
+
+set(runtime_dlls
+    onnxruntime.dll
+    Qt6Core.dll
+    Qt6Gui.dll
+    Qt6Widgets.dll
+    Qt6Svg.dll
+    Qt6Test.dll
+    opencv_core4.dll
+    opencv_imgproc4.dll
+    opencv_imgcodecs4.dll
+    opencv_videoio4.dll
+)
+
+foreach(dll_name IN LISTS runtime_dlls)
+    if(EXISTS "${vcpkg_bin_dir}/${dll_name}")
+        file(INSTALL
+            DESTINATION "${CMAKE_BINARY_DIR}/Release"
+            TYPE SHARED_LIBRARY
+            FILES "${vcpkg_bin_dir}/${dll_name}"
+        )
+    endif()
+endforeach()
+
+if(EXISTS "${qt_plugins_dir}/platforms/qwindows.dll")
+    file(INSTALL
+        DESTINATION "${CMAKE_BINARY_DIR}/Release/platforms"
+        TYPE SHARED_LIBRARY
+        FILES "${qt_plugins_dir}/platforms/qwindows.dll"
+    )
+endif()
+
+set(image_format_plugins
+    qjpeg.dll
+    qsvg.dll
+    qgif.dll
+    qico.dll
+    qtiff.dll
+    qwebp.dll
+)
+
+foreach(plugin IN LISTS image_format_plugins)
+    if(EXISTS "${qt_plugins_dir}/imageformats/${plugin}")
+        file(INSTALL
+            DESTINATION "${CMAKE_BINARY_DIR}/Release/imageformats"
+            TYPE SHARED_LIBRARY
+            FILES "${qt_plugins_dir}/imageformats/${plugin}"
+        )
+    endif()
+endforeach()

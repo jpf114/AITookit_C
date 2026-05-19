@@ -1,6 +1,7 @@
 #include "runtime/backend_registry.h"
 
 #include <map>
+#include <mutex>
 
 namespace aitoolkit::runtime {
 
@@ -10,9 +11,10 @@ struct BackendRegistry::Impl {
 
 BackendRegistry& BackendRegistry::instance() {
     static BackendRegistry registry;
-    if (!registry.impl_) {
+    static std::once_flag initFlag;
+    std::call_once(initFlag, [&]() {
         registry.impl_ = std::make_unique<Impl>();
-    }
+    });
     return registry;
 }
 

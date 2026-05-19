@@ -83,10 +83,10 @@ void ExportServiceTest::rendersSegmentationMaskWithInstanceColor() {
     item.renderColor = QColor(QStringLiteral("#ef4444"));
     summary.segmentations.push_back(item);
 
-    const QString outputPath = tempDir.filePath(QStringLiteral("rendered.png"));
+    const QString outputPath = tempDir.filePath(QStringLiteral("rendered.bmp"));
 
     aitoolkit::services::ExportService service;
-    service.exportRenderedImage(outputPath, sourceImage, summary);
+    QVERIFY2(service.exportRenderedImage(outputPath, sourceImage, summary), "Export should succeed");
 
     const QImage rendered(outputPath);
     QVERIFY2(!rendered.isNull(), "Rendered export image should be readable");

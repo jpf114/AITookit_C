@@ -14,7 +14,7 @@ BackendInfo OnnxRuntimePlugin::info() const {
     BackendInfo info;
     info.name = QStringLiteral("onnxruntime");
     info.displayName = QStringLiteral("ONNX Runtime");
-    info.version = QStringLiteral("1.23.2");
+    info.version = QString::fromUtf8(OrtGetApiBase()->GetVersionString());
 #ifdef USE_CUDA
     info.supportsGPU = true;
 #else

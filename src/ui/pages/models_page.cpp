@@ -1,42 +1,74 @@
 #include "ui/pages/models_page.h"
 
 #include <QAbstractItemView>
+#include <QComboBox>
 #include <QCoreApplication>
-#include <QDesktopServices>
 #include <QDir>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QLabel>
 #include <QListWidget>
 #include <QPushButton>
-#include <QUrl>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 
 namespace aitoolkit::ui {
 
 namespace {
 
-QString defaultManifestSummaryText() {
-    return QStringLiteral("加载模型清单后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。");
+QString defaultSummaryText() {
+    return QStringLiteral("选择一个模型后，可在这里查看模型名称、输入尺寸、后端类型和标签数量。");
 }
 
 QString manifestSummaryText(const core::ModelManifest& manifest) {
     if (manifest.manifestPath.isEmpty()) {
-        return defaultManifestSummaryText();
+        return defaultSummaryText();
     }
+
+    const QString taskLabel = manifest.taskType == QStringLiteral("segmentation")
+        ? QStringLiteral("实例分割")
+        : manifest.taskType == QStringLiteral("classification")
+            ? QStringLiteral("图像分类")
+            : QStringLiteral("目标检测");
 
     return QStringLiteral(
                "模型名称：%1\n任务类型：%2\n推理后端：%3\n解码器：%4\n输入尺寸：%5 x %6\n标签数量：%7\n模型文件：%8")
         .arg(manifest.name)
-        .arg(manifest.taskType)
+        .arg(taskLabel)
         .arg(manifest.backendType)
-        .arg(manifest.decoder.isEmpty() ? QStringLiteral("yolo_v8（默认）") : manifest.decoder)
+        .arg(manifest.decoder.isEmpty() ? QStringLiteral("无（分类模型）") : manifest.decoder)
         .arg(manifest.inputWidth)
         .arg(manifest.inputHeight)
         .arg(manifest.labels.size())
-        .arg(manifest.modelPath);
+        .arg(QDir::toNativeSeparators(manifest.modelPath));
 }
 
 }  // namespace
+
+QVector<BuiltinModelEntry> ModelsPage::builtinModels() const {
+    return {
+        {QStringLiteral("YOLOv8n — 目标检测"),
+         QStringLiteral("detection"),
+         QStringLiteral("yolov8n.json"),
+         QStringLiteral("YOLOv8 Nano 检测模型 — COCO 80 类，极速推理（约 12MB），mAP 37.3")},
+        {QStringLiteral("YOLOv8s — 目标检测"),
+         QStringLiteral("detection"),
+         QStringLiteral("yolov8s.json"),
+         QStringLiteral("YOLOv8 Small 检测模型 — COCO 80 类，精度更高（约 43MB），mAP 44.9")},
+        {QStringLiteral("YOLOv8n — 图像分类"),
+         QStringLiteral("classification"),
+         QStringLiteral("yolov8n-cls.json"),
+         QStringLiteral("YOLOv8 Nano 分类模型 — ImageNet 1000 类，极速推理（约 10MB），Top-1 66.6%")},
+        {QStringLiteral("YOLOv8n — 实例分割"),
+         QStringLiteral("segmentation"),
+         QStringLiteral("yolov8n-seg.json"),
+         QStringLiteral("YOLOv8 Nano 分割模型 — COCO 80 类实例分割（约 13MB），mAP 36.7")},
+        {QStringLiteral("YOLOv8s — 实例分割"),
+         QStringLiteral("segmentation"),
+         QStringLiteral("yolov8s-seg.json"),
+         QStringLiteral("YOLOv8 Small 分割模型 — COCO 80 类实例分割（约 45MB），mAP 44.6")},
+    };
+}
 
 ModelsPage::ModelsPage(QWidget* parent)
     : QWidget(parent) {
@@ -44,64 +76,99 @@ ModelsPage::ModelsPage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(16);
 
-    auto* title = new QLabel(QStringLiteral("模型准备"), this);
+    auto* title = new QLabel(QStringLiteral("模型选择"), this);
     title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
 
-    auto* lead = new QLabel(QStringLiteral("先加载一个模型清单，再确认模型信息是否符合当前任务。"), this);
+    auto* lead = new QLabel(QStringLiteral("选择一个内置模型即可开始推理，也可导入自定义模型。"), this);
     lead->setObjectName(QStringLiteral("PageLead"));
     lead->setWordWrap(true);
 
-    loadSection_ = new QWidget(this);
-    loadSection_->setObjectName(QStringLiteral("ModelLoadSection"));
-    auto* loadSectionLayout = new QVBoxLayout(loadSection_);
-    loadSectionLayout->setContentsMargins(16, 16, 16, 16);
-    loadSectionLayout->setSpacing(10);
+    auto* builtinSection = new QWidget(this);
+    builtinSection->setObjectName(QStringLiteral("ModelBuiltinSection"));
+    auto* builtinLayout = new QVBoxLayout(builtinSection);
+    builtinLayout->setContentsMargins(16, 16, 16, 16);
+    builtinLayout->setSpacing(10);
 
-    auto* loadSectionTitle = new QLabel(QStringLiteral("加载清单"), loadSection_);
-    loadSectionTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
+    auto* builtinTitle = new QLabel(QStringLiteral("内置模型"), builtinSection);
+    builtinTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
 
-    auto* loadHintLabel = new QLabel(
-        QStringLiteral("支持选择 JSON 模型清单文件；直接导入 ONNX 目前只生成 detection 清单。"),
-        loadSection_);
-    loadHintLabel->setObjectName(QStringLiteral("SectionHint"));
-    loadHintLabel->setWordWrap(true);
+    auto* filterRow = new QHBoxLayout();
+    auto* filterLabel = new QLabel(QStringLiteral("任务类型："), builtinSection);
+    taskFilterCombo_ = new QComboBox(builtinSection);
+    taskFilterCombo_->addItem(QStringLiteral("全部"), QString());
+    taskFilterCombo_->addItem(QStringLiteral("目标检测"), QStringLiteral("detection"));
+    taskFilterCombo_->addItem(QStringLiteral("图像分类"), QStringLiteral("classification"));
+    taskFilterCombo_->addItem(QStringLiteral("实例分割"), QStringLiteral("segmentation"));
+    filterRow->addWidget(filterLabel);
+    filterRow->addWidget(taskFilterCombo_);
+    filterRow->addStretch(1);
 
-    auto* loadButton = new QPushButton(QStringLiteral("加载模型清单"), loadSection_);
-    loadButton->setObjectName(QStringLiteral("PrimaryButton"));
+    modelList_ = new QListWidget(builtinSection);
+    modelList_->setSelectionMode(QAbstractItemView::SingleSelection);
+    modelList_->setMaximumHeight(160);
 
-    auto* loadOnnxButton = new QPushButton(QStringLiteral("加载 ONNX 文件"), loadSection_);
-    loadOnnxButton->setObjectName(QStringLiteral("SecondaryButton"));
+    descriptionLabel_ = new QLabel(builtinSection);
+    descriptionLabel_->setWordWrap(true);
+    descriptionLabel_->setMinimumHeight(40);
+    descriptionLabel_->setStyleSheet(QStringLiteral("color: #64748b; padding: 4px;"));
 
-    auto* browseDirButton = new QPushButton(QStringLiteral("浏览模型目录"), loadSection_);
-    browseDirButton->setObjectName(QStringLiteral("SecondaryButton"));
-    browseDirButton->setToolTip(QStringLiteral("在文件管理器中打开 models 目录"));
+    activateButton_ = new QPushButton(QStringLiteral("使用此模型"), builtinSection);
+    activateButton_->setObjectName(QStringLiteral("PrimaryButton"));
+    activateButton_->setEnabled(false);
 
-    manifestPathLabel_ = new QLabel(QStringLiteral("当前未选择模型清单"), loadSection_);
-    manifestPathLabel_->setObjectName(QStringLiteral("ManifestPathLabel"));
-    manifestPathLabel_->setWordWrap(true);
+    builtinLayout->addWidget(builtinTitle);
+    builtinLayout->addLayout(filterRow);
+    builtinLayout->addWidget(modelList_);
+    builtinLayout->addWidget(descriptionLabel_);
+    builtinLayout->addWidget(activateButton_);
 
-    loadSectionLayout->addWidget(loadSectionTitle);
-    loadSectionLayout->addWidget(loadHintLabel);
-    loadSectionLayout->addWidget(loadButton);
-    loadSectionLayout->addWidget(loadOnnxButton);
-    loadSectionLayout->addWidget(browseDirButton);
-    loadSectionLayout->addWidget(manifestPathLabel_);
+    auto* importSection = new QWidget(this);
+    importSection->setObjectName(QStringLiteral("ModelImportSection"));
+    auto* importLayout = new QVBoxLayout(importSection);
+    importLayout->setContentsMargins(16, 16, 16, 16);
+    importLayout->setSpacing(10);
+
+    auto* importTitle = new QLabel(QStringLiteral("自定义模型"), importSection);
+    importTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
+
+    auto* importHint = new QLabel(
+        QStringLiteral("支持导入 JSON 模型清单文件或直接导入 ONNX 模型文件。"), importSection);
+    importHint->setObjectName(QStringLiteral("SectionHint"));
+    importHint->setWordWrap(true);
+
+    auto* importButtonRow = new QHBoxLayout();
+    importJsonButton_ = new QPushButton(QStringLiteral("导入模型清单"), importSection);
+    importJsonButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    importOnnxButton_ = new QPushButton(QStringLiteral("导入 ONNX 文件"), importSection);
+    importOnnxButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    importButtonRow->addWidget(importJsonButton_);
+    importButtonRow->addWidget(importOnnxButton_);
+    importButtonRow->addStretch(1);
+
+    importLayout->addWidget(importTitle);
+    importLayout->addWidget(importHint);
+    importLayout->addLayout(importButtonRow);
 
     summarySection_ = new QWidget(this);
     summarySection_->setObjectName(QStringLiteral("ModelSummarySection"));
-    auto* summarySectionLayout = new QVBoxLayout(summarySection_);
-    summarySectionLayout->setContentsMargins(16, 16, 16, 16);
-    summarySectionLayout->setSpacing(10);
+    auto* summaryLayout = new QVBoxLayout(summarySection_);
+    summaryLayout->setContentsMargins(16, 16, 16, 16);
+    summaryLayout->setSpacing(10);
 
-    auto* summarySectionTitle = new QLabel(QStringLiteral("清单摘要"), summarySection_);
-    summarySectionTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
+    auto* summaryTitle = new QLabel(QStringLiteral("当前模型"), summarySection_);
+    summaryTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
 
-    manifestSummaryLabel_ = new QLabel(defaultManifestSummaryText(), summarySection_);
+    manifestPathLabel_ = new QLabel(QStringLiteral("未选择模型"), summarySection_);
+    manifestPathLabel_->setObjectName(QStringLiteral("ManifestPathLabel"));
+    manifestPathLabel_->setWordWrap(true);
+
+    manifestSummaryLabel_ = new QLabel(defaultSummaryText(), summarySection_);
     manifestSummaryLabel_->setObjectName(QStringLiteral("ManifestSummaryLabel"));
     manifestSummaryLabel_->setWordWrap(true);
 
-    summarySectionLayout->addWidget(summarySectionTitle);
-    summarySectionLayout->addWidget(manifestSummaryLabel_);
+    summaryLayout->addWidget(summaryTitle);
+    summaryLayout->addWidget(manifestPathLabel_);
+    summaryLayout->addWidget(manifestSummaryLabel_);
 
     labelsSection_ = new QWidget(this);
     auto* labelsLayout = new QVBoxLayout(labelsSection_);
@@ -119,9 +186,26 @@ ModelsPage::ModelsPage(QWidget* parent)
     labelsLayout->addWidget(labelsList_);
     labelsSection_->hide();
 
-    summarySectionLayout->addStretch(1);
+    summaryLayout->addStretch(1);
 
-    connect(loadButton, &QPushButton::clicked, this, [this]() {
+    connect(taskFilterCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]() {
+        const QString filter = taskFilterCombo_->currentData().toString();
+        modelList_->clear();
+        for (int i = 0; i < entries_.size(); ++i) {
+            const BuiltinModelEntry& entry = entries_[i];
+            if (!filter.isEmpty() && entry.taskType != filter) continue;
+            auto* item = new QListWidgetItem(entry.displayName, modelList_);
+            item->setData(Qt::UserRole, i);
+        }
+        descriptionLabel_->clear();
+        activateButton_->setEnabled(false);
+    });
+
+    connect(modelList_, &QListWidget::currentRowChanged, this, &ModelsPage::updateDescription);
+    connect(modelList_, &QListWidget::itemDoubleClicked, this, &ModelsPage::activateSelectedModel);
+    connect(activateButton_, &QPushButton::clicked, this, &ModelsPage::activateSelectedModel);
+
+    connect(importJsonButton_, &QPushButton::clicked, this, [this]() {
         const QString path = QFileDialog::getOpenFileName(
             this,
             QStringLiteral("选择模型清单"),
@@ -131,7 +215,8 @@ ModelsPage::ModelsPage(QWidget* parent)
             emit modelManifestSelected(path);
         }
     });
-    connect(loadOnnxButton, &QPushButton::clicked, this, [this]() {
+
+    connect(importOnnxButton_, &QPushButton::clicked, this, [this]() {
         const QString path = QFileDialog::getOpenFileName(
             this,
             QStringLiteral("选择 ONNX 文件"),
@@ -141,31 +226,87 @@ ModelsPage::ModelsPage(QWidget* parent)
             emit onnxFileSelected(path);
         }
     });
-    connect(browseDirButton, &QPushButton::clicked, this, []() {
-        const QDir appDir(QCoreApplication::applicationDirPath());
-        const QStringList searchPaths = {
-            appDir.filePath(QStringLiteral("../models")),
-            appDir.filePath(QStringLiteral("../../models")),
-            appDir.filePath(QStringLiteral("models"))
-        };
-
-        for (const QString& path : searchPaths) {
-            if (QDir(path).exists()) {
-                QDesktopServices::openUrl(QUrl::fromLocalFile(path));
-                return;
-            }
-        }
-
-        QDir().mkpath(appDir.filePath(QStringLiteral("../models")));
-        QDesktopServices::openUrl(QUrl::fromLocalFile(appDir.filePath(QStringLiteral("../models"))));
-    });
 
     layout->addWidget(title);
     layout->addWidget(lead);
-    layout->addWidget(loadSection_);
+    layout->addWidget(builtinSection);
+    layout->addWidget(importSection);
     layout->addWidget(summarySection_);
     layout->addWidget(labelsSection_);
     layout->addStretch(1);
+
+    refreshBuiltinModels();
+}
+
+void ModelsPage::refreshBuiltinModels() {
+    entries_ = builtinModels();
+    modelList_->clear();
+    for (int i = 0; i < entries_.size(); ++i) {
+        const BuiltinModelEntry& entry = entries_[i];
+        auto* item = new QListWidgetItem(entry.displayName, modelList_);
+        item->setData(Qt::UserRole, i);
+    }
+    descriptionLabel_->clear();
+    activateButton_->setEnabled(false);
+}
+
+void ModelsPage::updateDescription() {
+    const int row = modelList_->currentRow();
+    if (row < 0 || row >= modelList_->count()) {
+        descriptionLabel_->clear();
+        activateButton_->setEnabled(false);
+        return;
+    }
+
+    const int idx = modelList_->item(row)->data(Qt::UserRole).toInt();
+    if (idx < 0 || idx >= entries_.size()) {
+        descriptionLabel_->clear();
+        activateButton_->setEnabled(false);
+        return;
+    }
+
+    const BuiltinModelEntry& entry = entries_[idx];
+    descriptionLabel_->setText(entry.description);
+
+    const QString modelsDir = findModelsDir();
+    const QString manifestPath = modelsDir + QStringLiteral("/") + entry.manifestFileName;
+    const bool exists = QFileInfo::exists(manifestPath);
+    activateButton_->setEnabled(exists);
+    if (!exists) {
+        descriptionLabel_->setText(entry.description + QStringLiteral("\n\n⚠ 模型文件未找到，请确认 models 目录中包含所需文件。"));
+    }
+}
+
+void ModelsPage::activateSelectedModel() {
+    const int row = modelList_->currentRow();
+    if (row < 0 || row >= modelList_->count()) return;
+
+    const int idx = modelList_->item(row)->data(Qt::UserRole).toInt();
+    if (idx < 0 || idx >= entries_.size()) return;
+
+    const BuiltinModelEntry& entry = entries_[idx];
+    const QString modelsDir = findModelsDir();
+    const QString manifestPath = modelsDir + QStringLiteral("/") + entry.manifestFileName;
+
+    if (QFileInfo::exists(manifestPath)) {
+        emit modelManifestSelected(manifestPath);
+    }
+}
+
+QString ModelsPage::findModelsDir() const {
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    const QStringList searchPaths = {
+        appDir.filePath(QStringLiteral("../models")),
+        appDir.filePath(QStringLiteral("../../models")),
+        appDir.filePath(QStringLiteral("models"))
+    };
+
+    for (const QString& path : searchPaths) {
+        if (QDir(path).exists()) {
+            return QDir::cleanPath(path);
+        }
+    }
+    return QDir::cleanPath(appDir.filePath(QStringLiteral("../models")));
 }
 
 void ModelsPage::setCurrentManifest(const core::ModelManifest& manifest) {
@@ -185,14 +326,14 @@ void ModelsPage::setCurrentManifest(const core::ModelManifest& manifest) {
 
 void ModelsPage::setCurrentManifestPath(const QString& manifestPath) {
     if (manifestPath.isEmpty()) {
-        manifestPathLabel_->setText(QStringLiteral("当前未选择模型清单"));
+        manifestPathLabel_->setText(QStringLiteral("未选择模型"));
         if (manifestSummaryLabel_ != nullptr) {
-            manifestSummaryLabel_->setText(defaultManifestSummaryText());
+            manifestSummaryLabel_->setText(defaultSummaryText());
         }
         return;
     }
 
-    manifestPathLabel_->setText(QStringLiteral("当前模型清单：%1").arg(manifestPath));
+    manifestPathLabel_->setText(QStringLiteral("当前模型：%1").arg(QDir::toNativeSeparators(manifestPath)));
 }
 
 }  // namespace aitoolkit::ui
