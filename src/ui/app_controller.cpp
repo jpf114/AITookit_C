@@ -8,9 +8,17 @@
 #include <stdexcept>
 
 #include "services/unicode_io.h"
+#include "core/app_paths.h"
 #include "ui/image_utils.h"
 
 namespace aitoolkit::ui {
+
+namespace {
+
+const QString kGpuFallbackMessage = QStringLiteral(
+    "GPU 推理不可用，已自动回退到 CPU 模式。如需 GPU 加速，请确认已安装 CUDA Toolkit 并使用启用 CUDA 的构建。");
+
+}
 
 AppController::AppController(QObject* parent)
     : QObject(parent) {
@@ -77,7 +85,7 @@ AppController::~AppController() {
     inferenceWorker_->cancel();
     inferenceThread_->quit();
     inferenceThread_->wait();
-    delete inferenceWorker_;
+    inferenceWorker_->deleteLater();
 }
 
 bool AppController::tryLoadDefaultModel() {
@@ -93,44 +101,35 @@ bool AppController::tryLoadDefaultModel() {
             emit modelLoaded(currentManifest_);
             emit contextChanged();
             return true;
-        } catch (const std::exception&) {
+        } catch (const std::exception& e) {
+            qWarning("Failed to load last model manifest: %s", e.what());
         }
     }
 
-    const QDir appDir(QCoreApplication::applicationDirPath());
-    const QStringList searchPaths = {
-        appDir.filePath(QStringLiteral("../models")),
-        appDir.filePath(QStringLiteral("../../models")),
-        appDir.filePath(QStringLiteral("models"))
-    };
+    const QString modelsDir = core::findModelsDirectory();
+    const QDir modelsDirObj(modelsDir);
 
-    for (const QString& searchPath : searchPaths) {
-        const QDir modelsDir(searchPath);
-        if (!modelsDir.exists()) {
-            continue;
-        }
-
-        const QStringList jsonFiles = modelsDir.entryList(
-            {QStringLiteral("*.json")}, QDir::Files, QDir::Name);
-        for (const QString& jsonFile : jsonFiles) {
-            const QString manifestPath = modelsDir.absoluteFilePath(jsonFile);
-            try {
-                const core::ModelManifest manifest = modelService_.loadManifest(manifestPath);
-                if (!QFileInfo::exists(manifest.modelPath)) {
-                    continue;
-                }
-                currentManifest_ = manifest;
-                currentModel_.reset();
-                currentManifestPath_ = currentManifest_.manifestPath;
-                currentSummary_ = {};
-                batchResults_.clear();
-                settingsStore_.addRecentModel(currentManifestPath_);
-                settingsStore_.setLastModelManifestPath(currentManifestPath_);
-                emit modelLoaded(currentManifest_);
-                emit contextChanged();
-                return true;
-            } catch (const std::exception&) {
+    const QStringList jsonFiles = modelsDirObj.entryList(
+        {QStringLiteral("*.json")}, QDir::Files, QDir::Name);
+    for (const QString& jsonFile : jsonFiles) {
+        const QString manifestPath = modelsDirObj.absoluteFilePath(jsonFile);
+        try {
+            const core::ModelManifest manifest = modelService_.loadManifest(manifestPath);
+            if (!QFileInfo::exists(manifest.modelPath)) {
+                continue;
             }
+            currentManifest_ = manifest;
+            currentModel_.reset();
+            currentManifestPath_ = currentManifest_.manifestPath;
+            currentSummary_ = {};
+            batchResults_.clear();
+            settingsStore_.addRecentModel(currentManifestPath_);
+            settingsStore_.setLastModelManifestPath(currentManifestPath_);
+            emit modelLoaded(currentManifest_);
+            emit contextChanged();
+            return true;
+        } catch (const std::exception& e) {
+            qWarning("Failed to auto-discover model: %s", e.what());
         }
     }
 
@@ -168,7 +167,7 @@ void AppController::loadOnnxFile(const QString& onnxPath, const QString& name, i
         settingsStore_.addRecentModel(manifest.manifestPath);
         settingsStore_.setLastModelManifestPath(manifest.manifestPath);
         if (modelService_.useGPU() && currentModel_ && !currentModel_->supportsGPU()) {
-            emit inferenceError(QStringLiteral("GPU 推理不可用，已自动回退到 CPU 模式。如需 GPU 加速，请确认已安装 CUDA Toolkit 并使用启用 CUDA 的构建。"));
+            emit inferenceError(kGpuFallbackMessage);
         }
         emit modelLoaded(manifest);
         emit contextChanged();
@@ -215,7 +214,7 @@ void AppController::selectFolder(const QString& folderPath, double confidence, d
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadModel(currentManifestPath_);
             if (modelService_.useGPU() && currentModel_ && !currentModel_->supportsGPU()) {
-                emit inferenceError(QStringLiteral("GPU 推理不可用，已自动回退到 CPU 模式。"));
+                emit inferenceError(kGpuFallbackMessage);
             }
         }
 
@@ -249,7 +248,7 @@ void AppController::selectVideo(const QString& videoPath, const int maxFrames, d
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadModel(currentManifestPath_);
             if (modelService_.useGPU() && currentModel_ && !currentModel_->supportsGPU()) {
-                emit inferenceError(QStringLiteral("GPU 推理不可用，已自动回退到 CPU 模式。"));
+                emit inferenceError(kGpuFallbackMessage);
             }
         }
 
@@ -282,7 +281,7 @@ void AppController::runInference(double confidence, double nms) {
             currentModel_->manifest().manifestPath.compare(currentManifestPath_, Qt::CaseInsensitive) != 0) {
             currentModel_ = modelService_.loadModel(currentManifestPath_);
             if (modelService_.useGPU() && currentModel_ && !currentModel_->supportsGPU()) {
-                emit inferenceError(QStringLiteral("GPU 推理不可用，已自动回退到 CPU 模式。"));
+                emit inferenceError(kGpuFallbackMessage);
             }
         }
         inferenceWorker_->setModel(currentModel_);

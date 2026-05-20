@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QThread>
 
+#include <atomic>
 #include <memory>
 
 #include "core/settings_store.h"
@@ -77,8 +78,8 @@ private:
     QString currentInputSourcePath_;
     core::InferenceSummary currentSummary_;
     QVector<core::InferenceSummary> batchResults_;
-    bool inferenceRunning_ = false;
-    bool inferenceCancellationRequested_ = false;
+    std::atomic<bool> inferenceRunning_{false};
+    std::atomic<bool> inferenceCancellationRequested_{false};
 };
 
 }  // namespace aitoolkit::ui

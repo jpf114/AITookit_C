@@ -34,7 +34,7 @@ public:
     bool hasDecoder(const std::string& decoderName) const;
 
 private:
-    PostprocessRegistry() = default;
+    PostprocessRegistry();
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };

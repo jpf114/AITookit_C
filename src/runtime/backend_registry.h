@@ -20,7 +20,7 @@ public:
     QStringList availableBackendNames() const;
 
 private:
-    BackendRegistry() = default;
+    BackendRegistry();
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
