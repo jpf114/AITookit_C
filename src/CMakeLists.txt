@@ -104,6 +104,8 @@ endif()
 ai_define_module(
     ai_core
     SOURCES
+        core/app_paths.cpp
+        core/image_algorithms.cpp
         core/json_utils.cpp
         core/model_manifest.cpp
         core/settings_store.cpp

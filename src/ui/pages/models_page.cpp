@@ -2,7 +2,6 @@
 
 #include <QAbstractItemView>
 #include <QComboBox>
-#include <QCoreApplication>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -11,6 +10,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+
+#include "core/app_paths.h"
 
 namespace aitoolkit::ui {
 
@@ -77,7 +78,7 @@ ModelsPage::ModelsPage(QWidget* parent)
     layout->setSpacing(16);
 
     auto* title = new QLabel(QStringLiteral("模型选择"), this);
-    title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
+    title->setObjectName(QStringLiteral("PageTitle"));
 
     auto* lead = new QLabel(QStringLiteral("选择一个内置模型即可开始推理，也可导入自定义模型。"), this);
     lead->setObjectName(QStringLiteral("PageLead"));
@@ -90,7 +91,7 @@ ModelsPage::ModelsPage(QWidget* parent)
     builtinLayout->setSpacing(10);
 
     auto* builtinTitle = new QLabel(QStringLiteral("内置模型"), builtinSection);
-    builtinTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
+    builtinTitle->setObjectName(QStringLiteral("SectionSubtitle"));
 
     auto* filterRow = new QHBoxLayout();
     auto* filterLabel = new QLabel(QStringLiteral("任务类型："), builtinSection);
@@ -110,7 +111,7 @@ ModelsPage::ModelsPage(QWidget* parent)
     descriptionLabel_ = new QLabel(builtinSection);
     descriptionLabel_->setWordWrap(true);
     descriptionLabel_->setMinimumHeight(40);
-    descriptionLabel_->setStyleSheet(QStringLiteral("color: #64748b; padding: 4px;"));
+    descriptionLabel_->setObjectName(QStringLiteral("DescriptionLabel"));
 
     activateButton_ = new QPushButton(QStringLiteral("使用此模型"), builtinSection);
     activateButton_->setObjectName(QStringLiteral("PrimaryButton"));
@@ -129,7 +130,7 @@ ModelsPage::ModelsPage(QWidget* parent)
     importLayout->setSpacing(10);
 
     auto* importTitle = new QLabel(QStringLiteral("自定义模型"), importSection);
-    importTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
+    importTitle->setObjectName(QStringLiteral("SectionSubtitle"));
 
     auto* importHint = new QLabel(
         QStringLiteral("支持导入 JSON 模型清单文件或直接导入 ONNX 模型文件。"), importSection);
@@ -156,7 +157,7 @@ ModelsPage::ModelsPage(QWidget* parent)
     summaryLayout->setSpacing(10);
 
     auto* summaryTitle = new QLabel(QStringLiteral("当前模型"), summarySection_);
-    summaryTitle->setStyleSheet(QStringLiteral("font-size: 16px; font-weight: 600;"));
+    summaryTitle->setObjectName(QStringLiteral("SectionSubtitle"));
 
     manifestPathLabel_ = new QLabel(QStringLiteral("未选择模型"), summarySection_);
     manifestPathLabel_->setObjectName(QStringLiteral("ManifestPathLabel"));
@@ -176,7 +177,7 @@ ModelsPage::ModelsPage(QWidget* parent)
     labelsLayout->setSpacing(4);
 
     auto* labelsHeader = new QLabel(QStringLiteral("标签列表"), this);
-    labelsHeader->setStyleSheet(QStringLiteral("font-size: 13px; font-weight: 600;"));
+    labelsHeader->setObjectName(QStringLiteral("LabelsHeader"));
 
     labelsList_ = new QListWidget(this);
     labelsList_->setMaximumHeight(200);
@@ -294,19 +295,7 @@ void ModelsPage::activateSelectedModel() {
 }
 
 QString ModelsPage::findModelsDir() const {
-    const QDir appDir(QCoreApplication::applicationDirPath());
-    const QStringList searchPaths = {
-        appDir.filePath(QStringLiteral("../models")),
-        appDir.filePath(QStringLiteral("../../models")),
-        appDir.filePath(QStringLiteral("models"))
-    };
-
-    for (const QString& path : searchPaths) {
-        if (QDir(path).exists()) {
-            return QDir::cleanPath(path);
-        }
-    }
-    return QDir::cleanPath(appDir.filePath(QStringLiteral("../models")));
+    return core::findModelsDirectory();
 }
 
 void ModelsPage::setCurrentManifest(const core::ModelManifest& manifest) {

@@ -118,6 +118,13 @@ private:
     }
     void buildShell();
     void wireSignals();
+    void wireNavSignals();
+    void wireHomeSignals();
+    void wireModelsSignals();
+    void wireInferenceSignals();
+    void wireResultsSignals();
+    void wireSettingsSignals();
+    void wireControllerSignals();
     void updateContextPanel();
     void refreshSettingsPage();
     void showPage(int pageId);

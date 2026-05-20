@@ -1,13 +1,11 @@
 #pragma once
 
+#include <QColor>
 #include <QImage>
 #include <QSize>
-#include <QString>
 
-namespace aitoolkit::ui {
-
-QImage loadUsableImage(const QString& imagePath);
+namespace aitoolkit::core {
 
 QImage colorizeMask(const QImage& mask, const QSize& targetSize, QColor color);
 
-}  // namespace aitoolkit::ui
+}  // namespace aitoolkit::core

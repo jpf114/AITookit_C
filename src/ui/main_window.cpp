@@ -31,6 +31,7 @@
 #include "ui/pages/results_page.h"
 #include "ui/pages/settings_page.h"
 #include "services/unicode_io.h"
+#include "core/app_paths.h"
 
 namespace aitoolkit::ui {
 
@@ -121,36 +122,31 @@ void MainWindow::buildShell() {
 
     auto* title = new QLabel(QStringLiteral("任务摘要"), contextPanel_);
     title->setObjectName(QStringLiteral("ContextTitle"));
-    title->setStyleSheet(QStringLiteral("font-size: 18px; font-weight: 600;"));
 
-    const auto configureTitleLabel = [](QLabel* label, const QString& objectName, const QString& text) {
-        label->setObjectName(objectName);
+    const auto configureTitleLabel = [](QLabel* label, const QString& text) {
+        label->setObjectName(QStringLiteral("ContextSectionTitle"));
         label->setText(text);
-        label->setStyleSheet(QStringLiteral("font-size: 13px; font-weight: 600; color: #334155;"));
     };
-    const auto configureValueLabel = [](QLabel* label, const QString& objectName) {
-        label->setObjectName(objectName);
+    const auto configureValueLabel = [](QLabel* label) {
+        label->setObjectName(QStringLiteral("ContextSectionValue"));
         label->setWordWrap(true);
-        label->setStyleSheet(QStringLiteral("font-size: 13px; color: #0f172a;"));
     };
     const auto buildDivider = [contextPanel_ = contextPanel_]() {
         auto* divider = new QFrame(contextPanel_);
         divider->setFrameShape(QFrame::HLine);
         divider->setFrameShadow(QFrame::Plain);
-        divider->setStyleSheet(QStringLiteral("color: #cbd5e1;"));
+        divider->setObjectName(QStringLiteral("ContextDivider"));
         return divider;
     };
     const auto addContextSection = [contextLayout, &buildDivider, &configureTitleLabel, &configureValueLabel](
                                        QLabel*& titleLabel,
-                                       const QString& titleObjectName,
                                        const QString& titleText,
                                        QLabel*& valueLabel,
-                                       const QString& valueObjectName,
                                        const bool addTrailingDivider) {
         titleLabel = new QLabel(contextLayout->parentWidget());
-        configureTitleLabel(titleLabel, titleObjectName, titleText);
+        configureTitleLabel(titleLabel, titleText);
         valueLabel = new QLabel(contextLayout->parentWidget());
-        configureValueLabel(valueLabel, valueObjectName);
+        configureValueLabel(valueLabel);
         contextLayout->addWidget(titleLabel);
         contextLayout->addWidget(valueLabel);
         if (addTrailingDivider) {
@@ -161,28 +157,20 @@ void MainWindow::buildShell() {
     contextLayout->addWidget(title);
     contextLayout->addWidget(buildDivider());
     addContextSection(modelStatusTitleLabel_,
-                      QStringLiteral("ContextModelTitle"),
                       QStringLiteral("当前模型"),
                       modelStatusLabel_,
-                      QStringLiteral("ContextModelValue"),
                       true);
     addContextSection(imageStatusTitleLabel_,
-                      QStringLiteral("ContextImageTitle"),
                       QStringLiteral("当前图像"),
                       imageStatusLabel_,
-                      QStringLiteral("ContextImageValue"),
                       true);
     addContextSection(resultStatusTitleLabel_,
-                      QStringLiteral("ContextResultTitle"),
                       QStringLiteral("当前结果"),
                       runStatusLabel_,
-                      QStringLiteral("ContextResultValue"),
                       true);
     addContextSection(nextStepTitleLabel_,
-                      QStringLiteral("ContextNextStepTitle"),
                       QStringLiteral("下一步"),
                       nextStepLabel_,
-                      QStringLiteral("ContextNextStepValue"),
                       false);
     contextLayout->addStretch(1);
 
@@ -194,7 +182,20 @@ void MainWindow::buildShell() {
 }
 
 void MainWindow::wireSignals() {
+    wireNavSignals();
+    wireHomeSignals();
+    wireModelsSignals();
+    wireInferenceSignals();
+    wireResultsSignals();
+    wireSettingsSignals();
+    wireControllerSignals();
+}
+
+void MainWindow::wireNavSignals() {
     connect(navPanel_, &NavPanel::pageRequested, this, &MainWindow::showPage);
+}
+
+void MainWindow::wireHomeSignals() {
     connect(homePage_, &HomePage::loadModelClicked, this, [this]() { showPage(NavPanel::ModelsPageId); });
     connect(homePage_, &HomePage::selectImageClicked, this, [this]() { showPage(NavPanel::InferencePageId); });
     connect(homePage_, &HomePage::downloadSampleModelClicked, this, [this]() {
@@ -245,22 +246,8 @@ void MainWindow::wireSignals() {
              QStringLiteral("-ModelsDir"), modelsDir});
     });
     connect(homePage_, &HomePage::modelCatalogRequested, this, [this]() {
-        const QDir appDir(QCoreApplication::applicationDirPath());
-        const QStringList searchPaths = {
-            appDir.filePath(QStringLiteral("../models")),
-            appDir.filePath(QStringLiteral("../../models")),
-            appDir.filePath(QStringLiteral("models"))
-        };
-
-        QString modelsDir;
-        for (const QString& path : searchPaths) {
-            if (QDir(path).exists()) {
-                modelsDir = path;
-                break;
-            }
-        }
-        if (modelsDir.isEmpty()) {
-            modelsDir = appDir.filePath(QStringLiteral("../models"));
+        QString modelsDir = core::findModelsDirectory();
+        if (!QDir(modelsDir).exists()) {
             QDir().mkpath(modelsDir);
         }
 
@@ -344,6 +331,9 @@ void MainWindow::wireSignals() {
         controller_->selectImage(imagePath);
         showPage(NavPanel::InferencePageId);
     });
+}
+
+void MainWindow::wireModelsSignals() {
     connect(modelsPage_, &ModelsPage::modelManifestSelected, this, [this](const QString& path) {
         controller_->loadModelManifest(path);
     });
@@ -364,6 +354,9 @@ void MainWindow::wireSignals() {
         modelsPage_->setCurrentManifest(controller_->currentManifest());
         dialog->deleteLater();
     });
+}
+
+void MainWindow::wireInferenceSignals() {
     connect(inferencePage_, &InferencePage::imageSelected, this, [this](const QString& path) {
         controller_->selectImage(path);
     });
@@ -396,6 +389,9 @@ void MainWindow::wireSignals() {
         runStatusLabel_->setText(QStringLiteral("已取消"));
         nextStepLabel_->setText(QStringLiteral("可重新开始检测。"));
     });
+}
+
+void MainWindow::wireResultsSignals() {
     connect(resultsPage_, &ResultsPage::exportRequested, this, [this]() {
         if (controller_->currentSummary().inputPath.isEmpty()) {
             QMessageBox::information(this, QStringLiteral("暂无结果"), QStringLiteral("请先完成一次推理，再导出结果。"));
@@ -485,6 +481,9 @@ void MainWindow::wireSignals() {
         const QImage previewImage = loadUsableImage(summary.inputPath);
         inferencePage_->setCurrentImagePath(previewImage.isNull() ? QString() : summary.inputPath);
     });
+}
+
+void MainWindow::wireSettingsSignals() {
     connect(settingsPage_,
             &SettingsPage::defaultExportDirectoryChanged,
             this,
@@ -504,7 +503,9 @@ void MainWindow::wireSignals() {
         controller_->settingsStore().setUseGPUInference(useGPU);
         controller_->modelService().setUseGPU(useGPU);
     });
+}
 
+void MainWindow::wireControllerSignals() {
     connect(controller_, &AppController::modelLoaded, this, [this](const core::ModelManifest& manifest) {
         modelsPage_->setCurrentManifest(manifest);
         inferencePage_->setModelReady(true);
@@ -589,8 +590,14 @@ void MainWindow::wireSignals() {
             QMessageBox::information(this, QStringLiteral("无帧数据"), QStringLiteral("未能从视频中读取任何帧。"));
             return;
         }
-        inferencePage_->setCurrentImagePath(QString());
-        resultsPage_->setImage(QImage());
+        if (!results.first().inputPath.isEmpty()) {
+            const QImage firstFrame = loadUsableImage(results.first().inputPath);
+            inferencePage_->setCurrentImagePath(firstFrame.isNull() ? QString() : results.first().inputPath);
+            resultsPage_->setImage(firstFrame);
+        } else {
+            inferencePage_->setCurrentImagePath(QString());
+            resultsPage_->setImage(QImage());
+        }
         resultsPage_->setSummary(results.first());
         resultsPage_->setResults(results);
         updateContextPanel();
@@ -804,6 +811,10 @@ void MainWindow::handleDroppedUrls(const QList<QUrl>& urls) {
         const QFileInfo info(localPath);
 
         if (info.isDir()) {
+            if (controller_->isRunning()) {
+                statusBar()->showMessage(QStringLiteral("推理进行中，请等待完成后再操作。"), 3000);
+                return;
+            }
             controller_->selectFolder(localPath, inferencePage_->confidenceThreshold(), inferencePage_->nmsThreshold());
             return;
         }
@@ -815,6 +826,10 @@ void MainWindow::handleDroppedUrls(const QList<QUrl>& urls) {
             return;
         }
         if (kVideoSuffixes.contains(suffix)) {
+            if (controller_->isRunning()) {
+                statusBar()->showMessage(QStringLiteral("推理进行中，请等待完成后再操作。"), 3000);
+                return;
+            }
             controller_->selectVideo(localPath, inferencePage_->maxFrames(), inferencePage_->confidenceThreshold(), inferencePage_->nmsThreshold());
             return;
         }

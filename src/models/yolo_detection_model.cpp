@@ -130,21 +130,28 @@ std::vector<int> runNms(const std::vector<CandidateDetection>& candidates, const
 }
 
 int resolveExpectedAttributes(const int expectedNumClasses) {
+    constexpr int kBboxAttributes = 4;
+    constexpr int kObjectnessAttribute = 1;
+
     if (expectedNumClasses < 0) {
-        return 5;
+        return kBboxAttributes + kObjectnessAttribute;
     }
 
-    return 5 + expectedNumClasses;
+    return kBboxAttributes + kObjectnessAttribute + expectedNumClasses;
 }
 
 bool isRecognizedAttributeCount(const int dimension, const int expectedNumClasses) {
-    if (dimension == 5) {
+    constexpr int kBboxAttributes = 4;
+    constexpr int kObjectnessAttribute = 1;
+    constexpr int kCocoClasses = 80;
+
+    if (dimension == kBboxAttributes + kObjectnessAttribute) {
         return true;
     }
-    if (dimension == 85) {
+    if (dimension == kBboxAttributes + kObjectnessAttribute + kCocoClasses) {
         return true;
     }
-    if (dimension == 4) {
+    if (dimension == kBboxAttributes) {
         return true;
     }
 
@@ -153,7 +160,7 @@ bool isRecognizedAttributeCount(const int dimension, const int expectedNumClasse
     }
 
     return dimension == resolveExpectedAttributes(expectedNumClasses) ||
-           dimension == (4 + expectedNumClasses);
+           dimension == (kBboxAttributes + expectedNumClasses);
 }
 
 }  // namespace
