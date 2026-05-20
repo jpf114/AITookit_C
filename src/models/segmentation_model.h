@@ -29,6 +29,11 @@ public:
         double nmsThreshold = -1.0) const override;
     QString backendName() const noexcept override;
 
+    static QVector<core::SegmentationItem> postprocessSegmentations(
+        const QVector<core::DetectionItem>& detections,
+        const runtime::InferenceTensor& maskTensor,
+        const QSize& originalSize);
+
 private:
     core::ModelManifest manifest_;
     runtime::OnnxBackend backend_;

@@ -68,10 +68,12 @@ QVector<core::InferenceSummary> InferenceService::runBatch(
     for (const QString& imagePath : imagePaths) {
         try {
             results.append(runImage(model, imagePath));
-        } catch (const std::exception&) {
+        } catch (const std::exception& e) {
             core::InferenceSummary skipped;
             skipped.modelName = model.manifest().name;
             skipped.inputPath = QDir::cleanPath(imagePath);
+            skipped.success = false;
+            skipped.errorMessage = QString::fromUtf8(e.what());
             results.append(skipped);
         }
     }
@@ -106,10 +108,12 @@ QVector<core::InferenceSummary> InferenceService::runVideo(
             const QString framePath = QStringLiteral("%1 [frame %2]").arg(QFileInfo(cleanPath).absoluteFilePath()).arg(frameIndex);
             auto summary = runImageFromMat(model, frame, framePath);
             results.append(summary);
-        } catch (const std::exception&) {
+        } catch (const std::exception& e) {
             core::InferenceSummary skipped;
             skipped.modelName = model.manifest().name;
             skipped.inputPath = QStringLiteral("%1 [frame %2]").arg(QFileInfo(cleanPath).absoluteFilePath()).arg(frameIndex);
+            skipped.success = false;
+            skipped.errorMessage = QString::fromUtf8(e.what());
             results.append(skipped);
         }
 

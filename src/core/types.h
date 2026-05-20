@@ -39,6 +39,8 @@ struct InferenceSummary {
     double elapsedMs = 0.0;
     int imageWidth = 0;
     int imageHeight = 0;
+    bool success = true;
+    QString errorMessage;
     QVector<DetectionItem> detections;
     QVector<ClassificationItem> classifications;
     QVector<SegmentationItem> segmentations;

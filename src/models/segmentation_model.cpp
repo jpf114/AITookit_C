@@ -42,6 +42,9 @@ QImage maskToQImage(const cv::Mat& mask, const QSize& targetSize) {
 SegmentationModel::SegmentationModel(core::ModelManifest manifest, const int threadCount, const bool useGPU)
     : manifest_(std::move(manifest))
     , backend_(manifest_.modelPath, threadCount, useGPU) {
+    if (manifest_.inputWidth <= 0 || manifest_.inputHeight <= 0) {
+        throw std::runtime_error("Segmentation model input dimensions must be greater than zero");
+    }
     backend_.warmup();
 }
 
@@ -80,7 +83,13 @@ QVector<core::SegmentationItem> SegmentationModel::segment(
         detOutput, prepared.networkSize, manifest_,
         prepared.originalSize, confidenceThreshold, nmsThreshold);
 
-    const runtime::InferenceTensor& maskTensor = outputs[1];
+    return postprocessSegmentations(detections, outputs[1], prepared.originalSize);
+}
+
+QVector<core::SegmentationItem> SegmentationModel::postprocessSegmentations(
+    const QVector<core::DetectionItem>& detections,
+    const runtime::InferenceTensor& maskTensor,
+    const QSize& originalSize) {
     const int maskDim = static_cast<int>(maskTensor.shape.size());
 
     int maskH = 0;
@@ -109,7 +118,7 @@ QVector<core::SegmentationItem> SegmentationModel::segment(
         item.boundingBox = detections[i].boundingBox;
         item.renderColor = colors[i % colors.size()];
 
-        cv::Mat singleMask(maskH, maskW, CV_32F);
+        cv::Mat singleMask = cv::Mat::zeros(maskH, maskW, CV_32F);
         for (int y = 0; y < maskH; ++y) {
             for (int x = 0; x < maskW; ++x) {
                 const int idx = i * maskH * maskW + y * maskW + x;
@@ -119,7 +128,7 @@ QVector<core::SegmentationItem> SegmentationModel::segment(
             }
         }
 
-        item.mask = maskToQImage(singleMask, QSize(image.cols, image.rows));
+        item.mask = maskToQImage(singleMask, originalSize);
         results.append(item);
     }
 

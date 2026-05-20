@@ -6,11 +6,16 @@
 #include <numeric>
 #include <stdexcept>
 
+#include "models/yolo_detection_model.h"
+
 namespace aitoolkit::models {
 
 ClassificationModel::ClassificationModel(core::ModelManifest manifest, const int threadCount, const bool useGPU)
     : manifest_(std::move(manifest))
     , backend_(manifest_.modelPath, threadCount, useGPU) {
+    if (manifest_.inputWidth <= 0 || manifest_.inputHeight <= 0) {
+        throw std::runtime_error("Classification model input dimensions must be greater than zero");
+    }
     backend_.warmup();
 }
 
@@ -43,38 +48,7 @@ QString ClassificationModel::backendName() const noexcept {
 std::vector<float> ClassificationModel::preprocessImage(
     const cv::Mat& image,
     const core::ModelManifest& manifest) {
-    cv::Mat convertedImage;
-    switch (image.channels()) {
-        case 1:
-            cv::cvtColor(image, convertedImage, cv::COLOR_GRAY2RGB);
-            break;
-        case 3:
-            cv::cvtColor(image, convertedImage, cv::COLOR_BGR2RGB);
-            break;
-        case 4:
-            cv::cvtColor(image, convertedImage, cv::COLOR_BGRA2RGB);
-            break;
-        default:
-            throw std::runtime_error("Unsupported channel count for classification preprocessing");
-    }
-
-    cv::Mat resized;
-    cv::resize(convertedImage, resized, cv::Size(manifest.inputWidth, manifest.inputHeight));
-
-    cv::Mat floatImg;
-    resized.convertTo(floatImg, CV_32F, 1.0 / 255.0);
-
-    std::vector<float> blob;
-    blob.reserve(static_cast<std::size_t>(floatImg.channels()) * manifest.inputWidth * manifest.inputHeight);
-
-    std::vector<cv::Mat> channels(floatImg.channels());
-    cv::split(floatImg, channels);
-
-    for (const cv::Mat& channel : channels) {
-        blob.insert(blob.end(), channel.begin<float>(), channel.end<float>());
-    }
-
-    return blob;
+    return YoloDetectionModel::preprocessImage(image, manifest).blob;
 }
 
 QVector<core::ClassificationItem> ClassificationModel::postprocessClassifications(

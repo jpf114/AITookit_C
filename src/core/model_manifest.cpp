@@ -11,6 +11,7 @@
 #include <QTextStream>
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace aitoolkit::core {
@@ -122,7 +123,7 @@ int requirePositiveIntField(const QJsonObject& object, const QString& manifestPa
     }
 
     const int number = static_cast<int>(rawNumber);
-    if (number <= 0) {
+    if (number <= 0 || rawNumber > static_cast<double>(std::numeric_limits<int>::max())) {
         throw manifestError(manifestPath, fieldName, QStringLiteral("field must be an integer greater than 0"));
     }
     return number;

@@ -95,6 +95,8 @@ void InferenceWorker::runBatch(const QStringList& imagePaths) {
                 core::InferenceSummary skipped;
                 skipped.modelName = model->manifest().name;
                 skipped.inputPath = cleanPath;
+                skipped.success = false;
+                skipped.errorMessage = QStringLiteral("Failed to read image file");
                 results.append(skipped);
                 emit batchProgress(i + 1, total);
                 continue;
@@ -102,10 +104,12 @@ void InferenceWorker::runBatch(const QStringList& imagePaths) {
 
             auto summary = inferenceService_.runImageFromMat(*model, image, cleanPath, confThreshold, nmsThresholdVal);
             results.append(summary);
-        } catch (const std::exception&) {
+        } catch (const std::exception& e) {
             core::InferenceSummary skipped;
             skipped.modelName = model->manifest().name;
             skipped.inputPath = QDir::cleanPath(imagePaths[i]);
+            skipped.success = false;
+            skipped.errorMessage = QString::fromUtf8(e.what());
             results.append(skipped);
         }
 
@@ -158,10 +162,12 @@ void InferenceWorker::runVideo(const QString& videoPath, const int maxFrames) {
                 const QString framePath = QStringLiteral("%1 [frame %2]").arg(QFileInfo(cleanPath).absoluteFilePath()).arg(frameIndex);
                 auto summary = inferenceService_.runImageFromMat(*model, frame, framePath, confThreshold, nmsThresholdVal);
                 results.append(summary);
-            } catch (const std::exception&) {
+            } catch (const std::exception& e) {
                 core::InferenceSummary skipped;
                 skipped.modelName = model->manifest().name;
                 skipped.inputPath = QStringLiteral("%1 [frame %2]").arg(QFileInfo(cleanPath).absoluteFilePath()).arg(frameIndex);
+                skipped.success = false;
+                skipped.errorMessage = QString::fromUtf8(e.what());
                 results.append(skipped);
             }
 

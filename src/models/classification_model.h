@@ -28,14 +28,15 @@ public:
         double confidenceThreshold = -1.0) const override;
     QString backendName() const noexcept override;
 
-private:
-    static std::vector<float> preprocessImage(
-        const cv::Mat& image,
-        const core::ModelManifest& manifest);
     static QVector<core::ClassificationItem> postprocessClassifications(
         const std::vector<runtime::InferenceTensor>& tensors,
         const core::ModelManifest& manifest,
         double confidenceThreshold);
+
+private:
+    static std::vector<float> preprocessImage(
+        const cv::Mat& image,
+        const core::ModelManifest& manifest);
 
     core::ModelManifest manifest_;
     runtime::OnnxBackend backend_;
