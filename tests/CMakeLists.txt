@@ -75,6 +75,9 @@ ai_add_qt_test_if_exists(test_models_page.cpp)
 ai_add_qt_test_if_exists(test_results_page.cpp)
 ai_add_qt_test_if_exists(test_settings_page.cpp)
 ai_add_qt_test_if_exists(test_gui_validation.cpp)
+ai_add_qt_test_if_exists(test_classification_model.cpp)
+ai_add_qt_test_if_exists(test_segmentation_model.cpp)
+ai_add_qt_test_if_exists(test_inference_service.cpp)
 
 if(TARGET test_yolo_postprocess)
     target_link_libraries(
@@ -103,6 +106,30 @@ endif()
 if(TARGET test_model_service)
     target_link_libraries(
         test_model_service
+        PRIVATE
+            ai_services
+    )
+endif()
+
+if(TARGET test_classification_model)
+    target_link_libraries(
+        test_classification_model
+        PRIVATE
+            ai_models
+    )
+endif()
+
+if(TARGET test_segmentation_model)
+    target_link_libraries(
+        test_segmentation_model
+        PRIVATE
+            ai_models
+    )
+endif()
+
+if(TARGET test_inference_service)
+    target_link_libraries(
+        test_inference_service
         PRIVATE
             ai_services
     )
