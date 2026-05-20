@@ -6,33 +6,13 @@
 #include <QPen>
 #include <QWheelEvent>
 
+#include "ui/image_utils.h"
+
 namespace aitoolkit::ui {
-
-namespace {
-
-QImage colorizeMask(const QImage& mask, const QSize& targetSize, QColor color) {
-    QImage alphaMask = mask.scaled(targetSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
-                           .convertToFormat(QImage::Format_ARGB32_Premultiplied);
-    QImage tinted(alphaMask.size(), QImage::Format_ARGB32_Premultiplied);
-    tinted.fill(Qt::transparent);
-
-    for (int y = 0; y < alphaMask.height(); ++y) {
-        const QRgb* alphaRow = reinterpret_cast<const QRgb*>(alphaMask.constScanLine(y));
-        QRgb* tintedRow = reinterpret_cast<QRgb*>(tinted.scanLine(y));
-        for (int x = 0; x < alphaMask.width(); ++x) {
-            QColor pixelColor = color;
-            pixelColor.setAlpha((qAlpha(alphaRow[x]) * color.alpha()) / 255);
-            tintedRow[x] = pixelColor.rgba();
-        }
-    }
-
-    return tinted;
-}
-
-}  // namespace
 
 ImagePreviewWidget::ImagePreviewWidget(QWidget* parent)
     : QWidget(parent) {
+    setObjectName(QStringLiteral("ImagePreviewWidget"));
     setAutoFillBackground(true);
     setMouseTracking(true);
 }
@@ -58,10 +38,10 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.fillRect(rect(), QColor(QStringLiteral("#f8fafc")));
+    painter.fillRect(rect(), palette().window().color());
 
     if (image_.isNull()) {
-        painter.setPen(QColor(QStringLiteral("#64748b")));
+        painter.setPen(palette().windowText().color());
         painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("暂无可预览结果"));
         return;
     }
@@ -133,7 +113,7 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
     }
 
     if (zoomLevel_ > 1.0001) {
-        painter.setPen(QColor(QStringLiteral("#94a3b8")));
+        painter.setPen(QColor(QStringLiteral("#7e92a8")));
         painter.setBrush(Qt::NoBrush);
         const QFont oldFont = painter.font();
         QFont smallFont = oldFont;

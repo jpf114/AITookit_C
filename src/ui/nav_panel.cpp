@@ -22,11 +22,11 @@ NavPanel::NavPanel(QWidget* parent)
     sidebarLayout->setContentsMargins(14, 12, 14, 12);
     sidebarLayout->setSpacing(8);
 
-    auto* eyebrow = new QLabel(QStringLiteral("AI TOOLKIT"), sidebar);
+    auto* eyebrow = new QLabel(QStringLiteral("AITOOLKIT"), sidebar);
     eyebrow->setObjectName(QStringLiteral("SidebarEyebrow"));
     auto* title = new QLabel(QStringLiteral("AI 检测工具"), sidebar);
     title->setObjectName(QStringLiteral("SidebarTitle"));
-    auto* desc = new QLabel(QStringLiteral("围绕模型清单、图像推理和结果导出组织一个紧凑的桌面工作台。"), sidebar);
+    auto* desc = new QLabel(QStringLiteral("基于 ONNX Runtime 的轻量级 AI 推理桌面工具，支持目标检测、图像分类和实例分割。"), sidebar);
     desc->setObjectName(QStringLiteral("SidebarDesc"));
     desc->setWordWrap(true);
 
@@ -66,7 +66,7 @@ NavPanel::NavPanel(QWidget* parent)
 
     sidebarLayout->addStretch(1);
 
-    auto* footer = new QLabel(QStringLiteral("当前版本先聚焦单图推理链路，后续可继续补批处理、结果复核和模型管理能力。"), sidebar);
+    auto* footer = new QLabel(QStringLiteral("支持 YOLOv5/v8/v11 系列模型，更多功能持续更新中。"), sidebar);
     footer->setObjectName(QStringLiteral("SidebarFooter"));
     footer->setWordWrap(true);
     sidebarLayout->addWidget(footer);

@@ -17,7 +17,7 @@ HomePage::HomePage(QWidget* parent)
     layout->setSpacing(16);
 
     auto* title = new QLabel(QStringLiteral("AI \u68c0\u6d4b\u5de5\u5177 v%1").arg(QCoreApplication::applicationVersion()), this);
-    title->setStyleSheet(QStringLiteral("font-size: 24px; font-weight: 600;"));
+    title->setObjectName(QStringLiteral("HomePageTitle"));
 
     auto* lead = new QLabel(
         QStringLiteral("\u4ece\u5de6\u4fa7\u5f00\u59cb\u52a0\u8f7d\u6a21\u578b\u6e05\u5355\uff0c\u9009\u62e9\u5f85\u63a8\u7406\u56fe\u50cf\u540e\u5373\u53ef\u6267\u884c\u4e00\u6b21\u76ee\u6807\u68c0\u6d4b\uff0c\u5e76\u5728\u7ed3\u679c\u9875\u67e5\u770b\u53e0\u52a0\u9884\u89c8\u4e0e\u660e\u7ec6\u3002"),
@@ -67,8 +67,8 @@ HomePage::HomePage(QWidget* parent)
     modelsColumnLayout->setContentsMargins(0, 0, 0, 0);
     modelsColumnLayout->setSpacing(6);
 
-    auto* modelsTitle = new QLabel(QStringLiteral("\u6700\u8fd1\u6a21\u578b"), this);
-    modelsTitle->setStyleSheet(QStringLiteral("font-size: 14px; font-weight: 600;"));
+    auto* modelsTitle = new QLabel(QStringLiteral("最近模型"), this);
+    modelsTitle->setObjectName(QStringLiteral("HomeRecentTitle"));
 
     recentModelsList_ = new QListWidget(this);
     recentModelsList_->setObjectName(QStringLiteral("HomeRecentModelsList"));
@@ -83,8 +83,8 @@ HomePage::HomePage(QWidget* parent)
     inputsColumnLayout->setContentsMargins(0, 0, 0, 0);
     inputsColumnLayout->setSpacing(6);
 
-    auto* inputsTitle = new QLabel(QStringLiteral("\u6700\u8fd1\u56fe\u50cf"), this);
-    inputsTitle->setStyleSheet(QStringLiteral("font-size: 14px; font-weight: 600;"));
+    auto* inputsTitle = new QLabel(QStringLiteral("最近图像"), this);
+    inputsTitle->setObjectName(QStringLiteral("HomeRecentTitle"));
 
     recentInputsList_ = new QListWidget(this);
     recentInputsList_->setObjectName(QStringLiteral("HomeRecentInputsList"));

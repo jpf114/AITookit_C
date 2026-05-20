@@ -152,7 +152,16 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
     auto* layout = new QVBoxLayout(this);
 
     auto* titleLabel = new QLabel(QStringLiteral("选择要下载的模型："), this);
-    titleLabel->setStyleSheet(QStringLiteral("font-size: 14px; font-weight: 600;"));
+    titleLabel->setObjectName(QStringLiteral("CatalogTitleLabel"));
+
+    auto* licenseNotice = new QLabel(
+        QStringLiteral("注意：Ultralytics YOLO 模型采用 AGPL-3.0 许可证。"
+                       "商业使用需获取 Ultralytics 商业许可，详见 "
+                       "<a href=\"https://ultralytics.com/license\">ultralytics.com/license</a>"),
+        this);
+    licenseNotice->setWordWrap(true);
+    licenseNotice->setObjectName(QStringLiteral("CatalogLicenseNotice"));
+    licenseNotice->setOpenExternalLinks(true);
 
     auto* filterRow = new QHBoxLayout();
     auto* filterLabel = new QLabel(QStringLiteral("任务类型："), this);
@@ -171,7 +180,7 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
     descriptionLabel_ = new QLabel(this);
     descriptionLabel_->setWordWrap(true);
     descriptionLabel_->setMinimumHeight(60);
-    descriptionLabel_->setStyleSheet(QStringLiteral("color: #64748b; padding: 8px;"));
+    descriptionLabel_->setObjectName(QStringLiteral("CatalogDescriptionLabel"));
 
     downloadButton_ = new QPushButton(QStringLiteral("下载"), this);
     downloadButton_->setObjectName(QStringLiteral("PrimaryButton"));
@@ -186,6 +195,7 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
     buttonRow->addWidget(downloadButton_);
 
     layout->addWidget(titleLabel);
+    layout->addWidget(licenseNotice);
     layout->addLayout(filterRow);
     layout->addWidget(catalogList_, 1);
     layout->addWidget(descriptionLabel_);

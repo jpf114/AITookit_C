@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QFileInfo>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
@@ -60,12 +61,18 @@ SettingsPage::SettingsPage(QWidget* parent)
     });
     connect(recentModelsList_, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
         if (item != nullptr) {
-            emit recentModelActivated(item->text());
+            const QString path = item->data(Qt::UserRole).toString();
+            if (!path.isEmpty()) {
+                emit recentModelActivated(path);
+            }
         }
     });
     connect(recentInputsList_, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
         if (item != nullptr) {
-            emit recentInputActivated(item->text());
+            const QString path = item->data(Qt::UserRole).toString();
+            if (!path.isEmpty()) {
+                emit recentInputActivated(path);
+            }
         }
     });
     connect(browseButton, &QPushButton::clicked, this, [this]() {
@@ -115,12 +122,20 @@ void SettingsPage::setDefaultExportDirectory(const QString& directoryPath) {
 
 void SettingsPage::setRecentModels(const QStringList& recentModels) {
     recentModelsList_->clear();
-    recentModelsList_->addItems(recentModels);
+    for (const QString& path : recentModels) {
+        auto* item = new QListWidgetItem(QFileInfo(path).fileName(), recentModelsList_);
+        item->setData(Qt::UserRole, path);
+        item->setToolTip(path);
+    }
 }
 
 void SettingsPage::setRecentInputs(const QStringList& recentInputs) {
     recentInputsList_->clear();
-    recentInputsList_->addItems(recentInputs);
+    for (const QString& path : recentInputs) {
+        auto* item = new QListWidgetItem(QFileInfo(path).fileName(), recentInputsList_);
+        item->setData(Qt::UserRole, path);
+        item->setToolTip(path);
+    }
 }
 
 void SettingsPage::setInferenceThreadCount(const int count) {

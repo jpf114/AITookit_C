@@ -144,7 +144,8 @@ void OnnxSetupDialog::tryAutoDetectInputSize(const QString& onnxPath) {
                 heightSpin_->setValue(static_cast<int>(height));
             }
         }
-    } catch (...) {
+    } catch (const std::exception& e) {
+        qWarning("Failed to auto-detect ONNX input size: %s", e.what());
     }
 }
 
