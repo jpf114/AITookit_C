@@ -9,8 +9,8 @@ namespace aitoolkit::core {
 class SettingsStore {
 public:
     explicit SettingsStore(
-        const QString& organizationName = QStringLiteral("MyProject"),
-        const QString& applicationName = QStringLiteral("AI Toolkit C"));
+        const QString& organizationName = QStringLiteral("AIToolkit"),
+        const QString& applicationName = QStringLiteral("AIToolkit"));
     SettingsStore(const QString& filePath, QSettings::Format format);
 
     [[nodiscard]] QStringList recentModels() const;

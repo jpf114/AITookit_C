@@ -17,6 +17,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(USE_STATIC_QT "Link Qt statically (requires Qt commercial license or LGPL compliance)" OFF)
+if(USE_STATIC_QT)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
+    message(WARNING "Static Qt linking enabled. Ensure LGPL v3 compliance or hold a Qt commercial license.")
+endif()
+
 if(MSVC)
     add_compile_options(/utf-8)
 endif()

@@ -1,27 +1,22 @@
 #pragma once
 
+#include <QCoreApplication>
 #include <QString>
+#include <stdexcept>
 
 namespace aitoolkit::core {
 
-struct Error {
-    QString code;
-    QString message;
-    QString detail;
+class AppError : public std::runtime_error {
+public:
+    explicit AppError(const QString& message)
+        : std::runtime_error(message.toUtf8().constData()), message_(message) {}
 
-    [[nodiscard]] bool isEmpty() const {
-        return code.isEmpty() && message.isEmpty() && detail.isEmpty();
+    [[nodiscard]] const QString& qMessage() const noexcept {
+        return message_;
     }
-};
 
-template <typename T>
-struct Result {
-    T value{};
-    Error error{};
-
-    [[nodiscard]] bool ok() const {
-        return error.isEmpty();
-    }
+private:
+    QString message_;
 };
 
 }  // namespace aitoolkit::core

@@ -25,10 +25,10 @@ QString findExistingPath(const QStringList& candidatePaths) {
 }  // namespace
 
 void AppBootstrap::initialize(QApplication& app) {
-    app.setApplicationName(QStringLiteral("AI 检测工具"));
+    app.setApplicationName(QStringLiteral("AIToolkit"));
     app.setApplicationDisplayName(QStringLiteral("AI 检测工具"));
     app.setApplicationVersion(QStringLiteral("1.0.0"));
-    app.setOrganizationName(QStringLiteral("MyProject"));
+    app.setOrganizationName(QStringLiteral("AIToolkit"));
 
     QIcon appIcon(QStringLiteral(":/icons/app_icon.png"));
     if (!appIcon.isNull()) {

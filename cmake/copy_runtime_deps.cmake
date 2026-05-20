@@ -12,6 +12,12 @@ else()
     return()
 endif()
 
+if(CMAKE_CONFIGURATION_TYPES)
+    set(config_dirs "${CMAKE_BINARY_DIR}/Debug" "${CMAKE_BINARY_DIR}/Release")
+else()
+    set(config_dirs "${CMAKE_BINARY_DIR}")
+endif()
+
 set(runtime_dlls
     onnxruntime.dll
     Qt6Core.dll
@@ -27,37 +33,41 @@ set(runtime_dlls
 
 foreach(dll_name IN LISTS runtime_dlls)
     if(EXISTS "${vcpkg_bin_dir}/${dll_name}")
-        file(INSTALL
-            DESTINATION "${CMAKE_BINARY_DIR}/Release"
-            TYPE SHARED_LIBRARY
-            FILES "${vcpkg_bin_dir}/${dll_name}"
-        )
+        foreach(dest_dir IN LISTS config_dirs)
+            file(INSTALL
+                DESTINATION "${dest_dir}"
+                TYPE SHARED_LIBRARY
+                FILES "${vcpkg_bin_dir}/${dll_name}"
+            )
+        endforeach()
     endif()
 endforeach()
 
-if(EXISTS "${qt_plugins_dir}/platforms/qwindows.dll")
-    file(INSTALL
-        DESTINATION "${CMAKE_BINARY_DIR}/Release/platforms"
-        TYPE SHARED_LIBRARY
-        FILES "${qt_plugins_dir}/platforms/qwindows.dll"
-    )
-endif()
-
-set(image_format_plugins
-    qjpeg.dll
-    qsvg.dll
-    qgif.dll
-    qico.dll
-    qtiff.dll
-    qwebp.dll
-)
-
-foreach(plugin IN LISTS image_format_plugins)
-    if(EXISTS "${qt_plugins_dir}/imageformats/${plugin}")
+foreach(dest_dir IN LISTS config_dirs)
+    if(EXISTS "${qt_plugins_dir}/platforms/qwindows.dll")
         file(INSTALL
-            DESTINATION "${CMAKE_BINARY_DIR}/Release/imageformats"
+            DESTINATION "${dest_dir}/platforms"
             TYPE SHARED_LIBRARY
-            FILES "${qt_plugins_dir}/imageformats/${plugin}"
+            FILES "${qt_plugins_dir}/platforms/qwindows.dll"
         )
     endif()
+
+    set(image_format_plugins
+        qjpeg.dll
+        qsvg.dll
+        qgif.dll
+        qico.dll
+        qtiff.dll
+        qwebp.dll
+    )
+
+    foreach(plugin IN LISTS image_format_plugins)
+        if(EXISTS "${qt_plugins_dir}/imageformats/${plugin}")
+            file(INSTALL
+                DESTINATION "${dest_dir}/imageformats"
+                TYPE SHARED_LIBRARY
+                FILES "${qt_plugins_dir}/imageformats/${plugin}"
+            )
+        endif()
+    endforeach()
 endforeach()

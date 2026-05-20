@@ -2,6 +2,7 @@ build/
 install/
 out/
 .vcpkg_installed/
+vcpkg_installed/
 .vs/
 .vscode/.ropeproject/
 .vscode/c_cpp_properties.json
@@ -23,5 +24,11 @@ CMakeSettings.json
 Thumbs.db
 .DS_Store
 models/*.pt
+models/*.onnx
 *.pt
+__pycache__/
+*.pyc
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_Pack_Pack.cmake
 docs/superpowers/

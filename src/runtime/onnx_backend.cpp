@@ -232,7 +232,8 @@ void OnnxBackend::warmup() {
         const std::size_t count = elementCount(inputShape_);
         const std::vector<float> zeros(count, 0.0f);
         (void)run(zeros, inputShape_);
-    } catch (const std::exception&) {
+    } catch (const std::exception& e) {
+        qWarning("OnnxBackend warmup failed: %s", e.what());
     }
 }
 

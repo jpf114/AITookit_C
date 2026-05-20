@@ -36,19 +36,29 @@ QWidget#ContextCard {
 }
 
 QLabel#PageLead,
-QLabel#SectionHint,
-QLabel#ContextNextStepValue {
+QLabel#SectionHint {
     color: #4f637a;
     font-size: 12px;
 }
 
-QLabel#ContextModelTitle,
-QLabel#ContextImageTitle,
-QLabel#ContextResultTitle,
-QLabel#ContextNextStepTitle {
-    color: #7e92a8;
-    font-size: 11px;
-    font-weight: 700;
+QLabel#ContextTitle {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+QLabel#ContextSectionTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: #15253a;
+}
+
+QLabel#ContextSectionValue {
+    font-size: 13px;
+    color: #15253a;
+}
+
+QFrame#ContextDivider {
+    color: #d3dde8;
 }
 
 QPushButton {
@@ -318,4 +328,55 @@ QMessageBox QLabel {
 
 QMessageBox QPushButton {
     min-width: 80px;
+}
+
+QLabel#HomePageTitle {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+QLabel#HomeRecentTitle {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+QLabel#PageTitle {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+QLabel#SectionSubtitle {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+QLabel#DescriptionLabel {
+    color: #4f637a;
+    padding: 4px;
+}
+
+QLabel#LabelsHeader {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+QLabel#CatalogTitleLabel {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+QLabel#CatalogLicenseNotice {
+    color: #b45309;
+    padding: 6px;
+    font-size: 12px;
+}
+
+QLabel#CatalogDescriptionLabel {
+    color: #4f637a;
+    padding: 8px;
+}
+
+QWidget#ImagePreviewWidget {
+    background-color: #f5f6f8;
+    color: #4f637a;
 }
