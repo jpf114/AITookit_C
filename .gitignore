@@ -28,6 +28,7 @@ models/*.onnx
 *.pt
 __pycache__/
 *.pyc
+*.qm
 CPackConfig.cmake
 CPackSourceConfig.cmake
 _Pack_Pack.cmake
