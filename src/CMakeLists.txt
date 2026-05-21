@@ -207,6 +207,12 @@ ai_copy_qt_windows_platform_plugin(ai_toolkit_c)
 
 install(TARGETS ai_toolkit_c RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+install(
+    DIRECTORY "${CMAKE_SOURCE_DIR}/resources/translations/"
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/translations
+    FILES_MATCHING PATTERN "*.qm"
+)
+
 if(EXISTS "${CMAKE_SOURCE_DIR}/resources/themes/app.qss")
     install(
         FILES "${CMAKE_SOURCE_DIR}/resources/themes/app.qss"

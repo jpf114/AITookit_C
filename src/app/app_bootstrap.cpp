@@ -5,7 +5,10 @@
 #include <QDir>
 #include <QFile>
 #include <QIcon>
+#include <QLocale>
+#include <QSettings>
 #include <QStringList>
+#include <QTranslator>
 
 #include "runtime/onnx_plugin.h"
 
@@ -29,6 +32,31 @@ void AppBootstrap::initialize(QApplication& app) {
     app.setApplicationDisplayName(QStringLiteral("AI 检测工具"));
     app.setApplicationVersion(QStringLiteral("1.0.0"));
     app.setOrganizationName(QStringLiteral("AIToolkit"));
+
+    QSettings settings;
+    QString langCode = settings.value(QStringLiteral("language")).toString();
+    if (langCode.isEmpty()) {
+        langCode = QLocale::system().name();
+    }
+
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    const QStringList translationDirs = {
+        appDir.filePath(QStringLiteral("translations")),
+        appDir.filePath(QStringLiteral("share/translations")),
+        appDir.filePath(QStringLiteral("../translations")),
+        appDir.filePath(QStringLiteral("../share/translations")),
+        appDir.filePath(QStringLiteral("../../translations")),
+        appDir.filePath(QStringLiteral("../../share/translations")),
+    };
+
+    auto* translator = new QTranslator(&app);
+    for (const QString& dir : translationDirs) {
+        const QString qmPath = QDir(dir).filePath(QStringLiteral("ai_toolkit_%1.qm").arg(langCode));
+        if (QFile::exists(qmPath) && translator->load(qmPath)) {
+            app.installTranslator(translator);
+            break;
+        }
+    }
 
     QIcon appIcon(QStringLiteral(":/icons/app_icon.png"));
     if (!appIcon.isNull()) {

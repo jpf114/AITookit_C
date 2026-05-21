@@ -42,7 +42,7 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
 
     if (image_.isNull()) {
         painter.setPen(palette().windowText().color());
-        painter.drawText(rect(), Qt::AlignCenter, QStringLiteral("暂无可预览结果"));
+        painter.drawText(rect(), Qt::AlignCenter, tr("暂无可预览结果"));
         return;
     }
 
@@ -122,7 +122,7 @@ void ImagePreviewWidget::paintEvent(QPaintEvent* event) {
         painter.drawText(
             rect().adjusted(8, 8, -8, -8),
             Qt::AlignBottom | Qt::AlignLeft,
-            QStringLiteral("%1%  双击重置").arg(static_cast<int>(zoomLevel_ * 100)));
+            tr("%1%  双击重置").arg(static_cast<int>(zoomLevel_ * 100)));
     }
 }
 

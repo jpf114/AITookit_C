@@ -4,6 +4,7 @@
 #include <QWidget>
 
 class QCheckBox;
+class QComboBox;
 class QLineEdit;
 class QListWidget;
 class QSpinBox;
@@ -21,6 +22,7 @@ public:
     void setRecentInputs(const QStringList& recentInputs);
     void setInferenceThreadCount(int count);
     void setUseGPU(bool useGPU);
+    void setLanguage(const QString& langCode);
 
 signals:
     void defaultExportDirectoryChanged(const QString& directoryPath);
@@ -28,11 +30,13 @@ signals:
     void recentInputActivated(const QString& imagePath);
     void inferenceThreadCountChanged(int count);
     void useGPUChanged(bool useGPU);
+    void languageChanged(const QString& langCode);
 
 private:
     QLineEdit* exportDirectoryEdit_ = nullptr;
     QSpinBox* threadCountSpin_ = nullptr;
     QCheckBox* gpuCheckBox_ = nullptr;
+    QComboBox* languageCombo_ = nullptr;
     QListWidget* recentModelsList_ = nullptr;
     QListWidget* recentInputsList_ = nullptr;
 };

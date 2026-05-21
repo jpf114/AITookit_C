@@ -13,6 +13,7 @@ constexpr auto kLastModelManifestKey = "state/lastModelManifest";
 constexpr auto kWindowGeometryKey = "state/windowGeometry";
 constexpr auto kInferenceThreadCountKey = "inference/threadCount";
 constexpr auto kUseGPUInferenceKey = "inference/useGPU";
+constexpr auto kLanguageKey = "language";
 
 }  // namespace
 
@@ -84,6 +85,15 @@ bool SettingsStore::useGPUInference() const {
 
 void SettingsStore::setUseGPUInference(const bool useGPU) {
     settings_.setValue(QString::fromLatin1(kUseGPUInferenceKey), useGPU);
+    settings_.sync();
+}
+
+QString SettingsStore::language() const {
+    return settings_.value(QString::fromLatin1(kLanguageKey)).toString().trimmed();
+}
+
+void SettingsStore::setLanguage(const QString& langCode) {
+    settings_.setValue(QString::fromLatin1(kLanguageKey), langCode);
     settings_.sync();
 }
 

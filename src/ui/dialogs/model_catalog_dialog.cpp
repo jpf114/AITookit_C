@@ -18,7 +18,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("detection"),
          QStringLiteral("yolo11n.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.onnx"),
-         QStringLiteral("YOLO11 Nano — 最新一代检测模型，极速推理（约 5MB），mAP 39.5"),
+         ModelCatalogDialog::tr("YOLO11 Nano — 最新一代检测模型，极速推理（约 5MB），mAP 39.5"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -27,7 +27,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("detection"),
          QStringLiteral("yolo11s.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s.onnx"),
-         QStringLiteral("YOLO11 Small — 最新一代，精度与速度平衡（约 18MB），mAP 47.0"),
+         ModelCatalogDialog::tr("YOLO11 Small — 最新一代，精度与速度平衡（约 18MB），mAP 47.0"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -36,7 +36,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("detection"),
          QStringLiteral("yolo11m.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11m.onnx"),
-         QStringLiteral("YOLO11 Medium — 最新一代高精度检测（约 40MB），mAP 51.5"),
+         ModelCatalogDialog::tr("YOLO11 Medium — 最新一代高精度检测（约 40MB），mAP 51.5"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -45,7 +45,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("detection"),
          QStringLiteral("yolov8n.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx"),
-         QStringLiteral("YOLOv8 Nano — 经典检测模型，极速推理（约 6MB），mAP 37.3"),
+         ModelCatalogDialog::tr("YOLOv8 Nano — 经典检测模型，极速推理（约 6MB），mAP 37.3"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -54,7 +54,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("detection"),
          QStringLiteral("yolov8s.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8s.onnx"),
-         QStringLiteral("YOLOv8 Small — 经典检测，精度与速度平衡（约 22MB），mAP 44.9"),
+         ModelCatalogDialog::tr("YOLOv8 Small — 经典检测，精度与速度平衡（约 22MB），mAP 44.9"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -63,7 +63,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("detection"),
          QStringLiteral("yolov8m.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8m.onnx"),
-         QStringLiteral("YOLOv8 Medium — 经典高精度检测（约 52MB），mAP 50.2"),
+         ModelCatalogDialog::tr("YOLOv8 Medium — 经典高精度检测（约 52MB），mAP 50.2"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -72,7 +72,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("detection"),
          QStringLiteral("yolov5nu.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov5nu.onnx"),
-         QStringLiteral("YOLOv5 Nano — YOLOv5 架构轻量版（约 5MB），mAP 37.1"),
+         ModelCatalogDialog::tr("YOLOv5 Nano — YOLOv5 架构轻量版（约 5MB），mAP 37.1"),
          640,
          QStringLiteral("yolo_v5"),
          QStringLiteral("coco80")},
@@ -81,7 +81,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("classification"),
          QStringLiteral("yolo11n-cls.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-cls.onnx"),
-         QStringLiteral("YOLO11 分类 Nano — 最新一代图像分类，极速推理（约 5MB），Top-1 69.0%"),
+         ModelCatalogDialog::tr("YOLO11 分类 Nano — 最新一代图像分类，极速推理（约 5MB），Top-1 69.0%"),
          224,
          QString(),
          QStringLiteral("imagenet1000")},
@@ -90,7 +90,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("classification"),
          QStringLiteral("yolo11s-cls.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s-cls.onnx"),
-         QStringLiteral("YOLO11 分类 Small — 最新一代分类，平衡精度（约 11MB），Top-1 75.4%"),
+         ModelCatalogDialog::tr("YOLO11 分类 Small — 最新一代分类，平衡精度（约 11MB），Top-1 75.4%"),
          224,
          QString(),
          QStringLiteral("imagenet1000")},
@@ -99,7 +99,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("classification"),
          QStringLiteral("yolov8n-cls.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-cls.onnx"),
-         QStringLiteral("YOLOv8 分类 Nano — 经典图像分类，极速推理（约 6MB），Top-1 66.6%"),
+         ModelCatalogDialog::tr("YOLOv8 分类 Nano — 经典图像分类，极速推理（约 6MB），Top-1 66.6%"),
          224,
          QString(),
          QStringLiteral("imagenet1000")},
@@ -108,7 +108,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("segmentation"),
          QStringLiteral("yolo11n-seg.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.onnx"),
-         QStringLiteral("YOLO11 分割 Nano — 最新一代实例分割，极速推理（约 6MB），mAP 38.0"),
+         ModelCatalogDialog::tr("YOLO11 分割 Nano — 最新一代实例分割，极速推理（约 6MB），mAP 38.0"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -117,7 +117,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("segmentation"),
          QStringLiteral("yolo11s-seg.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s-seg.onnx"),
-         QStringLiteral("YOLO11 分割 Small — 最新一代分割，平衡精度（约 19MB），mAP 45.2"),
+         ModelCatalogDialog::tr("YOLO11 分割 Small — 最新一代分割，平衡精度（约 19MB），mAP 45.2"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -126,7 +126,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("segmentation"),
          QStringLiteral("yolov8n-seg.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-seg.onnx"),
-         QStringLiteral("YOLOv8 分割 Nano — 经典实例分割，极速推理（约 6MB），mAP 36.7"),
+         ModelCatalogDialog::tr("YOLOv8 分割 Nano — 经典实例分割，极速推理（约 6MB），mAP 36.7"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -135,7 +135,7 @@ QVector<CatalogModelEntry> builtinCatalog() {
          QStringLiteral("segmentation"),
          QStringLiteral("yolov8s-seg.onnx"),
          QStringLiteral("https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8s-seg.onnx"),
-         QStringLiteral("YOLOv8 分割 Small — 经典分割，平衡精度（约 23MB），mAP 44.6"),
+         ModelCatalogDialog::tr("YOLOv8 分割 Small — 经典分割，平衡精度（约 23MB），mAP 44.6"),
          640,
          QStringLiteral("yolo_v8"),
          QStringLiteral("coco80")},
@@ -146,30 +146,30 @@ QVector<CatalogModelEntry> builtinCatalog() {
 
 ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent)
     : QDialog(parent), modelsDir_(modelsDir) {
-    setWindowTitle(QStringLiteral("模型目录"));
+    setWindowTitle(tr("模型目录"));
     setMinimumSize(600, 500);
 
     auto* layout = new QVBoxLayout(this);
 
-    auto* titleLabel = new QLabel(QStringLiteral("选择要下载的模型："), this);
+    auto* titleLabel = new QLabel(tr("选择要下载的模型："), this);
     titleLabel->setObjectName(QStringLiteral("CatalogTitleLabel"));
 
     auto* licenseNotice = new QLabel(
-        QStringLiteral("注意：Ultralytics YOLO 模型采用 AGPL-3.0 许可证。"
-                       "商业使用需获取 Ultralytics 商业许可，详见 "
-                       "<a href=\"https://ultralytics.com/license\">ultralytics.com/license</a>"),
+        tr("注意：Ultralytics YOLO 模型采用 AGPL-3.0 许可证。"
+           "商业使用需获取 Ultralytics 商业许可，详见 "
+           "<a href=\"https://ultralytics.com/license\">ultralytics.com/license</a>"),
         this);
     licenseNotice->setWordWrap(true);
     licenseNotice->setObjectName(QStringLiteral("CatalogLicenseNotice"));
     licenseNotice->setOpenExternalLinks(true);
 
     auto* filterRow = new QHBoxLayout();
-    auto* filterLabel = new QLabel(QStringLiteral("任务类型："), this);
+    auto* filterLabel = new QLabel(tr("任务类型："), this);
     filterCombo_ = new QComboBox(this);
-    filterCombo_->addItem(QStringLiteral("全部"), QString());
-    filterCombo_->addItem(QStringLiteral("目标检测"), QStringLiteral("detection"));
-    filterCombo_->addItem(QStringLiteral("图像分类"), QStringLiteral("classification"));
-    filterCombo_->addItem(QStringLiteral("实例分割"), QStringLiteral("segmentation"));
+    filterCombo_->addItem(tr("全部"), QString());
+    filterCombo_->addItem(tr("目标检测"), QStringLiteral("detection"));
+    filterCombo_->addItem(tr("图像分类"), QStringLiteral("classification"));
+    filterCombo_->addItem(tr("实例分割"), QStringLiteral("segmentation"));
     filterRow->addWidget(filterLabel);
     filterRow->addWidget(filterCombo_);
     filterRow->addStretch(1);
@@ -182,11 +182,11 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
     descriptionLabel_->setMinimumHeight(60);
     descriptionLabel_->setObjectName(QStringLiteral("CatalogDescriptionLabel"));
 
-    downloadButton_ = new QPushButton(QStringLiteral("下载"), this);
+    downloadButton_ = new QPushButton(tr("下载"), this);
     downloadButton_->setObjectName(QStringLiteral("PrimaryButton"));
     downloadButton_->setEnabled(false);
 
-    auto* cancelButton = new QPushButton(QStringLiteral("取消"), this);
+    auto* cancelButton = new QPushButton(tr("取消"), this);
     cancelButton->setObjectName(QStringLiteral("SecondaryButton"));
 
     auto* buttonRow = new QHBoxLayout();
@@ -227,10 +227,10 @@ void ModelCatalogDialog::applyFilter(const QString& taskType) {
             continue;
         }
         const QString taskLabel = entry.taskType == QStringLiteral("segmentation")
-            ? QStringLiteral("分割")
+            ? tr("分割")
             : entry.taskType == QStringLiteral("classification")
-                ? QStringLiteral("分类")
-                : QStringLiteral("检测");
+                ? tr("分类")
+                : tr("检测");
         auto* item = new QListWidgetItem(
             QStringLiteral("%1 [%2]").arg(entry.name, taskLabel), catalogList_);
         item->setData(Qt::UserRole, i);

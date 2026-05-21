@@ -14,7 +14,7 @@ namespace aitoolkit::ui::dialogs {
 
 OnnxSetupDialog::OnnxSetupDialog(const QString& onnxPath, QWidget* parent)
     : QDialog(parent) {
-    setWindowTitle(QStringLiteral("配置 ONNX 模型"));
+    setWindowTitle(tr("配置 ONNX 模型"));
     setMinimumWidth(420);
 
     const QFileInfo info(onnxPath);
@@ -45,15 +45,15 @@ OnnxSetupDialog::OnnxSetupDialog(const QString& onnxPath, QWidget* parent)
 
     labelsEdit_ = new QTextEdit(this);
     labelsEdit_->setMaximumHeight(120);
-    labelsEdit_->setPlaceholderText(QStringLiteral("每行一个标签，可留空"));
+    labelsEdit_->setPlaceholderText(tr("每行一个标签，可留空"));
 
     auto* formLayout = new QFormLayout;
-    formLayout->addRow(QStringLiteral("模型名称："), nameEdit_);
-    formLayout->addRow(QStringLiteral("输入宽度："), widthSpin_);
-    formLayout->addRow(QStringLiteral("输入高度："), heightSpin_);
-    formLayout->addRow(QStringLiteral("置信度阈值："), confSpin_);
-    formLayout->addRow(QStringLiteral("NMS 阈值："), nmsSpin_);
-    formLayout->addRow(QStringLiteral("标签列表："), labelsEdit_);
+    formLayout->addRow(tr("模型名称："), nameEdit_);
+    formLayout->addRow(tr("输入宽度："), widthSpin_);
+    formLayout->addRow(tr("输入高度："), heightSpin_);
+    formLayout->addRow(tr("置信度阈值："), confSpin_);
+    formLayout->addRow(tr("NMS 阈值："), nmsSpin_);
+    formLayout->addRow(tr("标签列表："), labelsEdit_);
 
     auto* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     okButton_ = buttonBox->button(QDialogButtonBox::Ok);
@@ -64,9 +64,9 @@ OnnxSetupDialog::OnnxSetupDialog(const QString& onnxPath, QWidget* parent)
     connect(nameEdit_, &QLineEdit::textChanged, this, &OnnxSetupDialog::updateOkButtonState);
 
     auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->addWidget(new QLabel(QStringLiteral("ONNX 文件：%1").arg(info.fileName()), this));
+    mainLayout->addWidget(new QLabel(tr("ONNX 文件：%1").arg(info.fileName()), this));
     detectionOnlyNoticeLabel_ = new QLabel(
-        QStringLiteral("当前 ONNX 导入仅生成 detection 模型清单；classification / segmentation 请使用现成 JSON 清单。"),
+        tr("当前 ONNX 导入仅生成 detection 模型清单；classification / segmentation 请使用现成 JSON 清单。"),
         this);
     detectionOnlyNoticeLabel_->setWordWrap(true);
     detectionOnlyNoticeLabel_->setObjectName(QStringLiteral("OnnxDetectionOnlyNoticeLabel"));

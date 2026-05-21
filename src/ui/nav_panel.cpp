@@ -24,9 +24,9 @@ NavPanel::NavPanel(QWidget* parent)
 
     auto* eyebrow = new QLabel(QStringLiteral("AITOOLKIT"), sidebar);
     eyebrow->setObjectName(QStringLiteral("SidebarEyebrow"));
-    auto* title = new QLabel(QStringLiteral("AI 检测工具"), sidebar);
+    auto* title = new QLabel(tr("AI 检测工具"), sidebar);
     title->setObjectName(QStringLiteral("SidebarTitle"));
-    auto* desc = new QLabel(QStringLiteral("基于 ONNX Runtime 的轻量级 AI 推理桌面工具，支持目标检测、图像分类和实例分割。"), sidebar);
+    auto* desc = new QLabel(tr("基于 ONNX Runtime 的轻量级 AI 推理桌面工具，支持目标检测、图像分类和实例分割。"), sidebar);
     desc->setObjectName(QStringLiteral("SidebarDesc"));
     desc->setWordWrap(true);
 
@@ -34,25 +34,25 @@ NavPanel::NavPanel(QWidget* parent)
     sidebarLayout->addWidget(title);
     sidebarLayout->addWidget(desc);
 
-    auto* section = new QLabel(QStringLiteral("功能导航"), sidebar);
+    auto* section = new QLabel(tr("功能导航"), sidebar);
     section->setObjectName(QStringLiteral("SidebarSection"));
     sidebarLayout->addWidget(section);
 
     struct PageButtonSpec {
-        const char* text;
+        QString text;
         int pageId;
     };
 
     const PageButtonSpec buttons[] = {
-        {"首页", HomePageId},
-        {"模型", ModelsPageId},
-        {"推理", InferencePageId},
-        {"结果", ResultsPageId},
-        {"设置", SettingsPageId},
+        {tr("首页"), HomePageId},
+        {tr("模型"), ModelsPageId},
+        {tr("推理"), InferencePageId},
+        {tr("结果"), ResultsPageId},
+        {tr("设置"), SettingsPageId},
     };
 
     for (const PageButtonSpec& spec : buttons) {
-        auto* button = new QPushButton(QString::fromUtf8(spec.text), sidebar);
+        auto* button = new QPushButton(spec.text, sidebar);
         button->setObjectName(QStringLiteral("NavItem"));
         button->setCheckable(true);
         button->setMinimumHeight(38);
@@ -66,7 +66,7 @@ NavPanel::NavPanel(QWidget* parent)
 
     sidebarLayout->addStretch(1);
 
-    auto* footer = new QLabel(QStringLiteral("支持 YOLOv5/v8/v11 系列模型，更多功能持续更新中。"), sidebar);
+    auto* footer = new QLabel(tr("支持 YOLOv5/v8/v11 系列模型，更多功能持续更新中。"), sidebar);
     footer->setObjectName(QStringLiteral("SidebarFooter"));
     footer->setWordWrap(true);
     sidebarLayout->addWidget(footer);

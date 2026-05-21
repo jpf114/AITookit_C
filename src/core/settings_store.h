@@ -20,6 +20,7 @@ public:
     [[nodiscard]] QByteArray windowGeometry() const;
     [[nodiscard]] int inferenceThreadCount() const;
     [[nodiscard]] bool useGPUInference() const;
+    [[nodiscard]] QString language() const;
 
     void setRecentModels(const QStringList& paths);
     void setRecentInputs(const QStringList& paths);
@@ -28,6 +29,7 @@ public:
     void setWindowGeometry(const QByteArray& geometry);
     void setInferenceThreadCount(int count);
     void setUseGPUInference(bool useGPU);
+    void setLanguage(const QString& langCode);
 
     void addRecentModel(const QString& path, int maxItems = 10);
     void addRecentInput(const QString& path, int maxItems = 10);

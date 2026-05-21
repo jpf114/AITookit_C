@@ -27,7 +27,7 @@ QString baseResultListLabel(const core::InferenceSummary& summary, const int ind
     const QFileInfo info(summary.inputPath);
     const QString fileName = info.fileName();
     if (fileName.isEmpty()) {
-        return QStringLiteral("结果 %1").arg(index + 1);
+        return ResultsPage::tr("结果 %1").arg(index + 1);
     }
 
     static const QRegularExpression kFramePattern(QStringLiteral(R"(^(.*)\s+\[(frame\s+\d+)\]$)"),
@@ -110,16 +110,16 @@ ResultsPage::ResultsPage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(12);
 
-    auto* title = new QLabel(QStringLiteral("\u7ed3\u679c"), this);
+    auto* title = new QLabel(tr("结果"), this);
     title->setStyleSheet(QStringLiteral("font-size: 20px; font-weight: 600;"));
 
-    exportButton_ = new QPushButton(QStringLiteral("\u5bfc\u51fa JSON"), this);
+    exportButton_ = new QPushButton(tr("导出 JSON"), this);
     exportButton_->setObjectName(QStringLiteral("SecondaryButton"));
 
-    exportImageButton_ = new QPushButton(QStringLiteral("\u5bfc\u51fa\u56fe\u7247"), this);
+    exportImageButton_ = new QPushButton(tr("导出图片"), this);
     exportImageButton_->setObjectName(QStringLiteral("SecondaryButton"));
 
-    exportBatchBtn_ = new QPushButton(QStringLiteral("\u6279\u91cf\u5bfc\u51fa JSON"), this);
+    exportBatchBtn_ = new QPushButton(tr("批量导出 JSON"), this);
     exportBatchBtn_->setObjectName(QStringLiteral("SecondaryButton"));
     exportBatchBtn_->hide();
 
@@ -130,7 +130,7 @@ ResultsPage::ResultsPage(QWidget* parent)
     summaryStripLayout->setContentsMargins(16, 12, 16, 12);
     summaryStripLayout->setSpacing(12);
 
-    summaryLabel_ = new QLabel(QStringLiteral("\u5f53\u524d\u8fd8\u6ca1\u6709\u63a8\u7406\u7ed3\u679c"), summaryStrip_);
+    summaryLabel_ = new QLabel(tr("当前还没有推理结果"), summaryStrip_);
     summaryLabel_->setObjectName(QStringLiteral("ResultsSummaryLabel"));
     summaryLabel_->setWordWrap(true);
 
@@ -140,7 +140,7 @@ ResultsPage::ResultsPage(QWidget* parent)
     summaryStripLayout->addWidget(exportButton_, 0);
 
     categoryFilter_ = new QComboBox(this);
-    categoryFilter_->addItem(QStringLiteral("全部类别"));
+    categoryFilter_->addItem(tr("全部类别"));
     categoryFilter_->setMinimumWidth(150);
     connect(categoryFilter_, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &ResultsPage::applyCategoryFilter);
@@ -173,7 +173,7 @@ ResultsPage::ResultsPage(QWidget* parent)
 
     tableHeaderLayout_ = new QHBoxLayout();
     tableHeaderLayout_->setSpacing(8);
-    categoryFilterLabel_ = new QLabel(QStringLiteral("类别筛选："), this);
+    categoryFilterLabel_ = new QLabel(tr("类别筛选："), this);
     tableHeaderLayout_->addWidget(categoryFilterLabel_);
     tableHeaderLayout_->addWidget(categoryFilter_);
     tableHeaderLayout_->addStretch();
@@ -216,7 +216,7 @@ void ResultsPage::setSummary(const core::InferenceSummary& summary) {
 
     if (summary.inputPath.isEmpty()) {
         updateExportButtonStates(false, false);
-        summaryLabel_->setText(QStringLiteral("\u5f53\u524d\u8fd8\u6ca1\u6709\u63a8\u7406\u7ed3\u679c"));
+        summaryLabel_->setText(tr("当前还没有推理结果"));
         detectionsTable_->clearContents();
         detectionsTable_->setRowCount(0);
         setCategoryFilterVisible(true);
@@ -275,12 +275,12 @@ void ResultsPage::clearResults() {
     previewWidget_->setImage(QImage());
     previewWidget_->setSummary({});
     updateExportButtonStates(false, false);
-    summaryLabel_->setText(QStringLiteral("\u5f53\u524d\u8fd8\u6ca1\u6709\u63a8\u7406\u7ed3\u679c"));
+    summaryLabel_->setText(tr("当前还没有推理结果"));
     detectionsTable_->clearContents();
     detectionsTable_->setRowCount(0);
     categoryFilter_->blockSignals(true);
     categoryFilter_->clear();
-    categoryFilter_->addItem(QStringLiteral("全部类别"));
+    categoryFilter_->addItem(tr("全部类别"));
     categoryFilter_->blockSignals(false);
     setCategoryFilterVisible(true);
     currentDetections_.clear();
@@ -296,7 +296,7 @@ void ResultsPage::updateBatchExportVisibility(const bool hasMultipleResults) {
 
     exportBatchBtn_->setVisible(hasMultipleResults);
     exportBatchBtn_->setToolTip(
-        hasMultipleResults ? QStringLiteral("一次导出当前批量结果的全部 JSON") : QString());
+        hasMultipleResults ? tr("一次导出当前批量结果的全部 JSON") : QString());
 }
 
 void ResultsPage::showResultAtIndex(const int index) {
@@ -320,21 +320,21 @@ void ResultsPage::showResultAtIndex(const int index) {
 
 QString ResultsPage::buildSummaryText(const core::InferenceSummary& summary) const {
     const QString countLabel = summary.taskType == QStringLiteral("classification")
-        ? QStringLiteral("类别数：%1").arg(summary.classifications.size())
+        ? tr("类别数：%1").arg(summary.classifications.size())
         : summary.taskType == QStringLiteral("segmentation")
-            ? QStringLiteral("实例数：%1").arg(summary.segmentations.size())
-            : QStringLiteral("目标数：%1").arg(summary.detectionCount);
+            ? tr("实例数：%1").arg(summary.segmentations.size())
+            : tr("目标数：%1").arg(summary.detectionCount);
 
     QString positionLabel;
     if (results_.size() > 1 && currentIndex_ >= 0 && currentIndex_ < results_.size()) {
-        positionLabel = QStringLiteral("第 %1 / %2 项 | ").arg(currentIndex_ + 1).arg(results_.size());
+        positionLabel = tr("第 %1 / %2 项 | ").arg(currentIndex_ + 1).arg(results_.size());
     }
 
     const QString sourceLabel = summary.imageWidth > 0 && summary.imageHeight > 0
-        ? QStringLiteral("图像：%1×%2").arg(summary.imageWidth).arg(summary.imageHeight)
-        : QStringLiteral("来源：%1").arg(buildSourceLabel(summary));
+        ? tr("图像：%1×%2").arg(summary.imageWidth).arg(summary.imageHeight)
+        : tr("来源：%1").arg(buildSourceLabel(summary));
 
-    return QStringLiteral("%1模型：%2 | %3 | %4 | 耗时：%5 ms")
+    return tr("%1模型：%2 | %3 | %4 | 耗时：%5 ms")
         .arg(positionLabel)
         .arg(summary.modelName)
         .arg(sourceLabel)
@@ -413,10 +413,10 @@ void ResultsPage::populateTable(const core::InferenceSummary& summary) {
 
 void ResultsPage::resetDetectionTableHeaders() {
     detectionsTable_->setHorizontalHeaderLabels({
-        QStringLiteral("类别"),
-        QStringLiteral("标签"),
-        QStringLiteral("置信度"),
-        QStringLiteral("框选范围"),
+        tr("类别"),
+        tr("标签"),
+        tr("置信度"),
+        tr("框选范围"),
     });
 }
 
@@ -425,16 +425,16 @@ void ResultsPage::populateClassificationTable(const core::InferenceSummary& summ
     setCategoryFilterVisible(false);
     categoryFilter_->blockSignals(true);
     categoryFilter_->clear();
-    categoryFilter_->addItem(QStringLiteral("全部类别"));
+    categoryFilter_->addItem(tr("全部类别"));
     categoryFilter_->blockSignals(false);
     currentDetections_.clear();
     currentSegmentations_.clear();
 
     detectionsTable_->clearContents();
     detectionsTable_->setHorizontalHeaderLabels({
-        QStringLiteral("排名"),
-        QStringLiteral("标签"),
-        QStringLiteral("置信度"),
+        tr("排名"),
+        tr("标签"),
+        tr("置信度"),
         QStringLiteral(""),
     });
     detectionsTable_->setRowCount(summary.classifications.size());
@@ -461,7 +461,7 @@ void ResultsPage::populateCategoryFilter(const QVector<core::DetectionItem>& det
     categoryFilter_->blockSignals(true);
     const QString currentSelection = categoryFilter_->currentText();
     categoryFilter_->clear();
-    categoryFilter_->addItem(QStringLiteral("全部类别"));
+    categoryFilter_->addItem(tr("全部类别"));
 
     QSet<QString> seenLabels;
     for (const auto& item : detections) {
@@ -484,7 +484,7 @@ void ResultsPage::applyCategoryFilter() {
     }
 
     const QString selectedCategory = categoryFilter_->currentText();
-    const bool showAll = selectedCategory == QStringLiteral("全部类别");
+    const bool showAll = selectedCategory == tr("全部类别");
 
     detectionsTable_->setRowCount(0);
 
@@ -532,32 +532,32 @@ void ResultsPage::updateExportImageTooltip(const bool hasSummary, const bool has
     }
 
     if (!hasSummary) {
-        exportImageButton_->setToolTip(QStringLiteral("请先完成一次推理，再导出图片。"));
+        exportImageButton_->setToolTip(tr("请先完成一次推理，再导出图片。"));
         return;
     }
 
     if (!hasPreviewImage) {
-        exportImageButton_->setToolTip(QStringLiteral("当前结果没有可导出的预览图，请先选择可读取的图像结果。"));
+        exportImageButton_->setToolTip(tr("当前结果没有可导出的预览图，请先选择可读取的图像结果。"));
         return;
     }
 
     const bool hasMultipleResults = !results_.isEmpty() && results_.size() > 1;
     exportImageButton_->setToolTip(
-        hasMultipleResults ? QStringLiteral("导出当前选中结果的渲染图片")
-                           : QStringLiteral("导出当前结果的渲染图片"));
+        hasMultipleResults ? tr("导出当前选中结果的渲染图片")
+                           : tr("导出当前结果的渲染图片"));
 }
 
 void ResultsPage::updateExportActionCopy(const bool hasMultipleResults) {
     if (exportButton_ != nullptr) {
-        exportButton_->setText(hasMultipleResults ? QStringLiteral("导出当前 JSON") : QStringLiteral("导出 JSON"));
+        exportButton_->setText(hasMultipleResults ? tr("导出当前 JSON") : tr("导出 JSON"));
         exportButton_->setToolTip(
-            hasMultipleResults ? QStringLiteral("导出当前选中结果的 JSON") : QStringLiteral("导出当前结果的 JSON"));
+            hasMultipleResults ? tr("导出当前选中结果的 JSON") : tr("导出当前结果的 JSON"));
     }
     if (exportImageButton_ != nullptr) {
-        exportImageButton_->setText(hasMultipleResults ? QStringLiteral("导出当前图片") : QStringLiteral("导出图片"));
+        exportImageButton_->setText(hasMultipleResults ? tr("导出当前图片") : tr("导出图片"));
     }
     if (exportBatchBtn_ != nullptr) {
-        exportBatchBtn_->setText(QStringLiteral("导出全部 JSON"));
+        exportBatchBtn_->setText(tr("导出全部 JSON"));
     }
 }
 

@@ -15,7 +15,7 @@ namespace aitoolkit::ui {
 
 namespace {
 
-const QString kGpuFallbackMessage = QStringLiteral(
+const QString kGpuFallbackMessage = AppController::tr(
     "GPU 推理不可用，已自动回退到 CPU 模式。如需 GPU 加速，请确认已安装 CUDA Toolkit 并使用启用 CUDA 的构建。");
 
 }
@@ -188,7 +188,7 @@ void AppController::selectImage(const QString& imagePath) {
 
 void AppController::selectFolder(const QString& folderPath, double confidence, double nms) {
     if (currentManifestPath_.isEmpty()) {
-        emit inferenceError(QStringLiteral("请先加载模型清单，再进行批量推理。"));
+        emit inferenceError(tr("请先加载模型清单，再进行批量推理。"));
         return;
     }
 
@@ -204,7 +204,7 @@ void AppController::selectFolder(const QString& folderPath, double confidence, d
     };
     const QFileInfoList entries = dir.entryInfoList(nameFilters, QDir::Files | QDir::Readable, QDir::Name);
     if (entries.isEmpty()) {
-        emit inferenceError(QStringLiteral("所选文件夹中没有找到支持的图像文件。"));
+        emit inferenceError(tr("所选文件夹中没有找到支持的图像文件。"));
         return;
     }
 
@@ -238,7 +238,7 @@ void AppController::selectFolder(const QString& folderPath, double confidence, d
 
 void AppController::selectVideo(const QString& videoPath, const int maxFrames, double confidence, double nms) {
     if (currentManifestPath_.isEmpty()) {
-        emit inferenceError(QStringLiteral("请先加载模型清单，再进行视频推理。"));
+        emit inferenceError(tr("请先加载模型清单，再进行视频推理。"));
         return;
     }
 
@@ -267,7 +267,7 @@ void AppController::selectVideo(const QString& videoPath, const int maxFrames, d
 void AppController::runInference(double confidence, double nms) {
     const QImage currentImage = loadUsableImage(currentImagePath_);
     if (currentManifestPath_.isEmpty()) {
-        emit inferenceError(QStringLiteral("请先加载模型清单。"));
+        emit inferenceError(tr("请先加载模型清单。"));
         return;
     }
     if (currentImage.isNull()) {
@@ -318,7 +318,7 @@ void AppController::exportImage(const QString& outputPath) {
         settingsStore_.setDefaultExportDirectory(QFileInfo(outputPath).absolutePath());
         emit exportCompleted();
     } else {
-        emit inferenceError(QStringLiteral("无法保存渲染图片至：%1").arg(outputPath));
+        emit inferenceError(tr("无法保存渲染图片至：%1").arg(outputPath));
     }
 }
 

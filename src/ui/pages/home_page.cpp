@@ -16,11 +16,11 @@ HomePage::HomePage(QWidget* parent)
     layout->setContentsMargins(24, 24, 24, 24);
     layout->setSpacing(16);
 
-    auto* title = new QLabel(QStringLiteral("AI \u68c0\u6d4b\u5de5\u5177 v%1").arg(QCoreApplication::applicationVersion()), this);
+    auto* title = new QLabel(tr("AI 检测工具 v%1").arg(QCoreApplication::applicationVersion()), this);
     title->setObjectName(QStringLiteral("HomePageTitle"));
 
     auto* lead = new QLabel(
-        QStringLiteral("\u4ece\u5de6\u4fa7\u5f00\u59cb\u52a0\u8f7d\u6a21\u578b\u6e05\u5355\uff0c\u9009\u62e9\u5f85\u63a8\u7406\u56fe\u50cf\u540e\u5373\u53ef\u6267\u884c\u4e00\u6b21\u76ee\u6807\u68c0\u6d4b\uff0c\u5e76\u5728\u7ed3\u679c\u9875\u67e5\u770b\u53e0\u52a0\u9884\u89c8\u4e0e\u660e\u7ec6\u3002"),
+        tr("从左侧开始加载模型清单，选择待推理图像后即可执行一次目标检测，并在结果页查看叠加预览与明细。"),
         this);
     lead->setWordWrap(true);
 
@@ -30,23 +30,23 @@ HomePage::HomePage(QWidget* parent)
     actionsLayout->setContentsMargins(0, 0, 0, 0);
     actionsLayout->setSpacing(12);
 
-    auto* loadModelBtn = new QPushButton(QStringLiteral("\u52a0\u8f7d\u6a21\u578b"), this);
+    auto* loadModelBtn = new QPushButton(tr("加载模型"), this);
     loadModelBtn->setObjectName(QStringLiteral("PrimaryButton"));
 
-    auto* selectImageBtn = new QPushButton(QStringLiteral("\u9009\u62e9\u56fe\u50cf"), this);
+    auto* selectImageBtn = new QPushButton(tr("选择图像"), this);
     selectImageBtn->setObjectName(QStringLiteral("SecondaryButton"));
 
-    auto* downloadBtn = new QPushButton(QStringLiteral("\u4e0b\u8f7d\u793a\u4f8b\u6a21\u578b"), this);
+    auto* downloadBtn = new QPushButton(tr("下载示例模型"), this);
     downloadBtn->setObjectName(QStringLiteral("SecondaryButton"));
-    downloadBtn->setToolTip(QStringLiteral("\u4e0b\u8f7d YOLOv8n COCO \u793a\u4f8b\u6a21\u578b\uff08\u7ea6 6MB\uff09"));
+    downloadBtn->setToolTip(tr("下载 YOLOv8n COCO 示例模型（约 6MB）"));
 
-    auto* catalogButton = new QPushButton(QStringLiteral("\u6a21\u578b\u76ee\u5f55"), this);
+    auto* catalogButton = new QPushButton(tr("模型目录"), this);
     catalogButton->setObjectName(QStringLiteral("SecondaryButton"));
-    catalogButton->setToolTip(QStringLiteral("\u6d4f\u89c8\u548c\u4e0b\u8f7d\u66f4\u591a\u6a21\u578b"));
+    catalogButton->setToolTip(tr("浏览和下载更多模型"));
 
-    quickStartBtn_ = new QPushButton(QStringLiteral("\u5feb\u901f\u4f53\u9a8c"), this);
+    quickStartBtn_ = new QPushButton(tr("快速体验"), this);
     quickStartBtn_->setObjectName(QStringLiteral("PrimaryButton"));
-    quickStartBtn_->setToolTip(QStringLiteral("\u4f7f\u7528\u793a\u4f8b\u56fe\u50cf\u6267\u884c\u4e00\u6b21\u76ee\u6807\u68c0\u6d4b"));
+    quickStartBtn_->setToolTip(tr("使用示例图像执行一次目标检测"));
     quickStartBtn_->hide();
 
     actionsLayout->addWidget(loadModelBtn);
@@ -67,7 +67,7 @@ HomePage::HomePage(QWidget* parent)
     modelsColumnLayout->setContentsMargins(0, 0, 0, 0);
     modelsColumnLayout->setSpacing(6);
 
-    auto* modelsTitle = new QLabel(QStringLiteral("最近模型"), this);
+    auto* modelsTitle = new QLabel(tr("最近模型"), this);
     modelsTitle->setObjectName(QStringLiteral("HomeRecentTitle"));
 
     recentModelsList_ = new QListWidget(this);
@@ -83,7 +83,7 @@ HomePage::HomePage(QWidget* parent)
     inputsColumnLayout->setContentsMargins(0, 0, 0, 0);
     inputsColumnLayout->setSpacing(6);
 
-    auto* inputsTitle = new QLabel(QStringLiteral("最近图像"), this);
+    auto* inputsTitle = new QLabel(tr("最近图像"), this);
     inputsTitle->setObjectName(QStringLiteral("HomeRecentTitle"));
 
     recentInputsList_ = new QListWidget(this);
