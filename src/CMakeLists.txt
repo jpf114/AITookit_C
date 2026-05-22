@@ -48,10 +48,10 @@ function(ai_copy_qt_windows_platform_plugin target)
         return()
     endif()
 
-    if(EXISTS "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/Qt6/plugins/platforms/qwindows.dll")
-        set(qt_plugins_root "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows")
+    if(EXISTS "${VCPKG_INSTALLED_DIR}/x64-windows/Qt6/plugins/platforms/qwindows.dll")
+        set(qt_plugins_root "${VCPKG_INSTALLED_DIR}/x64-windows")
         set(qt_platform_plugin
-            "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
+            "${VCPKG_INSTALLED_DIR}/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
     else()
         message(WARNING "Qt Windows platform plugin not found in vcpkg_installed. Qt plugins will not be copied.")
         return()

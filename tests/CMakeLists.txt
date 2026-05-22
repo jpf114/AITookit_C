@@ -7,14 +7,10 @@ function(ai_copy_qt_windows_platform_plugin target)
         return()
     endif()
 
-    if(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/installed/x64-windows/Qt6/plugins/platforms/qwindows.dll")
-        set(qt_plugins_root "$ENV{VCPKG_ROOT}/installed/x64-windows")
+    if(EXISTS "${VCPKG_INSTALLED_DIR}/x64-windows/Qt6/plugins/platforms/qwindows.dll")
+        set(qt_plugins_root "${VCPKG_INSTALLED_DIR}/x64-windows")
         set(qt_platform_plugin
-            "$ENV{VCPKG_ROOT}/installed/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
-    elseif(EXISTS "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/Qt6/plugins/platforms/qwindows.dll")
-        set(qt_plugins_root "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows")
-        set(qt_platform_plugin
-            "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
+            "${VCPKG_INSTALLED_DIR}/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
     else()
         return()
     endif()
