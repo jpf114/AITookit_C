@@ -6,71 +6,37 @@ if(NOT EXISTS "${installed_exe}")
     message(FATAL_ERROR "Installed executable not found: ${installed_exe}")
 endif()
 
-if(EXISTS "@CMAKE_BINARY_DIR@/vcpkg_installed/x64-windows/bin")
-    set(vcpkg_bin_dir "@CMAKE_BINARY_DIR@/vcpkg_installed/x64-windows/bin")
-elseif(DEFINED ENV{VCPKG_ROOT} AND EXISTS "$ENV{VCPKG_ROOT}/installed/x64-windows/bin")
-    set(vcpkg_bin_dir "$ENV{VCPKG_ROOT}/installed/x64-windows/bin")
-else()
-    message(FATAL_ERROR "Cannot locate vcpkg installed binaries directory")
+set(vcpkg_bin_dir "@VCPKG_INSTALLED_DIR@/x64-windows/bin")
+
+if(NOT EXISTS "${vcpkg_bin_dir}")
+    message(FATAL_ERROR "Cannot locate vcpkg installed binaries directory: ${vcpkg_bin_dir}")
 endif()
 
-find_program(WINDEPLOYQT_EXECUTABLE windeployqt6 HINTS "${vcpkg_bin_dir}/../tools/Qt6/bin")
-
-if(WINDEPLOYQT_EXECUTABLE)
-    message(STATUS "Running windeployqt: ${WINDEPLOYQT_EXECUTABLE}")
-    execute_process(
-        COMMAND "${WINDEPLOYQT_EXECUTABLE}"
-            --release
-            --no-translations
-            --no-opengl-sw
-            --dir "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@"
-            "${installed_exe}"
-        RESULT_VARIABLE windeployqt_result
-        OUTPUT_VARIABLE windeployqt_output
-        ERROR_VARIABLE windeployqt_error
-    )
-    if(NOT windeployqt_result EQUAL 0)
-        message(WARNING "windeployqt failed (${windeployqt_result}): ${windeployqt_error}")
-    else()
-        message(STATUS "windeployqt completed successfully")
-    endif()
-else()
-    message(WARNING "windeployqt not found, Qt DLLs will not be deployed automatically")
-endif()
-
-set(non_qt_dlls
+set(runtime_dlls
+    Qt6Core.dll
+    Qt6Gui.dll
+    Qt6Widgets.dll
+    Qt6Svg.dll
+    double-conversion.dll
+    pcre2-16.dll
+    md4c.dll
+    z.dll
     onnxruntime.dll
+    onnxruntime_providers_shared.dll
+    libprotobuf.dll
+    libprotobuf-lite.dll
+    abseil_dll.dll
+    re2.dll
     opencv_core4.dll
     opencv_imgproc4.dll
     opencv_imgcodecs4.dll
     opencv_videoio4.dll
-    opencv_videoio_ffmpeg4_11_0.dll
-    zlib1.dll
     libpng16.dll
     jpeg62.dll
-    libsharpyuv.dll
-    libwebp.dll
-    tiff.dll
-    liblzma.dll
-    bz2.dll
-    zstd.dll
-    abseil_dll.dll
-    re2.dll
-    libprotobuf.dll
-    libprotobuf-lite.dll
-    double-conversion.dll
-    pcre2-16.dll
-    harfbuzz.dll
-    freetype.dll
-    brotlicommon.dll
-    brotlidec.dll
-    md4c.dll
-    icudt78.dll
-    icuin78.dll
-    icuuc78.dll
+    turbojpeg.dll
 )
 
-foreach(dll_name IN LISTS non_qt_dlls)
+foreach(dll_name IN LISTS runtime_dlls)
     if(EXISTS "${vcpkg_bin_dir}/${dll_name}")
         file(INSTALL
             DESTINATION "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@"
@@ -80,16 +46,47 @@ foreach(dll_name IN LISTS non_qt_dlls)
     endif()
 endforeach()
 
+set(qt_plugins_dir "@VCPKG_INSTALLED_DIR@/x64-windows/Qt6/plugins")
+
+set(qt_plugin_map
+    "platforms=qwindows.dll;qdirect2d.dll"
+    "imageformats=qjpeg.dll;qsvg.dll;qgif.dll;qico.dll"
+    "styles=qmodernwindowsstyle.dll"
+    "iconengines=qsvgicon.dll"
+)
+
+foreach(entry IN LISTS qt_plugin_map)
+    string(REGEX MATCH "^([^=]+)=(.*)$" _ "${entry}")
+    set(plugin_type "${CMAKE_MATCH_1}")
+    set(plugin_files "${CMAKE_MATCH_2}")
+    string(REPLACE ";" ";" plugin_list "${plugin_files}")
+
+    foreach(plugin_name IN LISTS plugin_list)
+        set(plugin_path "${qt_plugins_dir}/${plugin_type}/${plugin_name}")
+        if(EXISTS "${plugin_path}")
+            file(INSTALL
+                DESTINATION "${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_BINDIR@/${plugin_type}"
+                TYPE SHARED_LIBRARY
+                FILES "${plugin_path}"
+            )
+        endif()
+    endforeach()
+endforeach()
+
 set(vc_redist_dir "@AI_VC_REDIST_DIR@")
 
 if(vc_redist_dir AND EXISTS "${vc_redist_dir}")
     set(vc_runtime_dlls
+        concrt140.dll
         msvcp140.dll
         msvcp140_1.dll
         msvcp140_2.dll
+        msvcp140_atomic_wait.dll
+        msvcp140_codecvt_ids.dll
+        vccorlib140.dll
         vcruntime140.dll
         vcruntime140_1.dll
-        vcruntime140_2.dll
+        vcruntime140_threads.dll
     )
     foreach(dll_name IN LISTS vc_runtime_dlls)
         if(EXISTS "${vc_redist_dir}/${dll_name}")
