@@ -2,10 +2,8 @@ if(NOT WIN32)
     return()
 endif()
 
-if(EXISTS "${VCPKG_INSTALLED_DIR}/x64-windows/bin")
-    set(vcpkg_bin_dir "${VCPKG_INSTALLED_DIR}/x64-windows/bin")
-    set(qt_plugins_dir "${VCPKG_INSTALLED_DIR}/x64-windows/Qt6/plugins")
-else()
+set(vcpkg_root "${VCPKG_INSTALLED_DIR}/x64-windows")
+if(NOT EXISTS "${vcpkg_root}/bin")
     return()
 endif()
 
@@ -40,19 +38,21 @@ set(runtime_dlls
 )
 
 foreach(dll_name IN LISTS runtime_dlls)
-    if(EXISTS "${vcpkg_bin_dir}/${dll_name}")
+    if(EXISTS "${vcpkg_root}/bin/${dll_name}")
         foreach(dest_dir IN LISTS config_dirs)
             file(INSTALL
                 DESTINATION "${dest_dir}"
                 TYPE SHARED_LIBRARY
-                FILES "${vcpkg_bin_dir}/${dll_name}"
+                FILES "${vcpkg_root}/bin/${dll_name}"
             )
         endforeach()
     endif()
 endforeach()
 
+set(qt_plugins_dir "${vcpkg_root}/Qt6/plugins")
+
 set(qt_plugin_map
-    "platforms=qwindows.dll;qdirect2d.dll"
+    "platforms=qwindows.dll;qdirect2d.dll;qminimal.dll;qoffscreen.dll"
     "imageformats=qjpeg.dll;qsvg.dll;qgif.dll;qico.dll"
     "styles=qmodernwindowsstyle.dll"
     "iconengines=qsvgicon.dll"

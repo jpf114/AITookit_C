@@ -49,7 +49,7 @@ endforeach()
 set(qt_plugins_dir "@VCPKG_INSTALLED_DIR@/x64-windows/Qt6/plugins")
 
 set(qt_plugin_map
-    "platforms=qwindows.dll;qdirect2d.dll"
+    "platforms=qwindows.dll;qdirect2d.dll;qminimal.dll;qoffscreen.dll"
     "imageformats=qjpeg.dll;qsvg.dll;qgif.dll;qico.dll"
     "styles=qmodernwindowsstyle.dll"
     "iconengines=qsvgicon.dll"

@@ -7,26 +7,37 @@ function(ai_copy_qt_windows_platform_plugin target)
         return()
     endif()
 
-    if(EXISTS "${VCPKG_INSTALLED_DIR}/x64-windows/Qt6/plugins/platforms/qwindows.dll")
-        set(qt_plugins_root "${VCPKG_INSTALLED_DIR}/x64-windows")
-        set(qt_platform_plugin
-            "${VCPKG_INSTALLED_DIR}/x64-windows/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll")
-    else()
+    set(qt_plugins_root "${VCPKG_INSTALLED_DIR}/x64-windows")
+    if(NOT EXISTS "${qt_plugins_root}/Qt6/plugins/platforms/qwindows.dll")
         return()
     endif()
+
+    set(qt_platform_plugins
+        "${qt_plugins_root}/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qwindows$<$<CONFIG:Debug>:d>.dll"
+        "${qt_plugins_root}/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qminimal$<$<CONFIG:Debug>:d>.dll"
+        "${qt_plugins_root}/$<$<CONFIG:Debug>:debug/>Qt6/plugins/platforms/qoffscreen$<$<CONFIG:Debug>:d>.dll"
+    )
 
     add_custom_command(
         TARGET ${target}
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${target}>/platforms"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${qt_platform_plugin}"
-            "$<TARGET_FILE_DIR:${target}>/platforms/"
         VERBATIM
     )
 
-    set(qt_imageformats_dir "${qt_plugins_root}/Qt6/plugins/imageformats")
-    if(EXISTS "${qt_imageformats_dir}")
+    foreach(plugin IN LISTS qt_platform_plugins)
+        add_custom_command(
+            TARGET ${target}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${plugin}"
+                "$<TARGET_FILE_DIR:${target}>/platforms/"
+            VERBATIM
+        )
+    endforeach()
+
+    set(qt_imageformats_dir "${qt_plugins_root}/$<$<CONFIG:Debug>:debug/>Qt6/plugins/imageformats")
+    if(EXISTS "${qt_plugins_root}/Qt6/plugins/imageformats")
         add_custom_command(
             TARGET ${target}
             POST_BUILD
