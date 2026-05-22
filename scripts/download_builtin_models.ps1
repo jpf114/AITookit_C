@@ -1,6 +1,6 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $ProgressPreference = 'SilentlyContinue'
-$modelsDir = 'd:\Code\MyProject\AITookit_C\models'
+$modelsDir = Join-Path $PSScriptRoot '..\models'
 if (-not (Test-Path $modelsDir)) { New-Item -ItemType Directory -Path $modelsDir -Force | Out-Null }
 
 $models = @(

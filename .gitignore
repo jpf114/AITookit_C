@@ -1,8 +1,6 @@
 build/
 install/
 out/
-.vcpkg_installed/
-vcpkg_installed/
 .vs/
 .vscode/.ropeproject/
 .vscode/c_cpp_properties.json
