@@ -24,7 +24,7 @@ jobs:
         shell: pwsh
         run: |
           $toolchain = "$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
-          cmake -B build -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install"
+          cmake -B build -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DVCPKG_INSTALLED_DIR="${{ github.workspace }}/vcpkg_installed" -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install"
 
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }}

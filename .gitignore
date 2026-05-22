@@ -3,10 +3,6 @@ install/
 out/
 .vcpkg_installed/
 vcpkg_installed/
-vcpkg/buildtrees/
-vcpkg/downloads/
-vcpkg/installed/
-vcpkg/packages/
 .vs/
 .vscode/.ropeproject/
 .vscode/c_cpp_properties.json
