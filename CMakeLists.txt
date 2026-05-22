@@ -11,7 +11,11 @@ endif()
 project(ai-toolkit-c VERSION 1.0.0 LANGUAGES CXX)
 
 if(NOT DEFINED VCPKG_INSTALLED_DIR)
-    set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed" CACHE PATH "vcpkg manifest install directory")
+    if(DEFINED ENV{VCPKG_ROOT})
+        set(VCPKG_INSTALLED_DIR "$ENV{VCPKG_ROOT}/installed" CACHE PATH "vcpkg global install directory")
+    else()
+        set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed" CACHE PATH "vcpkg manifest install directory")
+    endif()
 endif()
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
