@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
         if (arg == "--version" || arg == "-v") {
             QCoreApplication coreApp(argc, argv);
             coreApp.setApplicationName(QStringLiteral("AIToolkit"));
-            coreApp.setApplicationVersion(QStringLiteral("1.0.0"));
+            coreApp.setApplicationVersion(QStringLiteral("1.0.1"));
             QTextStream(stdout) << coreApp.applicationName() << ' ' << coreApp.applicationVersion() << '\n';
             return 0;
         }

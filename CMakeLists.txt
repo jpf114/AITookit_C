@@ -11,7 +11,7 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-project(ai-toolkit-c VERSION 1.0.0 LANGUAGES CXX)
+project(ai-toolkit-c VERSION 1.0.1 LANGUAGES CXX)
 
 if(NOT DEFINED VCPKG_INSTALLED_DIR)
     if(DEFINED ENV{VCPKG_ROOT})

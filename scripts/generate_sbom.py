@@ -30,7 +30,7 @@ def main() -> int:
             "component": {
                 "type": "application",
                 "name": "AIToolkit",
-                "version": "1.0.0",
+                "version": "1.0.1",
             },
         },
         "components": [
