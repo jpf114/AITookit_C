@@ -23,7 +23,7 @@ jobs:
       - name: Install vcpkg dependencies
         shell: pwsh
         run: |
-          vcpkg install qtbase[qtsvg,widgets,testlib] qtsvg opencv4[jpeg,png,msmf] onnxruntime --triplet x64-windows
+          vcpkg install qtbase[widgets,testlib,network] qtsvg opencv4[jpeg,png,msmf] onnxruntime --triplet x64-windows
 
       - name: Configure CMake
         shell: pwsh
@@ -45,6 +45,47 @@ jobs:
           cpack -G ZIP -C Release
           cpack -G NSIS -C Release
 
+      - name: Smoke test packaged binary (Release only)
+        if: matrix.build_type == 'Release'
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path "${{ github.workspace }}/install/bin" -Filter "ai_toolkit_c.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) {
+            $exe = Get-ChildItem -Path build -Filter "ai_toolkit_c.exe" -Recurse | Select-Object -First 1
+          }
+          if (-not $exe) { throw "ai_toolkit_c.exe not found" }
+          $env:QT_QPA_PLATFORM = "offscreen"
+          & $exe.FullName --version
+
+      - name: Download models for E2E (Release only)
+        if: matrix.build_type == 'Release'
+        shell: pwsh
+        run: |
+          pwsh -ExecutionPolicy Bypass -File scripts/download_builtin_models.ps1
+
+      - name: E2E model validation (Release only)
+        if: matrix.build_type == 'Release'
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install onnxruntime opencv-python-headless numpy
+          python scripts/test_builtin_models.py
+
+      - name: Sign installer (optional)
+        if: matrix.build_type == 'Release' && env.AI_CODESIGN_THUMBPRINT != ''
+        env:
+          AI_CODESIGN_THUMBPRINT: ${{ secrets.AI_CODESIGN_THUMBPRINT }}
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path build -Filter "AIToolkit-*.exe" | Where-Object { $_.Name -notmatch "ai_toolkit" } | Select-Object -First 1
+          if ($installer -and $env:AI_CODESIGN_THUMBPRINT) {
+            signtool sign /sha1 $env:AI_CODESIGN_THUMBPRINT /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $installer.FullName
+          }
+
+      - name: Generate SBOM (Release only)
+        if: matrix.build_type == 'Release'
+        run: python scripts/generate_sbom.py sbom.json
+
       - name: Upload package
         if: matrix.build_type == 'Release'
         uses: actions/upload-artifact@v4
@@ -53,7 +94,30 @@ jobs:
           path: |
             build/AIToolkit-*.zip
             build/AIToolkit-*.exe
+            sbom.json
           retention-days: 30
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=warning,style,performance --error-exitcode=0 \
+            --suppress=missingIncludeSystem \
+            -I src \
+            src/ 2>&1 | tee cppcheck-report.txt
+
+      - name: Upload cppcheck report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cppcheck-report
+          path: cppcheck-report.txt
+          retention-days: 14
 
   release:
     needs: build-windows
