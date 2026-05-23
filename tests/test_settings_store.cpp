@@ -16,6 +16,7 @@ private slots:
     void deduplicatesRecentModelsIgnoringCaseOnWindows();
     void respectsRecentModelsReadbackLimit();
     void savesAndLoadsDefaultExportDirectory();
+    void savesAndLoadsGpuThreadLanguageAndGeometry();
 };
 
 QString settingsFilePath(QTemporaryDir& tempDir, const QString& fileName) {
@@ -105,6 +106,29 @@ void SettingsStoreTest::savesAndLoadsDefaultExportDirectory() {
 
     aitoolkit::core::SettingsStore store(iniPath, QSettings::IniFormat);
     QCOMPARE(store.defaultExportDirectory(), QStringLiteral("C:/exports/results"));
+}
+
+void SettingsStoreTest::savesAndLoadsGpuThreadLanguageAndGeometry() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+    const QString iniPath = settingsFilePath(tempDir, QStringLiteral("settings.ini"));
+
+    const QByteArray geometry = QByteArray::fromHex("0102030405");
+    {
+        aitoolkit::core::SettingsStore store(iniPath, QSettings::IniFormat);
+        store.setInferenceThreadCount(8);
+        store.setUseGPUInference(true);
+        store.setLanguage(QStringLiteral("en"));
+        store.setWindowGeometry(geometry);
+        store.setLastModelManifestPath(QStringLiteral("C:/models/test.json"));
+    }
+
+    aitoolkit::core::SettingsStore store(iniPath, QSettings::IniFormat);
+    QCOMPARE(store.inferenceThreadCount(), 8);
+    QVERIFY(store.useGPUInference());
+    QCOMPARE(store.language(), QStringLiteral("en"));
+    QCOMPARE(store.windowGeometry(), geometry);
+    QCOMPARE(store.lastModelManifestPath(), QStringLiteral("C:/models/test.json"));
 }
 
 }  // namespace

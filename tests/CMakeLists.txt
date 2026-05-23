@@ -85,6 +85,9 @@ ai_add_qt_test_if_exists(test_gui_validation.cpp)
 ai_add_qt_test_if_exists(test_classification_model.cpp)
 ai_add_qt_test_if_exists(test_segmentation_model.cpp)
 ai_add_qt_test_if_exists(test_inference_service.cpp)
+ai_add_qt_test_if_exists(test_backend_registry.cpp)
+ai_add_qt_test_if_exists(test_unicode_io.cpp)
+ai_add_qt_test_if_exists(test_inference_worker.cpp)
 
 if(TARGET test_yolo_postprocess)
     target_link_libraries(
@@ -142,6 +145,31 @@ if(TARGET test_inference_service)
     )
 endif()
 
+if(TARGET test_backend_registry)
+    target_link_libraries(
+        test_backend_registry
+        PRIVATE
+            ai_runtime
+            ai_models
+    )
+endif()
+
+if(TARGET test_unicode_io)
+    target_link_libraries(
+        test_unicode_io
+        PRIVATE
+            ai_services
+    )
+endif()
+
+if(TARGET test_inference_worker)
+    target_link_libraries(
+        test_inference_worker
+        PRIVATE
+            ai_services
+    )
+endif()
+
 if(TARGET test_app_controller)
     target_sources(
         test_app_controller
@@ -161,6 +189,7 @@ if(TARGET test_main_window)
     target_sources(
         test_main_window
         PRIVATE
+            ${CMAKE_SOURCE_DIR}/src/ui/license_utils.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/main_window.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/app_controller.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/image_utils.cpp
@@ -178,9 +207,11 @@ if(TARGET test_main_window)
         test_main_window
         PRIVATE
             ai_services
+            ai_core
             Qt6::Gui
             Qt6::Widgets
             Qt6::Svg
+            Qt6::Network
     )
 endif()
 
@@ -225,8 +256,10 @@ if(TARGET test_settings_page)
     target_link_libraries(
         test_settings_page
         PRIVATE
+            ai_core
             Qt6::Gui
             Qt6::Widgets
+            Qt6::Network
     )
 endif()
 
@@ -238,6 +271,7 @@ if(TARGET test_gui_validation)
     target_sources(
         test_gui_validation
         PRIVATE
+            ${CMAKE_SOURCE_DIR}/src/ui/license_utils.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/main_window.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/app_controller.cpp
             ${CMAKE_SOURCE_DIR}/src/ui/image_utils.cpp
@@ -255,8 +289,10 @@ if(TARGET test_gui_validation)
         test_gui_validation
         PRIVATE
             ai_services
+            ai_core
             Qt6::Gui
             Qt6::Widgets
             Qt6::Svg
+            Qt6::Network
     )
 endif()

@@ -76,13 +76,11 @@ void seedCurrentResult(aitoolkit::ui::MainWindow& window, const aitoolkit::core:
 }
 
 void verifyHasResultsState(aitoolkit::ui::MainWindow& window) {
-    auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
-    QVERIFY(contextResultValue != nullptr);
-    QVERIFY(contextResultValue->text().contains(QStringLiteral("12.50")));
+    QVERIFY(window.runStatusLabel_ != nullptr);
+    QVERIFY(window.runStatusLabel_->text().contains(QStringLiteral("12.50")));
 
-    auto* contextNextStepValue = window.findChild<QLabel*>(QStringLiteral("ContextNextStepValue"));
-    QVERIFY(contextNextStepValue != nullptr);
-    QVERIFY(contextNextStepValue->text().contains(QStringLiteral("JSON")));
+    QVERIFY(window.nextStepLabel_ != nullptr);
+    QVERIFY(window.nextStepLabel_->text().contains(QStringLiteral("JSON")));
 }
 
 void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
@@ -97,7 +95,7 @@ void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
     QVERIFY(detectionsTable != nullptr);
     QCOMPARE(detectionsTable->rowCount(), 0);
 
-    auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
+    auto* contextResultValue = window.runStatusLabel_;
     QVERIFY(contextResultValue != nullptr);
     QVERIFY(!contextResultValue->text().contains(QStringLiteral("12.50")));
 }
@@ -135,17 +133,17 @@ void MainWindowTest::buildsThreePaneShell() {
     const auto contextPanel = window.findChild<QWidget*>(QStringLiteral("ContextPanel"));
     QVERIFY(contextPanel != nullptr);
 
-    const auto contextModelTitle = window.findChild<QLabel*>(QStringLiteral("ContextModelTitle"));
-    QVERIFY(contextModelTitle != nullptr);
+    QVERIFY(window.modelStatusTitleLabel_ != nullptr);
+    QVERIFY(window.modelStatusTitleLabel_->text().contains(QStringLiteral("模型")));
 
-    const auto contextImageTitle = window.findChild<QLabel*>(QStringLiteral("ContextImageTitle"));
-    QVERIFY(contextImageTitle != nullptr);
+    QVERIFY(window.imageStatusTitleLabel_ != nullptr);
+    QVERIFY(window.imageStatusTitleLabel_->text().contains(QStringLiteral("图像")));
 
-    const auto contextResultTitle = window.findChild<QLabel*>(QStringLiteral("ContextResultTitle"));
-    QVERIFY(contextResultTitle != nullptr);
+    QVERIFY(window.resultStatusTitleLabel_ != nullptr);
+    QVERIFY(window.resultStatusTitleLabel_->text().contains(QStringLiteral("结果")));
 
-    const auto contextNextStepTitle = window.findChild<QLabel*>(QStringLiteral("ContextNextStepTitle"));
-    QVERIFY(contextNextStepTitle != nullptr);
+    QVERIFY(window.nextStepTitleLabel_ != nullptr);
+    QVERIFY(window.nextStepTitleLabel_->text().contains(QStringLiteral("下一步")));
 }
 
 void MainWindowTest::changingImageClearsStoredAndVisibleResults() {
@@ -242,13 +240,11 @@ void MainWindowTest::completedVideoSummaryKeepsResultFocusedContext() {
     window.controller_->currentImagePath_.clear();
     emit window.controller_->contextChanged();
 
-    auto* contextImageValue = window.findChild<QLabel*>(QStringLiteral("ContextImageValue"));
-    QVERIFY(contextImageValue != nullptr);
-    QVERIFY(contextImageValue->text().contains(QStringLiteral("视频")));
+    QVERIFY(window.imageStatusLabel_ != nullptr);
+    QVERIFY(window.imageStatusLabel_->text().contains(QStringLiteral("视频")));
 
-    auto* contextNextStepValue = window.findChild<QLabel*>(QStringLiteral("ContextNextStepValue"));
-    QVERIFY(contextNextStepValue != nullptr);
-    QVERIFY(contextNextStepValue->text().contains(QStringLiteral("JSON")));
+    QVERIFY(window.nextStepLabel_ != nullptr);
+    QVERIFY(window.nextStepLabel_->text().contains(QStringLiteral("JSON")));
 }
 
 void MainWindowTest::classificationSummaryUsesTaskAwareContextCopy() {
@@ -264,7 +260,7 @@ void MainWindowTest::classificationSummaryUsesTaskAwareContextCopy() {
 
     window.controller_->applyInferenceResult(summary);
 
-    auto* contextResultValue = window.findChild<QLabel*>(QStringLiteral("ContextResultValue"));
+    auto* contextResultValue = window.runStatusLabel_;
     QVERIFY(contextResultValue != nullptr);
     QVERIFY(contextResultValue->text().contains(QStringLiteral("2 个类别")));
     QVERIFY(!contextResultValue->text().contains(QStringLiteral("目标")));
@@ -296,9 +292,8 @@ void MainWindowTest::selectingBatchResultUpdatesCurrentExportContext() {
     QCOMPARE(window.controller_->currentSummary().inputPath, secondImagePath);
     QCOMPARE(window.controller_->currentImagePath(), secondImagePath);
 
-    auto* contextImageValue = window.findChild<QLabel*>(QStringLiteral("ContextImageValue"));
-    QVERIFY(contextImageValue != nullptr);
-    QVERIFY(contextImageValue->text().contains(QStringLiteral("second.bmp")));
+    QVERIFY(window.imageStatusLabel_ != nullptr);
+    QVERIFY(window.imageStatusLabel_->text().contains(QStringLiteral("second.bmp")));
 }
 
 void MainWindowTest::exportFileNamesFollowSelectedResult() {
@@ -405,9 +400,8 @@ void MainWindowTest::unreadableRecentInputClearsImageState() {
     QVERIFY(imagePathLabel != nullptr);
     QCOMPARE(imagePathLabel->text(), QStringLiteral("\u5f53\u524d\u672a\u9009\u62e9\u56fe\u50cf"));
 
-    auto* contextImageValue = window.findChild<QLabel*>(QStringLiteral("ContextImageValue"));
-    QVERIFY(contextImageValue != nullptr);
-    QVERIFY(!contextImageValue->text().contains(QFileInfo(imagePath).fileName()));
+    QVERIFY(window.imageStatusLabel_ != nullptr);
+    QVERIFY(!window.imageStatusLabel_->text().contains(QFileInfo(imagePath).fileName()));
 
     auto* runButton = window.inferencePage_->findChild<QPushButton*>(QStringLiteral("PrimaryButton"));
     QVERIFY(runButton != nullptr);
