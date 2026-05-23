@@ -1,5 +1,7 @@
 #include "app/app_bootstrap.h"
 
+#include "core/app_logger.h"
+
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
@@ -11,6 +13,8 @@
 #include <QTranslator>
 
 #include "runtime/onnx_plugin.h"
+#include "runtime/openvino_plugin.h"
+#include "runtime/tensorrt_plugin.h"
 
 namespace aitoolkit::app {
 
@@ -28,6 +32,8 @@ QString findExistingPath(const QStringList& candidatePaths) {
 }  // namespace
 
 void AppBootstrap::initialize(QApplication& app) {
+    core::AppLogger::install();
+
     app.setApplicationName(QStringLiteral("AIToolkit"));
     app.setApplicationDisplayName(QStringLiteral("AI 检测工具"));
     app.setApplicationVersion(QStringLiteral("1.0.0"));
@@ -69,6 +75,8 @@ void AppBootstrap::initialize(QApplication& app) {
     }
 
     runtime::registerOnnxRuntimePlugin();
+    runtime::registerTensorRtPlugin();
+    runtime::registerOpenVinoPlugin();
 }
 
 QString AppBootstrap::applicationStylePath() {

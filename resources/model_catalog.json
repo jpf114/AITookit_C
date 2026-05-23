@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "name": "YOLOv8n",
+      "taskType": "detection",
+      "fileName": "yolov8n.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx",
+      "description": "YOLOv8 Nano — classic detection, ~6MB",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLOv8n-cls",
+      "taskType": "classification",
+      "fileName": "yolov8n-cls.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-cls.onnx",
+      "description": "YOLOv8 Nano classification",
+      "inputSize": 224,
+      "decoder": "",
+      "labelsCategory": "imagenet1000"
+    },
+    {
+      "name": "YOLOv8n-seg",
+      "taskType": "segmentation",
+      "fileName": "yolov8n-seg.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-seg.onnx",
+      "description": "YOLOv8 Nano instance segmentation",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    }
+  ]
+}
