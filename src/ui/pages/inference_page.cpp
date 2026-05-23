@@ -64,10 +64,12 @@ InferencePage::InferencePage(QWidget* parent)
 
     runButton_ = new QPushButton(tr("\u5f00\u59cb\u68c0\u6d4b"), this);
     runButton_->setObjectName(QStringLiteral("PrimaryButton"));
+    runButton_->setAccessibleName(tr("开始检测"));
     runButton_->setEnabled(false);
 
     cancelButton_ = new QPushButton(tr("\u53d6\u6d88"), this);
     cancelButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    cancelButton_->setAccessibleName(tr("取消推理"));
     cancelButton_->setVisible(false);
 
     progressBar_ = new QProgressBar(this);

@@ -114,7 +114,7 @@ SettingsPage::SettingsPage(QWidget* parent)
                "<p>%3</p>")
                 .arg(QCoreApplication::applicationVersion())
                 .arg(QStringLiteral("ONNX Runtime"))
-                .arg(tr("隐私政策与第三方声明见安装目录 share/doc/ 下的 PRIVACY.md 与 THIRD_PARTY_NOTICES.md")));
+                .arg(tr("隐私政策、服务条款与第三方声明见安装目录 share/doc/ 下的 PRIVACY.md、TERMS.md 与 THIRD_PARTY_NOTICES.md")));
     });
 
     auto* updateButton = new QPushButton(tr("检查更新"), this);

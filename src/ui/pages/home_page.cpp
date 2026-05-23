@@ -32,21 +32,26 @@ HomePage::HomePage(QWidget* parent)
 
     auto* loadModelBtn = new QPushButton(tr("加载模型"), this);
     loadModelBtn->setObjectName(QStringLiteral("PrimaryButton"));
+    loadModelBtn->setAccessibleName(tr("加载模型"));
 
     auto* selectImageBtn = new QPushButton(tr("选择图像"), this);
     selectImageBtn->setObjectName(QStringLiteral("SecondaryButton"));
+    selectImageBtn->setAccessibleName(tr("选择图像"));
 
     auto* downloadBtn = new QPushButton(tr("下载示例模型"), this);
     downloadBtn->setObjectName(QStringLiteral("SecondaryButton"));
     downloadBtn->setToolTip(tr("下载 YOLOv8n COCO 示例模型（约 6MB）"));
+    downloadBtn->setAccessibleName(tr("下载示例模型"));
 
     auto* catalogButton = new QPushButton(tr("模型目录"), this);
     catalogButton->setObjectName(QStringLiteral("SecondaryButton"));
     catalogButton->setToolTip(tr("浏览和下载更多模型"));
+    catalogButton->setAccessibleName(tr("模型目录"));
 
     quickStartBtn_ = new QPushButton(tr("快速体验"), this);
     quickStartBtn_->setObjectName(QStringLiteral("PrimaryButton"));
     quickStartBtn_->setToolTip(tr("使用示例图像执行一次目标检测"));
+    quickStartBtn_->setAccessibleName(tr("快速体验"));
     quickStartBtn_->hide();
 
     actionsLayout->addWidget(loadModelBtn);
