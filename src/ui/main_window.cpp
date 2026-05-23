@@ -1,5 +1,7 @@
 #include "ui/main_window.h"
 
+#include "ui/license_utils.h"
+
 #include <QCloseEvent>
 #include <QCoreApplication>
 #include <QDir>
@@ -215,6 +217,10 @@ void MainWindow::wireHomeSignals() {
 
         if (QFileInfo::exists(manifestPath) && QFileInfo::exists(onnxPath)) {
             controller_->loadModelManifest(manifestPath);
+            return;
+        }
+
+        if (!confirmAgplModelDownload(this)) {
             return;
         }
 

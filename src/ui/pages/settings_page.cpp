@@ -1,5 +1,7 @@
 #include "ui/pages/settings_page.h"
 
+#include "core/update_checker.h"
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
@@ -108,9 +110,33 @@ SettingsPage::SettingsPage(QWidget* parent)
                "<p>基于 ONNX Runtime 的轻量级目标检测桌面应用</p>"
                "<p>支持 YOLOv5/YOLOv8/YOLOX 等模型</p>"
                "<p>推理后端：%2</p>"
-               "<p>&copy; 2026 MyProject</p>")
+               "<p>&copy; 2026 AIToolkit</p>"
+               "<p>%3</p>")
                 .arg(QCoreApplication::applicationVersion())
-                .arg(QStringLiteral("ONNX Runtime")));
+                .arg(QStringLiteral("ONNX Runtime"))
+                .arg(tr("隐私政策与第三方声明见安装目录 share/doc/ 下的 PRIVACY.md 与 THIRD_PARTY_NOTICES.md")));
+    });
+
+    auto* updateButton = new QPushButton(tr("检查更新"), this);
+    updateButton->setObjectName(QStringLiteral("SecondaryButton"));
+    connect(updateButton, &QPushButton::clicked, this, [this]() {
+        const auto result = aitoolkit::core::UpdateChecker::checkForUpdates(
+            QCoreApplication::applicationVersion());
+        if (!result.success) {
+            QMessageBox::warning(this, tr("检查更新"), result.errorMessage);
+            return;
+        }
+        if (result.updateAvailable) {
+            QMessageBox::information(
+                this,
+                tr("检查更新"),
+                tr("发现新版本 v%1。\n\n下载：%2").arg(result.latestVersion, result.releaseUrl));
+        } else {
+            QMessageBox::information(
+                this,
+                tr("检查更新"),
+                tr("当前已是最新版本 (v%1)。").arg(QCoreApplication::applicationVersion()));
+        }
     });
 
     layout->addWidget(title);
@@ -125,6 +151,7 @@ SettingsPage::SettingsPage(QWidget* parent)
     layout->addWidget(recentModelsList_);
     layout->addWidget(recentInputsLabel);
     layout->addWidget(recentInputsList_, 1);
+    layout->addWidget(updateButton);
     layout->addWidget(aboutButton);
 }
 

@@ -1,6 +1,13 @@
 #include "ui/dialogs/model_catalog_dialog.h"
 
+#include <QCheckBox>
 #include <QComboBox>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -12,7 +19,56 @@ namespace aitoolkit::ui {
 
 namespace {
 
+QVector<CatalogModelEntry> loadCatalogFromJson() {
+    const QDir appDir(QCoreApplication::applicationDirPath());
+    const QStringList candidates = {
+        appDir.filePath(QStringLiteral("share/model_catalog.json")),
+        appDir.filePath(QStringLiteral("../share/model_catalog.json")),
+        appDir.filePath(QStringLiteral("../../share/model_catalog.json")),
+        QDir::current().filePath(QStringLiteral("resources/model_catalog.json")),
+        QDir::current().filePath(QStringLiteral("../resources/model_catalog.json")),
+    };
+
+    for (const QString& path : candidates) {
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly)) {
+            continue;
+        }
+
+        const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
+        if (!document.isObject()) {
+            continue;
+        }
+
+        const QJsonArray models = document.object().value(QStringLiteral("models")).toArray();
+        QVector<CatalogModelEntry> entries;
+        entries.reserve(models.size());
+        for (const QJsonValue& value : models) {
+            const QJsonObject object = value.toObject();
+            entries.append(CatalogModelEntry{
+                object.value(QStringLiteral("name")).toString(),
+                object.value(QStringLiteral("taskType")).toString(),
+                object.value(QStringLiteral("fileName")).toString(),
+                object.value(QStringLiteral("url")).toString(),
+                object.value(QStringLiteral("description")).toString(),
+                object.value(QStringLiteral("inputSize")).toInt(640),
+                object.value(QStringLiteral("decoder")).toString(),
+                object.value(QStringLiteral("labelsCategory")).toString(),
+            });
+        }
+        if (!entries.isEmpty()) {
+            return entries;
+        }
+    }
+    return {};
+}
+
 QVector<CatalogModelEntry> builtinCatalog() {
+    const QVector<CatalogModelEntry> fromJson = loadCatalogFromJson();
+    if (!fromJson.isEmpty()) {
+        return fromJson;
+    }
+
     return {
         {QStringLiteral("YOLO11n"),
          QStringLiteral("detection"),
@@ -186,6 +242,16 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
     downloadButton_->setObjectName(QStringLiteral("PrimaryButton"));
     downloadButton_->setEnabled(false);
 
+    licenseAcceptCheckBox_ = new QCheckBox(
+        tr("我已阅读并同意 Ultralytics YOLO 模型的 AGPL-3.0 许可条款"), this);
+    licenseAcceptCheckBox_->setObjectName(QStringLiteral("CatalogLicenseAccept"));
+    connect(licenseAcceptCheckBox_, &QCheckBox::toggled, this, [this](const bool checked) {
+        updateDescription();
+        if (!checked && downloadButton_->isEnabled()) {
+            downloadButton_->setEnabled(false);
+        }
+    });
+
     auto* cancelButton = new QPushButton(tr("取消"), this);
     cancelButton->setObjectName(QStringLiteral("SecondaryButton"));
 
@@ -199,6 +265,7 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
     layout->addLayout(filterRow);
     layout->addWidget(catalogList_, 1);
     layout->addWidget(descriptionLabel_);
+    layout->addWidget(licenseAcceptCheckBox_);
     layout->addLayout(buttonRow);
 
     connect(filterCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]() {
@@ -256,7 +323,7 @@ void ModelCatalogDialog::updateDescription() {
 
     const CatalogModelEntry& entry = entries_[entryIndex];
     descriptionLabel_->setText(entry.description);
-    downloadButton_->setEnabled(true);
+    downloadButton_->setEnabled(licenseAcceptCheckBox_->isChecked());
 }
 
 QString ModelCatalogDialog::selectedModelName() const {

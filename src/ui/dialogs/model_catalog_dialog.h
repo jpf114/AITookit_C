@@ -7,6 +7,7 @@ class QComboBox;
 class QListWidget;
 class QPushButton;
 class QLabel;
+class QCheckBox;
 
 namespace aitoolkit::ui {
 
@@ -44,6 +45,7 @@ private:
     QListWidget* catalogList_ = nullptr;
     QLabel* descriptionLabel_ = nullptr;
     QPushButton* downloadButton_ = nullptr;
+    QCheckBox* licenseAcceptCheckBox_ = nullptr;
     QString modelsDir_;
     QVector<CatalogModelEntry> entries_;
 };

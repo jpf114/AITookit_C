@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 
+# vcpkg 全局模式：依赖预先安装到 $VCPKG_ROOT/installed，不使用 manifest
+set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "Disable vcpkg manifest mode" FORCE)
+
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     if(DEFINED ENV{VCPKG_ROOT})
         set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "vcpkg toolchain file")
@@ -14,7 +17,7 @@ if(NOT DEFINED VCPKG_INSTALLED_DIR)
     if(DEFINED ENV{VCPKG_ROOT})
         set(VCPKG_INSTALLED_DIR "$ENV{VCPKG_ROOT}/installed" CACHE PATH "vcpkg global install directory")
     else()
-        set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed" CACHE PATH "vcpkg manifest install directory")
+        message(FATAL_ERROR "VCPKG_ROOT is not set. Install dependencies globally and set VCPKG_ROOT before configuring.")
     endif()
 endif()
 
@@ -30,6 +33,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(USE_STATIC_QT "Link Qt statically (requires Qt commercial license or LGPL compliance)" OFF)
+option(AI_ENABLE_CUDA "Enable CUDA GPU inference (requires CUDA Toolkit and onnxruntime GPU build)" OFF)
 if(USE_STATIC_QT)
     set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
     message(WARNING "Static Qt linking enabled. Ensure LGPL v3 compliance or hold a Qt commercial license.")
@@ -39,7 +43,8 @@ if(MSVC)
     add_compile_options(/utf-8)
 endif()
 
-find_package(Qt6 COMPONENTS Core Gui Widgets Svg REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Svg Network REQUIRED)
+find_package(Qt6 COMPONENTS LinguistTools QUIET)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs videoio)
 find_package(onnxruntime CONFIG REQUIRED)
 
@@ -118,6 +123,19 @@ endif()
 install(
     DIRECTORY "${CMAKE_SOURCE_DIR}/scripts/"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/scripts"
+)
+
+install(
+    FILES
+        "${CMAKE_SOURCE_DIR}/PRIVACY.md"
+        "${CMAKE_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
+        "${CMAKE_SOURCE_DIR}/docs/USER_GUIDE.md"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc"
+)
+
+install(
+    FILES "${CMAKE_SOURCE_DIR}/resources/model_catalog.json"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}"
 )
 
 install(
