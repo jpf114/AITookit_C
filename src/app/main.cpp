@@ -1,6 +1,8 @@
 #include "app/app_bootstrap.h"
 #include "app/crash_handler.h"
 
+#include "app_version.h"
+
 #include <QApplication>
 #include <QByteArray>
 #include <QCoreApplication>
@@ -18,7 +20,7 @@ int main(int argc, char* argv[]) {
         if (arg == "--version" || arg == "-v") {
             QCoreApplication coreApp(argc, argv);
             coreApp.setApplicationName(QStringLiteral("AIToolkit"));
-            coreApp.setApplicationVersion(QStringLiteral("1.0.1"));
+            coreApp.setApplicationVersion(QStringLiteral(AITOOLKIT_VERSION));
             QTextStream(stdout) << coreApp.applicationName() << ' ' << coreApp.applicationVersion() << '\n';
             return 0;
         }

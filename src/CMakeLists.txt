@@ -210,7 +210,7 @@ if(NOT ai_toolkit_c_sources)
 endif()
 
 add_executable(ai_toolkit_c ${ai_toolkit_c_sources})
-target_include_directories(ai_toolkit_c PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(ai_toolkit_c PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_BINARY_DIR}/generated")
 target_link_libraries(
     ai_toolkit_c
     PRIVATE

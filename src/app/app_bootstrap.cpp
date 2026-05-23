@@ -1,5 +1,6 @@
 #include "app/app_bootstrap.h"
 
+#include "app_version.h"
 #include "core/app_logger.h"
 
 #include <QApplication>
@@ -36,7 +37,7 @@ void AppBootstrap::initialize(QApplication& app) {
 
     app.setApplicationName(QStringLiteral("AIToolkit"));
     app.setApplicationDisplayName(QStringLiteral("AI 检测工具"));
-    app.setApplicationVersion(QStringLiteral("1.0.1"));
+    app.setApplicationVersion(QStringLiteral(AITOOLKIT_VERSION));
     app.setOrganizationName(QStringLiteral("AIToolkit"));
 
     QSettings settings;

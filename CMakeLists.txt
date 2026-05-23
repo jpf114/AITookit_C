@@ -13,6 +13,12 @@ endif()
 
 project(ai-toolkit-c VERSION 1.0.1 LANGUAGES CXX)
 
+configure_file(
+    "${CMAKE_SOURCE_DIR}/cmake/app_version.h.in"
+    "${CMAKE_BINARY_DIR}/generated/app_version.h"
+    @ONLY
+)
+
 if(NOT DEFINED VCPKG_INSTALLED_DIR)
     if(DEFINED ENV{VCPKG_ROOT})
         set(VCPKG_INSTALLED_DIR "$ENV{VCPKG_ROOT}/installed" CACHE PATH "vcpkg global install directory")
@@ -129,6 +135,7 @@ install(
     FILES
         "${CMAKE_SOURCE_DIR}/PRIVACY.md"
         "${CMAKE_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
+        "${CMAKE_SOURCE_DIR}/TERMS.md"
         "${CMAKE_SOURCE_DIR}/docs/USER_GUIDE.md"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc"
 )

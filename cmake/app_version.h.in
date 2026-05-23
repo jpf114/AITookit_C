@@ -1,0 +1,3 @@
+#pragma once
+
+#define AITOOLKIT_VERSION "@PROJECT_VERSION@"
