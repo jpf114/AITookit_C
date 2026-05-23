@@ -118,9 +118,12 @@ ai_define_module(
         core/model_manifest.cpp
         core/settings_store.cpp
         core/unicode_path.cpp
+        core/app_logger.cpp
+        core/update_checker.cpp
     LINK_LIBS
         Qt6::Core
         Qt6::Gui
+        Qt6::Network
 )
 
 ai_define_module(
@@ -128,10 +131,19 @@ ai_define_module(
     SOURCES
         runtime/onnx_backend.cpp
         runtime/backend_registry.cpp
+        runtime/tensorrt_plugin.cpp
+        runtime/openvino_plugin.cpp
     LINK_LIBS
         ai_core
         onnxruntime::onnxruntime
 )
+
+if(AI_ENABLE_CUDA)
+    if(TARGET ai_runtime)
+        target_compile_definitions(ai_runtime PUBLIC USE_CUDA)
+        message(STATUS "CUDA GPU inference enabled (USE_CUDA)")
+    endif()
+endif()
 
 ai_define_module(
     ai_models
@@ -170,6 +182,7 @@ ai_collect_existing_sources(
     app/main.cpp
     app/app_bootstrap.cpp
     app/crash_handler.cpp
+    ui/license_utils.cpp
     ui/main_window.cpp
     ui/app_controller.cpp
     ui/image_utils.cpp
@@ -213,6 +226,76 @@ if(WIN32)
 endif()
 ai_copy_qt_windows_platform_plugin(ai_toolkit_c)
 
+set(AI_TRANSLATION_TS_FILES
+    "${CMAKE_SOURCE_DIR}/resources/translations/ai_toolkit_en.ts"
+    "${CMAKE_SOURCE_DIR}/resources/translations/ai_toolkit_zh_CN.ts"
+)
+if(EXISTS "${CMAKE_SOURCE_DIR}/resources/translations/ai_toolkit_en.ts")
+    if(TARGET Qt6::lrelease OR Qt6LinguistTools_FOUND)
+        qt_add_translations(
+            ai_toolkit_c
+            TS_FILES ${AI_TRANSLATION_TS_FILES}
+            QM_FILES_OUTPUT_VARIABLE ai_qm_files
+        )
+    else()
+        find_program(AI_LRELEASE_EXECUTABLE lrelease HINTS "${VCPKG_INSTALLED_DIR}/x64-windows/tools/qt6/bin")
+        if(AI_LRELEASE_EXECUTABLE)
+            set(ai_qm_files "")
+            foreach(ts_file IN LISTS AI_TRANSLATION_TS_FILES)
+                get_filename_component(ts_name "${ts_file}" NAME_WE)
+                set(qm_out "${CMAKE_CURRENT_BINARY_DIR}/${ts_name}.qm")
+                add_custom_command(
+                    OUTPUT "${qm_out}"
+                    COMMAND "${AI_LRELEASE_EXECUTABLE}" "${ts_file}" -qm "${qm_out}"
+                    DEPENDS "${ts_file}"
+                    COMMENT "Generating ${ts_name}.qm"
+                    VERBATIM
+                )
+                list(APPEND ai_qm_files "${qm_out}")
+            endforeach()
+            add_custom_target(ai_toolkit_translations DEPENDS ${ai_qm_files})
+            add_dependencies(ai_toolkit_c ai_toolkit_translations)
+        else()
+            message(WARNING "Qt Linguist tools not found; translations will not be built.")
+            set(ai_qm_files "")
+        endif()
+    endif()
+
+    if(ai_qm_files)
+    add_custom_command(
+        TARGET ai_toolkit_c
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:ai_toolkit_c>/translations"
+        COMMENT "Creating translations output directory"
+        VERBATIM
+    )
+    foreach(qm_file IN LISTS ai_qm_files)
+        add_custom_command(
+            TARGET ai_toolkit_c
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${qm_file}"
+                "$<TARGET_FILE_DIR:ai_toolkit_c>/translations/"
+            COMMENT "Copying ${qm_file} to runtime translations directory"
+            VERBATIM
+        )
+        endforeach()
+    endif()
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/resources/model_catalog.json")
+    add_custom_command(
+        TARGET ai_toolkit_c
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:ai_toolkit_c>/../share"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/resources/model_catalog.json"
+            "$<TARGET_FILE_DIR:ai_toolkit_c>/../share/model_catalog.json"
+        COMMENT "Copying model_catalog.json to runtime share directory"
+        VERBATIM
+    )
+endif()
+
 install(TARGETS ai_toolkit_c RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(
@@ -220,6 +303,8 @@ install(
     DESTINATION ${CMAKE_INSTALL_DATADIR}/translations
     FILES_MATCHING PATTERN "*.qm"
 )
+
+# qt_add_translations also installs .qm via the target; keep directory install as fallback.
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/resources/themes/app.qss")
     install(

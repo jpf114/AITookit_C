@@ -18,6 +18,7 @@ set(runtime_dlls
     Qt6Gui.dll
     Qt6Widgets.dll
     Qt6Svg.dll
+    Qt6Network.dll
     double-conversion.dll
     pcre2-16.dll
     md4c.dll
