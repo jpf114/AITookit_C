@@ -51,6 +51,7 @@ class InferenceWorkerTest : public QObject {
 private slots:
     void emitsErrorWhenNoModelLoaded();
     void processesImageWhenModelSet();
+    void batchProcessesMultipleImages();
 };
 
 void InferenceWorkerTest::emitsErrorWhenNoModelLoaded() {
@@ -84,12 +85,41 @@ void InferenceWorkerTest::processesImageWhenModelSet() {
 
     QCOMPARE(resultSpy.count(), 1);
     const auto summary = resultSpy.at(0).at(0).value<aitoolkit::core::InferenceSummary>();
-    if (summary.modelName.isEmpty() && summary.detectionCount == 0) {
-        QVERIFY(resultSpy.count() >= 1);
-    } else {
-        QVERIFY(summary.success);
-        QCOMPARE(summary.detectionCount, 1);
+    QVERIFY(summary.success);
+    QCOMPARE(summary.detectionCount, 1);
+}
+
+void InferenceWorkerTest::batchProcessesMultipleImages() {
+    qRegisterMetaType<aitoolkit::core::InferenceSummary>("aitoolkit::core::InferenceSummary");
+    qRegisterMetaType<QVector<aitoolkit::core::InferenceSummary>>("QVector<aitoolkit::core::InferenceSummary>");
+
+    aitoolkit::core::ModelManifest manifest;
+    manifest.name = QStringLiteral("Test");
+    manifest.taskType = QStringLiteral("detection");
+
+    auto backend = std::make_shared<FakeWorkerBackend>(manifest);
+    aitoolkit::services::InferenceWorker worker;
+    worker.setModel(backend);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QStringList paths;
+    for (int index = 0; index < 2; ++index) {
+        const QString imagePath = QDir(tempDir.path()).filePath(QStringLiteral("img_%1.png").arg(index));
+        QImage image(32, 32, QImage::Format_RGB32);
+        image.fill(Qt::blue);
+        QVERIFY(image.save(imagePath, "PNG"));
+        paths.append(imagePath);
     }
+
+    QSignalSpy batchSpy(&worker, &aitoolkit::services::InferenceWorker::batchFinished);
+    worker.runBatch(paths);
+
+    QCOMPARE(batchSpy.count(), 1);
+    const auto results = batchSpy.at(0).at(0).value<QVector<aitoolkit::core::InferenceSummary>>();
+    QCOMPARE(results.size(), 2);
+    QVERIFY(results.at(0).success);
+    QVERIFY(results.at(1).success);
 }
 
 }  // namespace
