@@ -124,5 +124,6 @@ src/
 
 - [用户指南](docs/USER_GUIDE.md) — 首次使用、GPU 设置、FAQ
 - [隐私政策](PRIVACY.md)
+- [服务条款](TERMS.md)
 - [第三方声明](THIRD_PARTY_NOTICES.md)
 - [贡献指南](CONTRIBUTING.md)

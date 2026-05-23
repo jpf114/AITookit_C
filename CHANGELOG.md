@@ -18,9 +18,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and the 
 - TensorRT / OpenVINO 后端插件骨架
 - resources/model_catalog.json 可配置模型目录
 - 4 个新测试套件（backend_registry、unicode_io、inference_worker、settings 扩展）
+- vcpkg 全局安装模式（`scripts/install_vcpkg_deps.ps1` 最小依赖集）
+- TERMS.md 服务条款
+- 主要控件无障碍名称（accessibleName）
+- CMake 统一版本号（`app_version.h`）
 
 ### Changed
 
+- 恢复 vcpkg 全局模式，移除 manifest 清单文件
 - 模型目录下载需勾选 AGPL 许可确认
 - 关于对话框版权统一为 AIToolkit
 - 移除第三方 GitHub 镜像，仅使用官方源
