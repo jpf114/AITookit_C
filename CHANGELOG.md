@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-05-23
+
+### Added
+
+- PRIVACY.md、THIRD_PARTY_NOTICES.md 法律合规文档
+- docs/USER_GUIDE.md 用户指南（GPU 设置、FAQ）
+- CMake/CI 自动生成 i18n `.qm` 翻译文件
+- `AI_ENABLE_CUDA` 编译选项启用 GPU 推理
+- CI：E2E 模型验证、打包冒烟测试、cppcheck 静态分析、SBOM 生成
+- 模型下载 SHA256 校验基础设施（models/checksums.json）
+- AppLogger 结构化本地日志、UpdateChecker 检查更新
+- TensorRT / OpenVINO 后端插件骨架
+- resources/model_catalog.json 可配置模型目录
+- 4 个新测试套件（backend_registry、unicode_io、inference_worker、settings 扩展）
+
+### Changed
+
+- 模型目录下载需勾选 AGPL 许可确认
+- 关于对话框版权统一为 AIToolkit
+- 移除第三方 GitHub 镜像，仅使用官方源
+- 大文件读取增加 512MB 上限保护
+
 ## [1.0.0] - 2026-05-19
 
 ### Added

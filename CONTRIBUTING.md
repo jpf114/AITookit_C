@@ -9,8 +9,7 @@
 - Windows 10/11 x64
 - Visual Studio 2022（MSVC v143）
 - CMake ≥ 3.21
-- [vcpkg](https://vcpkg.io/)（推荐设置 `VCPKG_ROOT` 环境变量）
-- Git
+- [vcpkg](https://vcpkg.io/)（**全局安装模式**，需设置 `VCPKG_ROOT` 环境变量）
 
 ### 构建步骤
 
@@ -19,7 +18,10 @@
 git clone <repo-url>
 cd AITookit_C
 
-# 配置（vcpkg manifest 模式自动安装依赖）
+# 安装最小 vcpkg 依赖（首次）
+pwsh -ExecutionPolicy Bypass -File scripts/install_vcpkg_deps.ps1
+
+# 配置
 cmake --preset release
 
 # 编译
@@ -152,3 +154,7 @@ ctest --test-dir build/release --preset release --output-on-failure
 本项目采用 [MIT License](LICENSE)。提交代码即表示你同意以相同许可证授权。
 
 注意：Ultralytics YOLO 模型采用 AGPL-3.0 许可证，商业使用需获取 Ultralytics 商业许可。
+
+## 跨平台说明
+
+当前 **生产目标为 Windows x64**。代码中通过 `#ifdef Q_OS_WIN` 隔离平台相关逻辑（崩溃处理、Unicode I/O、Qt 平台插件复制）。Linux/macOS 移植为后续版本计划，欢迎提交平台适配 PR。

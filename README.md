@@ -20,12 +20,19 @@
 - Windows 10/11 x64
 - Visual Studio 2022（MSVC v143）
 - CMake ≥ 3.21
-- [vcpkg](https://vcpkg.io/)（项目使用 manifest 模式，无需配置全局环境变量）
+- [vcpkg](https://vcpkg.io/)（全局安装模式，需设置 `VCPKG_ROOT` 环境变量）
+
+### 安装依赖（首次）
+
+```bash
+# 最小依赖集：Qt6、OpenCV、ONNX Runtime
+pwsh -ExecutionPolicy Bypass -File scripts/install_vcpkg_deps.ps1
+```
 
 ### 构建
 
 ```bash
-# 配置（vcpkg manifest 模式会自动安装依赖）
+# 配置（使用 VCPKG_ROOT 全局 installed 目录）
 cmake --preset release
 
 # 编译
@@ -37,6 +44,16 @@ ctest --test-dir build/release --preset release
 # 安装
 cmake --install build/release --config Release
 ```
+
+### GPU 构建（可选）
+
+```bash
+vcpkg install onnxruntime[cuda] --triplet x64-windows
+cmake --preset release -DAI_ENABLE_CUDA=ON
+cmake --build build/release --config Release
+```
+
+构建时会自动生成中英文翻译文件（`.qm`）并复制到可执行文件目录。
 
 ### 打包
 
@@ -102,3 +119,10 @@ src/
 ## 许可证
 
 [MIT License](LICENSE)
+
+## 文档
+
+- [用户指南](docs/USER_GUIDE.md) — 首次使用、GPU 设置、FAQ
+- [隐私政策](PRIVACY.md)
+- [第三方声明](THIRD_PARTY_NOTICES.md)
+- [贡献指南](CONTRIBUTING.md)
