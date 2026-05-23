@@ -47,6 +47,11 @@ std::vector<char> readFileToBuffer(const QString& filePath) {
         return {};
     }
 
+    constexpr qint64 kMaxReadBytes = 512LL * 1024 * 1024;
+    if (file.size() > kMaxReadBytes) {
+        return {};
+    }
+
     const QByteArray data = file.readAll();
     file.close();
 

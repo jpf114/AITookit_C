@@ -5,10 +5,37 @@ param(
     [string]$TaskType = "detection",
     [string]$Decoder = "yolo_v8",
     [string]$LabelsCategory = "coco80",
-    [int]$InputSize = 640
+    [int]$InputSize = 640,
+    [string]$ExpectedSha256 = ""
 )
 
 $ErrorActionPreference = "Stop"
+
+function Test-DownloadedSha256 {
+    param([string]$FilePath, [string]$ExpectedHash)
+    if ([string]::IsNullOrWhiteSpace($ExpectedHash)) { return $true }
+    $actual = (Get-FileHash -Path $FilePath -Algorithm SHA256).Hash.ToLower()
+    if ($actual -ne $ExpectedHash.ToLower()) {
+        Write-Warning "SHA256 mismatch: expected $ExpectedHash, got $actual"
+        return $false
+    }
+    Write-Host "SHA256 verified."
+    return $true
+}
+
+function Get-ChecksumFromManifest {
+    param([string]$FileName, [string]$ModelsDirectory)
+    $checksumsPath = Join-Path $ModelsDirectory "checksums.json"
+    if (-not (Test-Path $checksumsPath)) { return $null }
+    try {
+        $checksums = Get-Content $checksumsPath -Raw | ConvertFrom-Json
+        if ($checksums.files.PSObject.Properties.Name -contains $FileName) {
+            $hash = $checksums.files.$FileName
+            if (-not [string]::IsNullOrWhiteSpace($hash)) { return $hash }
+        }
+    } catch { }
+    return $null
+}
 
 $ModelsDir = [System.IO.Path]::GetFullPath($ModelsDir)
 
@@ -227,6 +254,10 @@ Write-Host "Generated manifest: $jsonFilePath"
 if (Test-Path $onnxFilePath) {
     Write-Host "Model file already exists: $onnxFilePath"
 } else {
+    if ([string]::IsNullOrWhiteSpace($ExpectedSha256)) {
+        $ExpectedSha256 = Get-ChecksumFromManifest -FileName $onnxFileName -ModelsDirectory $ModelsDir
+    }
+
     Write-Host ""
     Write-Host "Attempting to download $ModelName ONNX model..."
     Write-Host "  Source: $ModelUrl"
@@ -235,6 +266,14 @@ if (Test-Path $onnxFilePath) {
     try {
         Invoke-WebRequest -Uri $ModelUrl -OutFile $onnxFilePath -UseBasicParsing
         $fileSize = (Get-Item $onnxFilePath).Length
+        if ($fileSize -lt 1000000) {
+            Remove-Item $onnxFilePath -Force -ErrorAction SilentlyContinue
+            throw "Downloaded file too small ($fileSize bytes)"
+        }
+        if (-not (Test-DownloadedSha256 -FilePath $onnxFilePath -ExpectedHash $ExpectedSha256)) {
+            Remove-Item $onnxFilePath -Force -ErrorAction SilentlyContinue
+            throw "SHA256 verification failed"
+        }
         Write-Host "Download complete, file size: $([math]::Round($fileSize / 1MB, 2)) MB"
     } catch {
         Write-Warning "Automatic download failed. Please download the model manually:"

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "description": "Optional SHA256 checksums for downloaded ONNX models. Leave hash empty to skip verification.",
+  "files": {
+    "yolov8n.onnx": "",
+    "yolov8n-cls.onnx": "",
+    "yolov8n-seg.onnx": ""
+  }
+}
