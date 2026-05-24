@@ -2,6 +2,8 @@
 
 #include "core/update_checker.h"
 
+#include "runtime/backend_registry.h"
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
@@ -80,6 +82,10 @@ SettingsPage::SettingsPage(QWidget* parent)
         emit modelCatalogUrlChanged(QString());
     });
 
+    checkUpdatesOnStartupCheckBox_ = new QCheckBox(tr("启动时检查更新（每 24 小时最多一次）"), this);
+    checkUpdatesOnStartupCheckBox_->setChecked(true);
+    connect(checkUpdatesOnStartupCheckBox_, &QCheckBox::toggled, this, &SettingsPage::checkUpdatesOnStartupChanged);
+
     auto* recentModelsLabel = new QLabel(tr("最近模型"), this);
     recentModelsList_ = new QListWidget(this);
     recentModelsList_->setObjectName(QStringLiteral("RecentModelsList"));
@@ -126,17 +132,27 @@ SettingsPage::SettingsPage(QWidget* parent)
     aboutButton->setObjectName(QStringLiteral("SecondaryButton"));
     aboutButton->setAccessibleName(tr("关于"));
     connect(aboutButton, &QPushButton::clicked, this, [this]() {
+        QStringList backendLines;
+        for (const runtime::BackendInfo& backendInfo : runtime::BackendRegistry::instance().allBackendInfos()) {
+            const QString availability = backendInfo.isAvailable
+                ? tr("可用")
+                : tr("即将支持");
+            backendLines.append(
+                QStringLiteral("%1 %2 (%3)")
+                    .arg(backendInfo.displayName, backendInfo.version, availability));
+        }
+
         QMessageBox::about(
             this,
             tr("关于 AI 检测工具"),
             tr("<h3>AI 检测工具 v%1</h3>"
                "<p>基于 ONNX Runtime 的轻量级目标检测桌面应用</p>"
                "<p>支持 YOLOv5/YOLOv8/YOLOX 等模型</p>"
-               "<p>推理后端：%2</p>"
+               "<p><b>推理后端：</b><br/>%2</p>"
                "<p>&copy; 2026 AIToolkit</p>"
                "<p>%3</p>")
                 .arg(QCoreApplication::applicationVersion())
-                .arg(QStringLiteral("ONNX Runtime"))
+                .arg(backendLines.join(QStringLiteral("<br/>")))
                 .arg(tr("隐私政策、服务条款与第三方声明见安装目录 share/doc/ 下的 PRIVACY.md、TERMS.md 与 THIRD_PARTY_NOTICES.md")));
     });
 
@@ -180,6 +196,7 @@ SettingsPage::SettingsPage(QWidget* parent)
     layout->addWidget(languageCombo_);
     layout->addWidget(catalogLabel);
     layout->addLayout(catalogRow);
+    layout->addWidget(checkUpdatesOnStartupCheckBox_);
     layout->addWidget(recentModelsLabel);
     layout->addWidget(recentModelsList_);
     layout->addWidget(recentInputsLabel);
@@ -235,6 +252,12 @@ void SettingsPage::setLanguage(const QString& langCode) {
 
 void SettingsPage::setModelCatalogUrl(const QString& url) {
     catalogUrlEdit_->setText(url);
+}
+
+void SettingsPage::setCheckUpdatesOnStartup(const bool enabled) {
+    checkUpdatesOnStartupCheckBox_->blockSignals(true);
+    checkUpdatesOnStartupCheckBox_->setChecked(enabled);
+    checkUpdatesOnStartupCheckBox_->blockSignals(false);
 }
 
 }  // namespace aitoolkit::ui

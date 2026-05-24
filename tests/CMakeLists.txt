@@ -226,6 +226,7 @@ if(TARGET test_main_window)
             Qt6::Widgets
             Qt6::Svg
             Qt6::Network
+            Qt6::Concurrent
     )
 endif()
 
@@ -271,6 +272,7 @@ if(TARGET test_settings_page)
         test_settings_page
         PRIVATE
             ai_core
+            ai_runtime
             Qt6::Gui
             Qt6::Widgets
             Qt6::Network
@@ -308,5 +310,6 @@ if(TARGET test_gui_validation)
             Qt6::Widgets
             Qt6::Svg
             Qt6::Network
+            Qt6::Concurrent
     )
 endif()

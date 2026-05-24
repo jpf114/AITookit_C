@@ -22,6 +22,8 @@ public:
     [[nodiscard]] bool useGPUInference() const;
     [[nodiscard]] QString language() const;
     [[nodiscard]] QString modelCatalogUrl() const;
+    [[nodiscard]] bool checkUpdatesOnStartup() const;
+    [[nodiscard]] qint64 lastUpdateCheckEpochMs() const;
 
     void setRecentModels(const QStringList& paths);
     void setRecentInputs(const QStringList& paths);
@@ -32,6 +34,8 @@ public:
     void setUseGPUInference(bool useGPU);
     void setLanguage(const QString& langCode);
     void setModelCatalogUrl(const QString& url);
+    void setCheckUpdatesOnStartup(bool enabled);
+    void setLastUpdateCheckEpochMs(qint64 epochMs);
 
     void addRecentModel(const QString& path, int maxItems = 10);
     void addRecentInput(const QString& path, int maxItems = 10);

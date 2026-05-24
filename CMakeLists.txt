@@ -11,7 +11,7 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-project(ai-toolkit-c VERSION 1.1.0 LANGUAGES CXX)
+project(ai-toolkit-c VERSION 1.2.0 LANGUAGES CXX)
 
 configure_file(
     "${CMAKE_SOURCE_DIR}/cmake/app_version.h.in"
@@ -49,7 +49,7 @@ if(MSVC)
     add_compile_options(/utf-8)
 endif()
 
-find_package(Qt6 COMPONENTS Core Gui Widgets Svg Network REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Svg Network Concurrent REQUIRED)
 find_package(Qt6 COMPONENTS LinguistTools QUIET)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs videoio)
 find_package(onnxruntime CONFIG REQUIRED)

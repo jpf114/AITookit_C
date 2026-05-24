@@ -4,6 +4,8 @@
 
 #include <QCloseEvent>
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QDesktopServices>
 #include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -19,8 +21,13 @@
 #include <QShortcut>
 #include <QStackedWidget>
 #include <QStatusBar>
+#include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <QtConcurrent>
+#include <QFutureWatcher>
+
+#include "core/update_checker.h"
 
 #include "ui/app_controller.h"
 #include "ui/nav_panel.h"
@@ -91,6 +98,8 @@ MainWindow::MainWindow(QWidget* parent)
     updateContextPanel();
 
     controller_->tryLoadDefaultModel();
+
+    QTimer::singleShot(3000, this, &MainWindow::scheduleStartupUpdateCheck);
 }
 
 MainWindow::~MainWindow() {
@@ -519,6 +528,9 @@ void MainWindow::wireSettingsSignals() {
     connect(settingsPage_, &SettingsPage::modelCatalogUrlChanged, this, [this](const QString& url) {
         controller_->settingsStore().setModelCatalogUrl(url);
     });
+    connect(settingsPage_, &SettingsPage::checkUpdatesOnStartupChanged, this, [this](const bool enabled) {
+        controller_->settingsStore().setCheckUpdatesOnStartup(enabled);
+    });
 }
 
 void MainWindow::wireControllerSignals() {
@@ -723,10 +735,56 @@ void MainWindow::refreshSettingsPage() {
     settingsPage_->setUseGPU(controller_->settingsStore().useGPUInference());
     settingsPage_->setLanguage(controller_->settingsStore().language());
     settingsPage_->setModelCatalogUrl(controller_->settingsStore().modelCatalogUrl());
+    settingsPage_->setCheckUpdatesOnStartup(controller_->settingsStore().checkUpdatesOnStartup());
     controller_->modelService().setThreadCount(controller_->settingsStore().inferenceThreadCount());
     controller_->modelService().setUseGPU(controller_->settingsStore().useGPUInference());
     homePage_->setRecentModels(controller_->settingsStore().recentModels());
     homePage_->setRecentInputs(controller_->settingsStore().recentInputs());
+}
+
+void MainWindow::scheduleStartupUpdateCheck() {
+    auto& store = controller_->settingsStore();
+    if (!store.checkUpdatesOnStartup()) {
+        return;
+    }
+
+    constexpr qint64 kUpdateCheckIntervalMs = 24LL * 60 * 60 * 1000;
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    const qint64 lastCheck = store.lastUpdateCheckEpochMs();
+    if (lastCheck > 0 && (now - lastCheck) < kUpdateCheckIntervalMs) {
+        return;
+    }
+
+    const QString currentVersion = QCoreApplication::applicationVersion();
+    auto* watcher = new QFutureWatcher<core::UpdateCheckResult>(this);
+    connect(watcher, &QFutureWatcher<core::UpdateCheckResult>::finished, this, [this, watcher]() {
+        const core::UpdateCheckResult result = watcher->result();
+        watcher->deleteLater();
+        controller_->settingsStore().setLastUpdateCheckEpochMs(QDateTime::currentMSecsSinceEpoch());
+
+        if (!result.success || !result.updateAvailable) {
+            return;
+        }
+
+        statusBar()->showMessage(
+            tr("发现新版本 v%1").arg(result.latestVersion),
+            8000);
+
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Information);
+        box.setWindowTitle(tr("发现新版本"));
+        box.setText(tr("AIToolkit v%1 已发布。").arg(result.latestVersion));
+        box.setInformativeText(tr("当前版本：v%1").arg(QCoreApplication::applicationVersion()));
+        QPushButton* openButton = box.addButton(tr("打开下载页"), QMessageBox::AcceptRole);
+        box.addButton(tr("稍后"), QMessageBox::RejectRole);
+        box.exec();
+        if (box.clickedButton() == openButton) {
+            QDesktopServices::openUrl(QUrl(result.releaseUrl));
+        }
+    });
+    watcher->setFuture(QtConcurrent::run([currentVersion]() {
+        return core::UpdateChecker::checkForUpdates(currentVersion);
+    }));
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {

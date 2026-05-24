@@ -127,6 +127,7 @@ private:
     void wireControllerSignals();
     void updateContextPanel();
     void refreshSettingsPage();
+    void scheduleStartupUpdateCheck();
     void showPage(int pageId);
     void setupShortcuts();
     void handleDroppedUrls(const QList<QUrl>& urls);

@@ -24,6 +24,7 @@ public:
     void setUseGPU(bool useGPU);
     void setLanguage(const QString& langCode);
     void setModelCatalogUrl(const QString& url);
+    void setCheckUpdatesOnStartup(bool enabled);
 
 signals:
     void defaultExportDirectoryChanged(const QString& directoryPath);
@@ -33,10 +34,12 @@ signals:
     void useGPUChanged(bool useGPU);
     void languageChanged(const QString& langCode);
     void modelCatalogUrlChanged(const QString& url);
+    void checkUpdatesOnStartupChanged(bool enabled);
 
 private:
     QLineEdit* exportDirectoryEdit_ = nullptr;
     QLineEdit* catalogUrlEdit_ = nullptr;
+    QCheckBox* checkUpdatesOnStartupCheckBox_ = nullptr;
     QSpinBox* threadCountSpin_ = nullptr;
     QCheckBox* gpuCheckBox_ = nullptr;
     QComboBox* languageCombo_ = nullptr;

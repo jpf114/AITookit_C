@@ -18,6 +18,7 @@ private slots:
     void savesAndLoadsDefaultExportDirectory();
     void savesAndLoadsGpuThreadLanguageAndGeometry();
     void savesAndLoadsModelCatalogUrl();
+    void savesAndLoadsUpdatePreferences();
 };
 
 QString settingsFilePath(QTemporaryDir& tempDir, const QString& fileName) {
@@ -144,6 +145,22 @@ void SettingsStoreTest::savesAndLoadsModelCatalogUrl() {
 
     aitoolkit::core::SettingsStore store(iniPath, QSettings::IniFormat);
     QCOMPARE(store.modelCatalogUrl(), QStringLiteral("https://example.com/model_catalog.json"));
+}
+
+void SettingsStoreTest::savesAndLoadsUpdatePreferences() {
+    QTemporaryDir tempDir;
+    QVERIFY2(tempDir.isValid(), "Temporary directory should be created");
+    const QString iniPath = settingsFilePath(tempDir, QStringLiteral("settings.ini"));
+
+    {
+        aitoolkit::core::SettingsStore store(iniPath, QSettings::IniFormat);
+        store.setCheckUpdatesOnStartup(false);
+        store.setLastUpdateCheckEpochMs(1234567890);
+    }
+
+    aitoolkit::core::SettingsStore store(iniPath, QSettings::IniFormat);
+    QVERIFY(!store.checkUpdatesOnStartup());
+    QCOMPARE(store.lastUpdateCheckEpochMs(), 1234567890LL);
 }
 
 }  // namespace

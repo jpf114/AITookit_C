@@ -15,6 +15,8 @@ constexpr auto kInferenceThreadCountKey = "inference/threadCount";
 constexpr auto kUseGPUInferenceKey = "inference/useGPU";
 constexpr auto kLanguageKey = "language";
 constexpr auto kModelCatalogUrlKey = "catalog/modelUrl";
+constexpr auto kCheckUpdatesOnStartupKey = "updates/checkOnStartup";
+constexpr auto kLastUpdateCheckEpochMsKey = "updates/lastCheckEpochMs";
 
 }  // namespace
 
@@ -104,6 +106,24 @@ QString SettingsStore::modelCatalogUrl() const {
 
 void SettingsStore::setModelCatalogUrl(const QString& url) {
     settings_.setValue(QString::fromLatin1(kModelCatalogUrlKey), url.trimmed());
+    settings_.sync();
+}
+
+bool SettingsStore::checkUpdatesOnStartup() const {
+    return settings_.value(QString::fromLatin1(kCheckUpdatesOnStartupKey), true).toBool();
+}
+
+void SettingsStore::setCheckUpdatesOnStartup(const bool enabled) {
+    settings_.setValue(QString::fromLatin1(kCheckUpdatesOnStartupKey), enabled);
+    settings_.sync();
+}
+
+qint64 SettingsStore::lastUpdateCheckEpochMs() const {
+    return settings_.value(QString::fromLatin1(kLastUpdateCheckEpochMsKey), 0).toLongLong();
+}
+
+void SettingsStore::setLastUpdateCheckEpochMs(const qint64 epochMs) {
+    settings_.setValue(QString::fromLatin1(kLastUpdateCheckEpochMsKey), epochMs);
     settings_.sync();
 }
 
