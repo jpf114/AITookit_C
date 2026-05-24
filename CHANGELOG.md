@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-05-24
+
+### Added
+
+- 完整 `model_catalog.json`（14 款 YOLO 模型）
+- CMake 选项 `AI_ENABLE_TENSORRT` / `AI_ENABLE_OPENVINO`（插件骨架）
+- 扩展推理后端开发文档、`.clang-format` 配置
+- 模型页显示可用推理后端列表
+
+### Changed
+
+- TensorRT/OpenVINO 插件错误提示与版本标识更清晰
+- README 同步 ONNX 任务类型自动推断说明
+
 ## [1.2.0] - 2026-05-24
 
 ### Added
