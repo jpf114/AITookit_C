@@ -41,6 +41,16 @@ private slots:
         QVERIFY(registry_->getDecoder("yolo_v8") != nullptr);
     }
 
+    void testYoloV5DecoderIsRegistered() {
+        QVERIFY(registry_->hasDecoder("yolo_v5"));
+        QVERIFY(registry_->getDecoder("yolo_v5") != nullptr);
+    }
+
+    void testYoloXDecoderIsRegistered() {
+        QVERIFY(registry_->hasDecoder("yolo_x"));
+        QVERIFY(registry_->getDecoder("yolo_x") != nullptr);
+    }
+
 private:
     PostprocessRegistry* registry_ = nullptr;
 };
