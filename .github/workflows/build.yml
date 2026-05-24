@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload coverage report (Release only)
         if: matrix.build_type == 'Release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: |
@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload benchmark results (Release only)
         if: matrix.build_type == 'Release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results
           path: benchmark-results.txt
@@ -148,7 +148,7 @@ jobs:
 
       - name: Upload package
         if: matrix.build_type == 'Release'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: AIToolkit-win64
           path: |
@@ -186,7 +186,7 @@ jobs:
             xargs -0 clang-format --dry-run --Werror
 
       - name: Upload cppcheck report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cppcheck-report
           path: cppcheck-report.txt
