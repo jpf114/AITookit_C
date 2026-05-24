@@ -26,7 +26,10 @@ class ModelCatalogDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit ModelCatalogDialog(const QString& modelsDir, QWidget* parent = nullptr);
+    explicit ModelCatalogDialog(
+        const QString& modelsDir,
+        const QString& catalogUrl = QString(),
+        QWidget* parent = nullptr);
 
     QString selectedModelName() const;
     QString selectedModelUrl() const;
@@ -47,6 +50,7 @@ private:
     QPushButton* downloadButton_ = nullptr;
     QCheckBox* licenseAcceptCheckBox_ = nullptr;
     QString modelsDir_;
+    QString catalogUrl_;
     QVector<CatalogModelEntry> entries_;
 };
 

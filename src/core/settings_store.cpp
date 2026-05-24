@@ -14,6 +14,7 @@ constexpr auto kWindowGeometryKey = "state/windowGeometry";
 constexpr auto kInferenceThreadCountKey = "inference/threadCount";
 constexpr auto kUseGPUInferenceKey = "inference/useGPU";
 constexpr auto kLanguageKey = "language";
+constexpr auto kModelCatalogUrlKey = "catalog/modelUrl";
 
 }  // namespace
 
@@ -94,6 +95,15 @@ QString SettingsStore::language() const {
 
 void SettingsStore::setLanguage(const QString& langCode) {
     settings_.setValue(QString::fromLatin1(kLanguageKey), langCode);
+    settings_.sync();
+}
+
+QString SettingsStore::modelCatalogUrl() const {
+    return settings_.value(QString::fromLatin1(kModelCatalogUrlKey)).toString().trimmed();
+}
+
+void SettingsStore::setModelCatalogUrl(const QString& url) {
+    settings_.setValue(QString::fromLatin1(kModelCatalogUrlKey), url.trimmed());
     settings_.sync();
 }
 

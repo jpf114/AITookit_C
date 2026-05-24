@@ -5,6 +5,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
+#include <QDesktopServices>
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -14,6 +15,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QUrl>
 #include <QVBoxLayout>
 
 namespace aitoolkit::ui {
@@ -57,6 +59,25 @@ SettingsPage::SettingsPage(QWidget* parent)
     languageCombo_->addItem(QStringLiteral("English"), QStringLiteral("en"));
     connect(languageCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]() {
         emit languageChanged(languageCombo_->currentData().toString());
+    });
+
+    auto* catalogLabel = new QLabel(tr("模型目录 URL（高级）"), this);
+    auto* catalogRow = new QHBoxLayout();
+    catalogUrlEdit_ = new QLineEdit(this);
+    catalogUrlEdit_->setPlaceholderText(
+        tr("留空则使用 GitHub 官方 catalog；示例：https://raw.githubusercontent.com/.../model_catalog.json"));
+    auto* resetCatalogButton = new QPushButton(tr("恢复默认"), this);
+    resetCatalogButton->setObjectName(QStringLiteral("SecondaryButton"));
+    resetCatalogButton->setAccessibleName(tr("恢复默认模型目录 URL"));
+    catalogRow->addWidget(catalogUrlEdit_, 1);
+    catalogRow->addWidget(resetCatalogButton);
+
+    connect(catalogUrlEdit_, &QLineEdit::editingFinished, this, [this]() {
+        emit modelCatalogUrlChanged(catalogUrlEdit_->text().trimmed());
+    });
+    connect(resetCatalogButton, &QPushButton::clicked, this, [this]() {
+        catalogUrlEdit_->clear();
+        emit modelCatalogUrlChanged(QString());
     });
 
     auto* recentModelsLabel = new QLabel(tr("最近模型"), this);
@@ -130,10 +151,17 @@ SettingsPage::SettingsPage(QWidget* parent)
             return;
         }
         if (result.updateAvailable) {
-            QMessageBox::information(
-                this,
-                tr("检查更新"),
-                tr("发现新版本 v%1。\n\n下载：%2").arg(result.latestVersion, result.releaseUrl));
+            QMessageBox box(this);
+            box.setIcon(QMessageBox::Information);
+            box.setWindowTitle(tr("检查更新"));
+            box.setText(tr("发现新版本 v%1。").arg(result.latestVersion));
+            box.setInformativeText(tr("下载地址：%1").arg(result.releaseUrl));
+            QPushButton* openButton = box.addButton(tr("打开下载页"), QMessageBox::AcceptRole);
+            box.addButton(QMessageBox::Ok);
+            box.exec();
+            if (box.clickedButton() == openButton) {
+                QDesktopServices::openUrl(QUrl(result.releaseUrl));
+            }
         } else {
             QMessageBox::information(
                 this,
@@ -150,6 +178,8 @@ SettingsPage::SettingsPage(QWidget* parent)
     layout->addWidget(gpuCheckBox_);
     layout->addWidget(langLabel);
     layout->addWidget(languageCombo_);
+    layout->addWidget(catalogLabel);
+    layout->addLayout(catalogRow);
     layout->addWidget(recentModelsLabel);
     layout->addWidget(recentModelsList_);
     layout->addWidget(recentInputsLabel);
@@ -201,6 +231,10 @@ void SettingsPage::setLanguage(const QString& langCode) {
         }
     }
     languageCombo_->blockSignals(false);
+}
+
+void SettingsPage::setModelCatalogUrl(const QString& url) {
+    catalogUrlEdit_->setText(url);
 }
 
 }  // namespace aitoolkit::ui

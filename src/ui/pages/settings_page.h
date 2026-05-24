@@ -23,6 +23,7 @@ public:
     void setInferenceThreadCount(int count);
     void setUseGPU(bool useGPU);
     void setLanguage(const QString& langCode);
+    void setModelCatalogUrl(const QString& url);
 
 signals:
     void defaultExportDirectoryChanged(const QString& directoryPath);
@@ -31,9 +32,11 @@ signals:
     void inferenceThreadCountChanged(int count);
     void useGPUChanged(bool useGPU);
     void languageChanged(const QString& langCode);
+    void modelCatalogUrlChanged(const QString& url);
 
 private:
     QLineEdit* exportDirectoryEdit_ = nullptr;
+    QLineEdit* catalogUrlEdit_ = nullptr;
     QSpinBox* threadCountSpin_ = nullptr;
     QCheckBox* gpuCheckBox_ = nullptr;
     QComboBox* languageCombo_ = nullptr;

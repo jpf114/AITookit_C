@@ -257,7 +257,7 @@ void MainWindow::wireHomeSignals() {
             QDir().mkpath(modelsDir);
         }
 
-        ModelCatalogDialog dialog(modelsDir, this);
+        ModelCatalogDialog dialog(modelsDir, controller_->settingsStore().modelCatalogUrl(), this);
         if (dialog.exec() != QDialog::Accepted) {
             return;
         }
@@ -516,6 +516,9 @@ void MainWindow::wireSettingsSignals() {
             tr("语言切换"),
             tr("语言设置已保存，重启应用后生效。"));
     });
+    connect(settingsPage_, &SettingsPage::modelCatalogUrlChanged, this, [this](const QString& url) {
+        controller_->settingsStore().setModelCatalogUrl(url);
+    });
 }
 
 void MainWindow::wireControllerSignals() {
@@ -719,6 +722,7 @@ void MainWindow::refreshSettingsPage() {
     settingsPage_->setInferenceThreadCount(controller_->settingsStore().inferenceThreadCount());
     settingsPage_->setUseGPU(controller_->settingsStore().useGPUInference());
     settingsPage_->setLanguage(controller_->settingsStore().language());
+    settingsPage_->setModelCatalogUrl(controller_->settingsStore().modelCatalogUrl());
     controller_->modelService().setThreadCount(controller_->settingsStore().inferenceThreadCount());
     controller_->modelService().setUseGPU(controller_->settingsStore().useGPUInference());
     homePage_->setRecentModels(controller_->settingsStore().recentModels());

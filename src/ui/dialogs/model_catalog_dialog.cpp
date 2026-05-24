@@ -17,6 +17,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPushButton>
+#include <QStandardPaths>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -48,10 +49,57 @@ QVector<CatalogModelEntry> parseCatalogDocument(const QJsonDocument& document) {
     return entries;
 }
 
-QVector<CatalogModelEntry> tryFetchRemoteCatalog() {
+QString defaultModelCatalogUrl() {
+    return QStringLiteral(
+        "https://raw.githubusercontent.com/jpf114/AITookit_C/main/resources/model_catalog.json");
+}
+
+QString resolvedCatalogUrl(const QString& catalogUrl) {
+    return catalogUrl.trimmed().isEmpty() ? defaultModelCatalogUrl() : catalogUrl.trimmed();
+}
+
+QString catalogCachePath() {
+    const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (cacheDir.isEmpty()) {
+        return {};
+    }
+    return QDir(cacheDir).filePath(QStringLiteral("model_catalog_cache.json"));
+}
+
+void writeCatalogCache(const QByteArray& payload) {
+    const QString cachePath = catalogCachePath();
+    if (cachePath.isEmpty() || payload.isEmpty()) {
+        return;
+    }
+
+    QDir().mkpath(QFileInfo(cachePath).absolutePath());
+    QFile cacheFile(cachePath);
+    if (cacheFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        cacheFile.write(payload);
+    }
+}
+
+QVector<CatalogModelEntry> loadCatalogCache() {
+    const QString cachePath = catalogCachePath();
+    if (cachePath.isEmpty()) {
+        return {};
+    }
+
+    QFile file(cachePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return {};
+    }
+
+    return parseCatalogDocument(QJsonDocument::fromJson(file.readAll()));
+}
+
+QVector<CatalogModelEntry> tryFetchRemoteCatalog(const QString& catalogUrl) {
+    const QUrl url(resolvedCatalogUrl(catalogUrl));
+    if (!url.isValid()) {
+        return {};
+    }
+
     QNetworkAccessManager manager;
-    const QUrl url(QStringLiteral(
-        "https://raw.githubusercontent.com/jpf114/AITookit_C/main/resources/model_catalog.json"));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("AIToolkit-ModelCatalog/1.0"));
 
@@ -62,12 +110,17 @@ QVector<CatalogModelEntry> tryFetchRemoteCatalog() {
 
     if (reply->error() != QNetworkReply::NoError) {
         reply->deleteLater();
-        return {};
+        return loadCatalogCache();
     }
 
-    const QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
+    const QByteArray payload = reply->readAll();
     reply->deleteLater();
-    return parseCatalogDocument(document);
+
+    const QVector<CatalogModelEntry> entries = parseCatalogDocument(QJsonDocument::fromJson(payload));
+    if (!entries.isEmpty()) {
+        writeCatalogCache(payload);
+    }
+    return entries;
 }
 
 QVector<CatalogModelEntry> loadCatalogFromJson() {
@@ -227,8 +280,11 @@ QVector<CatalogModelEntry> hardcodedCatalogEntries() {
 
 }  // namespace
 
-ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent)
-    : QDialog(parent), modelsDir_(modelsDir) {
+ModelCatalogDialog::ModelCatalogDialog(
+    const QString& modelsDir,
+    const QString& catalogUrl,
+    QWidget* parent)
+    : QDialog(parent), modelsDir_(modelsDir), catalogUrl_(catalogUrl) {
     setWindowTitle(tr("模型目录"));
     setMinimumSize(600, 500);
 
@@ -311,7 +367,7 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
 }
 
 void ModelCatalogDialog::populateCatalog() {
-    entries_ = tryFetchRemoteCatalog();
+    entries_ = tryFetchRemoteCatalog(catalogUrl_);
     if (entries_.isEmpty()) {
         entries_ = loadCatalogFromJson();
     }

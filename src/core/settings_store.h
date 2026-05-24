@@ -21,6 +21,7 @@ public:
     [[nodiscard]] int inferenceThreadCount() const;
     [[nodiscard]] bool useGPUInference() const;
     [[nodiscard]] QString language() const;
+    [[nodiscard]] QString modelCatalogUrl() const;
 
     void setRecentModels(const QStringList& paths);
     void setRecentInputs(const QStringList& paths);
@@ -30,6 +31,7 @@ public:
     void setInferenceThreadCount(int count);
     void setUseGPUInference(bool useGPU);
     void setLanguage(const QString& langCode);
+    void setModelCatalogUrl(const QString& url);
 
     void addRecentModel(const QString& path, int maxItems = 10);
     void addRecentInput(const QString& path, int maxItems = 10);
