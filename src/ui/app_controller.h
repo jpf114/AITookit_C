@@ -13,6 +13,10 @@
 #include "services/inference_worker.h"
 #include "services/model_service.h"
 
+namespace aitoolkit::testing {
+struct AppControllerTestPeer;
+}
+
 namespace aitoolkit::ui {
 
 class AppController : public QObject {
@@ -48,6 +52,8 @@ public:
     bool isRunning() const;
 
     void applyInferenceResult(const core::InferenceSummary& summary);
+
+    friend struct aitoolkit::testing::AppControllerTestPeer;
 
 signals:
     void modelLoaded(const core::ModelManifest& manifest);

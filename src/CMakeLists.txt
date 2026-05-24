@@ -116,6 +116,9 @@ ai_define_module(
         core/image_algorithms.cpp
         core/json_utils.cpp
         core/model_manifest.cpp
+        core/model_checksum.cpp
+        core/catalog_url_validator.cpp
+        core/network_fetch.cpp
         core/settings_store.cpp
         core/unicode_path.cpp
         core/app_logger.cpp

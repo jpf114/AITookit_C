@@ -4,6 +4,9 @@
 
 #include "runtime/backend_registry.h"
 
+#include <QFutureWatcher>
+#include <QtConcurrent/QtConcurrent>
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
@@ -159,31 +162,41 @@ SettingsPage::SettingsPage(QWidget* parent)
     auto* updateButton = new QPushButton(tr("检查更新"), this);
     updateButton->setObjectName(QStringLiteral("SecondaryButton"));
     updateButton->setAccessibleName(tr("检查更新"));
-    connect(updateButton, &QPushButton::clicked, this, [this]() {
-        const auto result = aitoolkit::core::UpdateChecker::checkForUpdates(
-            QCoreApplication::applicationVersion());
-        if (!result.success) {
-            QMessageBox::warning(this, tr("检查更新"), result.errorMessage);
-            return;
-        }
-        if (result.updateAvailable) {
-            QMessageBox box(this);
-            box.setIcon(QMessageBox::Information);
-            box.setWindowTitle(tr("检查更新"));
-            box.setText(tr("发现新版本 v%1。").arg(result.latestVersion));
-            box.setInformativeText(tr("下载地址：%1").arg(result.releaseUrl));
-            QPushButton* openButton = box.addButton(tr("打开下载页"), QMessageBox::AcceptRole);
-            box.addButton(QMessageBox::Ok);
-            box.exec();
-            if (box.clickedButton() == openButton) {
-                QDesktopServices::openUrl(QUrl(result.releaseUrl));
+    connect(updateButton, &QPushButton::clicked, this, [this, updateButton]() {
+        updateButton->setEnabled(false);
+        auto* watcher = new QFutureWatcher<aitoolkit::core::UpdateCheckResult>(this);
+        connect(watcher, &QFutureWatcher<aitoolkit::core::UpdateCheckResult>::finished, this, [this, watcher, updateButton]() {
+            const auto result = watcher->result();
+            watcher->deleteLater();
+            updateButton->setEnabled(true);
+
+            if (!result.success) {
+                QMessageBox::warning(this, tr("检查更新"), result.errorMessage);
+                return;
             }
-        } else {
-            QMessageBox::information(
-                this,
-                tr("检查更新"),
-                tr("当前已是最新版本 (v%1)。").arg(QCoreApplication::applicationVersion()));
-        }
+            if (result.updateAvailable) {
+                QMessageBox box(this);
+                box.setIcon(QMessageBox::Information);
+                box.setWindowTitle(tr("检查更新"));
+                box.setText(tr("发现新版本 v%1。").arg(result.latestVersion));
+                box.setInformativeText(tr("下载地址：%1").arg(result.releaseUrl));
+                QPushButton* openButton = box.addButton(tr("打开下载页"), QMessageBox::AcceptRole);
+                box.addButton(QMessageBox::Ok);
+                box.exec();
+                if (box.clickedButton() == openButton) {
+                    QDesktopServices::openUrl(QUrl(result.releaseUrl));
+                }
+            } else {
+                QMessageBox::information(
+                    this,
+                    tr("检查更新"),
+                    tr("当前已是最新版本 (v%1)。").arg(QCoreApplication::applicationVersion()));
+            }
+        });
+        watcher->setFuture(QtConcurrent::run([]() {
+            return aitoolkit::core::UpdateChecker::checkForUpdates(
+                QCoreApplication::applicationVersion());
+        }));
     });
 
     layout->addWidget(title);

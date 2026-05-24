@@ -9,10 +9,9 @@
 #include <QTableWidget>
 #include <QTemporaryDir>
 
-#define private public
+#define AITOOLKIT_TESTING 1
+#include "test_peers.h"
 #include "ui/pages/results_page.h"
-#include "ui/widgets/image_preview_widget.h"
-#undef private
 
 namespace {
 
@@ -298,22 +297,27 @@ void ResultsPageTest::selectingBatchResultUpdatesPreviewImage() {
     page.setSummary(firstSummary);
     page.setResults({firstSummary, secondSummary});
 
-    QVERIFY(!page.previewWidget_->image_.isNull());
-    QCOMPARE(page.previewWidget_->image_.pixelColor(0, 0), QColor(QStringLiteral("#ef4444")));
+    auto* previewWidget = aitoolkit::testing::ResultsPageTestPeer::previewWidget(page);
+    QVERIFY(!aitoolkit::testing::ImagePreviewWidgetTestPeer::image(*previewWidget).isNull());
+    QCOMPARE(
+        aitoolkit::testing::ImagePreviewWidgetTestPeer::image(*previewWidget).pixelColor(0, 0),
+        QColor(QStringLiteral("#ef4444")));
 
-    page.resultsList_->setCurrentRow(1);
+    aitoolkit::testing::ResultsPageTestPeer::resultsList(page)->setCurrentRow(1);
 
-    QVERIFY(!page.previewWidget_->image_.isNull());
-    QCOMPARE(page.previewWidget_->image_.pixelColor(0, 0), QColor(QStringLiteral("#22c55e")));
+    QVERIFY(!aitoolkit::testing::ImagePreviewWidgetTestPeer::image(*previewWidget).isNull());
+    QCOMPARE(
+        aitoolkit::testing::ImagePreviewWidgetTestPeer::image(*previewWidget).pixelColor(0, 0),
+        QColor(QStringLiteral("#22c55e")));
 }
 
 void ResultsPageTest::exportButtonsReflectAvailableResultMedia() {
     aitoolkit::ui::ResultsPage page;
 
-    QVERIFY(page.exportButton_ != nullptr);
-    QVERIFY(page.exportImageButton_ != nullptr);
-    QVERIFY(!page.exportButton_->isEnabled());
-    QVERIFY(!page.exportImageButton_->isEnabled());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportButton(page) != nullptr);
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page) != nullptr);
+    QVERIFY(!aitoolkit::testing::ResultsPageTestPeer::exportButton(page)->isEnabled());
+    QVERIFY(!aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page)->isEnabled());
 
     aitoolkit::core::InferenceSummary videoSummary;
     videoSummary.modelName = QStringLiteral("Detector");
@@ -324,8 +328,8 @@ void ResultsPageTest::exportButtonsReflectAvailableResultMedia() {
     videoSummary.detections.push_back({0, QStringLiteral("car"), 0.9f, QRectF(1.0, 1.0, 8.0, 8.0)});
     page.setSummary(videoSummary);
 
-    QVERIFY(page.exportButton_->isEnabled());
-    QVERIFY(!page.exportImageButton_->isEnabled());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportButton(page)->isEnabled());
+    QVERIFY(!aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page)->isEnabled());
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
@@ -338,8 +342,8 @@ void ResultsPageTest::exportButtonsReflectAvailableResultMedia() {
     imageSummary.inputPath = imagePath;
     page.setSummary(imageSummary);
 
-    QVERIFY(page.exportButton_->isEnabled());
-    QVERIFY(page.exportImageButton_->isEnabled());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportButton(page)->isEnabled());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page)->isEnabled());
 }
 
 void ResultsPageTest::batchResultsClarifyCurrentVsAllExportActions() {
@@ -356,15 +360,15 @@ void ResultsPageTest::batchResultsClarifyCurrentVsAllExportActions() {
 
     aitoolkit::ui::ResultsPage page;
     page.setSummary(firstSummary);
-    QCOMPARE(page.exportButton_->text(), QStringLiteral("导出 JSON"));
-    QCOMPARE(page.exportImageButton_->text(), QStringLiteral("导出图片"));
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::exportButton(page)->text(), QStringLiteral("导出 JSON"));
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page)->text(), QStringLiteral("导出图片"));
 
     page.setResults({firstSummary, secondSummary});
 
-    QCOMPARE(page.exportButton_->text(), QStringLiteral("导出当前 JSON"));
-    QCOMPARE(page.exportImageButton_->text(), QStringLiteral("导出当前图片"));
-    QCOMPARE(page.exportBatchBtn_->text(), QStringLiteral("导出全部 JSON"));
-    QVERIFY(!page.exportBatchBtn_->isHidden());
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::exportButton(page)->text(), QStringLiteral("导出当前 JSON"));
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page)->text(), QStringLiteral("导出当前图片"));
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->text(), QStringLiteral("导出全部 JSON"));
+    QVERIFY(!aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->isHidden());
 }
 
 void ResultsPageTest::batchSummaryShowsCurrentPosition() {
@@ -392,7 +396,7 @@ void ResultsPageTest::batchSummaryShowsCurrentPosition() {
     page.setResults({firstSummary, secondSummary});
     QVERIFY(summaryLabel->text().contains(QStringLiteral("第 1 / 2 项")));
 
-    page.resultsList_->setCurrentRow(1);
+    aitoolkit::testing::ResultsPageTestPeer::resultsList(page)->setCurrentRow(1);
     QVERIFY(summaryLabel->text().contains(QStringLiteral("第 2 / 2 项")));
 }
 
@@ -416,11 +420,11 @@ void ResultsPageTest::resultListLabelsDisambiguateFramesAndDuplicateNames() {
     aitoolkit::ui::ResultsPage page;
     page.setResults({firstFrame, secondFrame, duplicateA, duplicateB});
 
-    QVERIFY(page.resultsList_ != nullptr);
-    QCOMPARE(page.resultsList_->item(0)->text(), QStringLiteral("demo.mp4 | frame 0"));
-    QCOMPARE(page.resultsList_->item(1)->text(), QStringLiteral("demo.mp4 | frame 12"));
-    QCOMPARE(page.resultsList_->item(2)->text(), QStringLiteral("cam-a/frame.png"));
-    QCOMPARE(page.resultsList_->item(3)->text(), QStringLiteral("cam-b/frame.png"));
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::resultsList(page) != nullptr);
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::resultsList(page)->item(0)->text(), QStringLiteral("demo.mp4 | frame 0"));
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::resultsList(page)->item(1)->text(), QStringLiteral("demo.mp4 | frame 12"));
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::resultsList(page)->item(2)->text(), QStringLiteral("cam-a/frame.png"));
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::resultsList(page)->item(3)->text(), QStringLiteral("cam-b/frame.png"));
 }
 
 void ResultsPageTest::summaryFallsBackToSourceWhenDimensionsMissing() {
@@ -451,8 +455,8 @@ void ResultsPageTest::summaryFallsBackToSourceWhenDimensionsMissing() {
 void ResultsPageTest::exportImageTooltipExplainsWhyItIsDisabled() {
     aitoolkit::ui::ResultsPage page;
 
-    QVERIFY(page.exportImageButton_ != nullptr);
-    QCOMPARE(page.exportImageButton_->toolTip(), QStringLiteral("请先完成一次推理，再导出图片。"));
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page) != nullptr);
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page)->toolTip(), QStringLiteral("请先完成一次推理，再导出图片。"));
 
     aitoolkit::core::InferenceSummary videoSummary;
     videoSummary.modelName = QStringLiteral("Detector");
@@ -463,7 +467,7 @@ void ResultsPageTest::exportImageTooltipExplainsWhyItIsDisabled() {
     page.setSummary(videoSummary);
 
     QCOMPARE(
-        page.exportImageButton_->toolTip(),
+        aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page)->toolTip(),
         QStringLiteral("当前结果没有可导出的预览图，请先选择可读取的图像结果。"));
 
     QTemporaryDir tempDir;
@@ -477,7 +481,7 @@ void ResultsPageTest::exportImageTooltipExplainsWhyItIsDisabled() {
     imageSummary.inputPath = imagePath;
     page.setSummary(imageSummary);
 
-    QCOMPARE(page.exportImageButton_->toolTip(), QStringLiteral("导出当前结果的渲染图片"));
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::exportImageButton(page)->toolTip(), QStringLiteral("导出当前结果的渲染图片"));
 }
 
 void ResultsPageTest::batchExportButtonOnlyAppearsForMultipleResults() {
@@ -492,21 +496,21 @@ void ResultsPageTest::batchExportButtonOnlyAppearsForMultipleResults() {
     secondSummary.inputPath = QStringLiteral("D:/images/second.png");
 
     aitoolkit::ui::ResultsPage page;
-    QVERIFY(page.exportBatchBtn_ != nullptr);
-    QVERIFY(page.exportBatchBtn_->isHidden());
-    QVERIFY(page.exportBatchBtn_->toolTip().isEmpty());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page) != nullptr);
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->isHidden());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->toolTip().isEmpty());
 
     page.setSummary(firstSummary);
-    QVERIFY(page.exportBatchBtn_->isHidden());
-    QVERIFY(page.exportBatchBtn_->toolTip().isEmpty());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->isHidden());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->toolTip().isEmpty());
 
     page.setResults({firstSummary, secondSummary});
-    QVERIFY(!page.exportBatchBtn_->isHidden());
-    QCOMPARE(page.exportBatchBtn_->toolTip(), QStringLiteral("一次导出当前批量结果的全部 JSON"));
+    QVERIFY(!aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->isHidden());
+    QCOMPARE(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->toolTip(), QStringLiteral("一次导出当前批量结果的全部 JSON"));
 
     page.setResults({firstSummary});
-    QVERIFY(page.exportBatchBtn_->isHidden());
-    QVERIFY(page.exportBatchBtn_->toolTip().isEmpty());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->isHidden());
+    QVERIFY(aitoolkit::testing::ResultsPageTestPeer::exportBatchButton(page)->toolTip().isEmpty());
 }
 
 }  // namespace

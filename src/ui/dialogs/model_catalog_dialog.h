@@ -8,6 +8,9 @@ class QListWidget;
 class QPushButton;
 class QLabel;
 class QCheckBox;
+class QNetworkAccessManager;
+class QNetworkReply;
+class QTimer;
 
 namespace aitoolkit::ui {
 
@@ -30,6 +33,7 @@ public:
         const QString& modelsDir,
         const QString& catalogUrl = QString(),
         QWidget* parent = nullptr);
+    ~ModelCatalogDialog() override;
 
     QString selectedModelName() const;
     QString selectedModelUrl() const;
@@ -39,8 +43,13 @@ public:
     int selectedModelInputSize() const;
     QString modelsDir() const;
 
+private slots:
+    void handleRemoteCatalogFinished();
+
 private:
-    void populateCatalog();
+    void populateCatalogFromLocal();
+    void startRemoteCatalogFetch();
+    void setCatalogEntries(const QVector<CatalogModelEntry>& entries);
     void updateDescription();
     void applyFilter(const QString& taskType);
 
@@ -52,6 +61,9 @@ private:
     QString modelsDir_;
     QString catalogUrl_;
     QVector<CatalogModelEntry> entries_;
+    QNetworkAccessManager* networkManager_ = nullptr;
+    QNetworkReply* remoteCatalogReply_ = nullptr;
+    QTimer* remoteCatalogTimeout_ = nullptr;
 };
 
 }  // namespace aitoolkit::ui

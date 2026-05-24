@@ -9,61 +9,12 @@
 #include "core/model_manifest.h"
 #include "runtime/backend_registry.h"
 #include "services/model_service.h"
+#include "test_helpers.h"
 
 namespace {
 
-class FakeInferenceBackend final : public aitoolkit::models::InferenceBackend {
-public:
-    explicit FakeInferenceBackend(aitoolkit::core::ModelManifest manifest)
-        : manifest_(std::move(manifest)) {
-    }
-
-    const aitoolkit::core::ModelManifest& manifest() const noexcept override {
-        return manifest_;
-    }
-
-    QVector<aitoolkit::core::DetectionItem> detect(const cv::Mat&, double, double) const override {
-        return {};
-    }
-
-    QString backendName() const noexcept override {
-        return QStringLiteral("Fake Backend");
-    }
-
-private:
-    aitoolkit::core::ModelManifest manifest_;
-};
-
-class FakeBackendPlugin final : public aitoolkit::runtime::BackendPlugin {
-public:
-    mutable int lastThreadCount = -1;
-    mutable bool lastUseGPU = false;
-    mutable int createModelCalls = 0;
-
-    aitoolkit::runtime::BackendInfo info() const override {
-        return {
-            QStringLiteral("fake_backend"),
-            QStringLiteral("Fake Backend"),
-            QStringLiteral("1.0"),
-            true,
-            true,
-        };
-    }
-
-    QStringList supportedTaskTypes() const override {
-        return {QStringLiteral("detection")};
-    }
-
-    std::unique_ptr<aitoolkit::models::InferenceBackend> createModel(
-        const aitoolkit::core::ModelManifest& manifest,
-        int threadCount,
-        bool useGPU) const override {
-        ++createModelCalls;
-        lastThreadCount = threadCount;
-        lastUseGPU = useGPU;
-        return std::make_unique<FakeInferenceBackend>(manifest);
-    }
-};
+using test_helpers::FakeBackendPlugin;
+using test_helpers::FakeInferenceBackend;
 
 QString writeManifestFile(const QString& directoryPath, const QString& backendName) {
     QFile modelFile(QDir(directoryPath).filePath(QStringLiteral("dummy.onnx")));

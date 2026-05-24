@@ -2,19 +2,18 @@
     "version":  1,
     "description":  "Optional SHA256 checksums for downloaded ONNX models. Leave hash empty to skip verification.",
     "files":  {
-                  "yolo11n.onnx":  "",
-                  "yolo11s.onnx":  "",
-                  "yolo11m.onnx":  "",
-                  "yolov8n.onnx":  "9a158697cac55b2e7e7d09f8c43d08389c0ff003e8a6ec2077d62e2f76665a01",
-                  "yolov8s.onnx":  "3a14b000c38a159e3ac240f9d90c146694ccc34d15a1316929eb219f7a3e5683",
-                  "yolov8m.onnx":  "",
-                  "yolov5nu.onnx":  "",
-                  "yolo11n-cls.onnx":  "",
-                  "yolo11s-cls.onnx":  "",
-                  "yolov8n-cls.onnx":  "515be3873e19af03464d65f4c4d6c49e1879feed86db39df319b8fe2c4c34bfb",
-                  "yolo11n-seg.onnx":  "",
-                  "yolo11s-seg.onnx":  "",
-                  "yolov8n-seg.onnx":  "9fea8cf41018eccc612ca9893a6252ce937074f2e2102aa2ad6ac6908ea5d05f",
-                  "yolov8s-seg.onnx":  "91ea61c3e5187ab20a1f52198c15a7e5d52a31d1afcead6e00dfd11b048e9e23"
+                  "yolo11n.onnx":  "634279b40c07c6391472c51ad45b81ebc48706a9a1fe72dd3396322acd0c053b",
+                  "yolo11s.onnx":  "21d6650c5097610c92c76ce5e4b717976059169eaea4962035b90c6a92c07a8f",
+                  "yolo11m.onnx":  "8a37b5c53ff642831aa454156b548ec2cf2537827445385c3e1c1b276cb666a3",
+                  "yolov8n.onnx":  "b2bc52f40e8e1c532427d5bde3575a5d5b571b739fab2c6df443733ed1589cbd",
+                  "yolov8s.onnx":  "111b9b7df6f1256ec4fa9c9258f10bd824a48da75f7bc575d2f2634c2171ebf7",
+                  "yolov8m.onnx":  "3aa21a2bbcb5e374a5802c05c0a68795470dbe67caf6eec15b1802e236692407",
+                  "yolo11n-cls.onnx":  "2d2f6414daeced6c518bb13f92b17fc1dbcaad60278b8f3ed5edd341c35abcd4",
+                  "yolo11s-cls.onnx":  "5978dfb101907ae880a05d070a6838ef503cb1dbab6e311727a34dd5b03f51cd",
+                  "yolov8n-cls.onnx":  "aa93a10489da776492e9005a9677f2aca3b1db40994e199f54b80131e76ef04d",
+                  "yolo11n-seg.onnx":  "0bc32bc92e985b881141ef9bd2216e2a746f70519d0d24da9fc85decc4428cf4",
+                  "yolo11s-seg.onnx":  "264666b830ffea90a0b89f8c51ce88e3b0c671492efe3bc95b3b9ef08f6122f8",
+                  "yolov8n-seg.onnx":  "0481e3434424d7a07fff3e6ee4e338e286abf6fe252c1a41ef4a6cacdf2d18f0",
+                  "yolov8s-seg.onnx":  "b3a62e190cab4f7ec46251dc3cf9826ba066d95e3b2b4f3c6f0e4b6fd5a31f76"
               }
 }

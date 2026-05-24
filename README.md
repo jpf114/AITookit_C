@@ -124,7 +124,7 @@ src/
 | UI 框架 | Qt 6 (Widgets) |
 | 推理引擎 | ONNX Runtime |
 | 图像处理 | OpenCV 4 |
-| 包管理 | vcpkg manifest 模式 |
+| 包管理 | vcpkg 全局模式 |
 | 构建系统 | CMake + CPack |
 | CI/CD | GitHub Actions |
 
@@ -135,6 +135,8 @@ src/
 ## 文档
 
 - [用户指南](docs/USER_GUIDE.md) — 首次使用、GPU 设置、FAQ
+- [配置参考](docs/CONFIGURATION.md) — CMake 选项、QSettings、脚本索引
+- [发布流程](docs/RELEASING.md) — 维护者发布 checklist
 - [隐私政策](PRIVACY.md)
 - [服务条款](TERMS.md)
 - [第三方声明](THIRD_PARTY_NOTICES.md)

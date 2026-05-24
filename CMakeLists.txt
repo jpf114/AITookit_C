@@ -139,6 +139,8 @@ install(
         "${CMAKE_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
         "${CMAKE_SOURCE_DIR}/TERMS.md"
         "${CMAKE_SOURCE_DIR}/docs/USER_GUIDE.md"
+        "${CMAKE_SOURCE_DIR}/docs/CONFIGURATION.md"
+        "${CMAKE_SOURCE_DIR}/docs/RELEASING.md"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc"
 )
 

@@ -6,6 +6,10 @@
 
 #include "core/types.h"
 
+namespace aitoolkit::testing {
+struct ImagePreviewWidgetTestPeer;
+}
+
 namespace aitoolkit::ui {
 
 class ImagePreviewWidget : public QWidget {
@@ -18,6 +22,8 @@ public:
     void setSummary(const core::InferenceSummary& summary);
 
     void resetView();
+
+    friend struct aitoolkit::testing::ImagePreviewWidgetTestPeer;
 
 protected:
     void paintEvent(QPaintEvent* event) override;

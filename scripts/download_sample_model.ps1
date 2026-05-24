@@ -1,7 +1,7 @@
 param(
     [string]$ModelsDir = (Join-Path $PSScriptRoot "..\models"),
     [string]$ModelName = "yolov8n",
-    [string]$ModelUrl = "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx",
+    [string]$ModelUrl = "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.onnx",
     [string]$TaskType = "detection",
     [string]$Decoder = "yolo_v8",
     [string]$LabelsCategory = "coco80",

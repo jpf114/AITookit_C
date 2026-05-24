@@ -54,7 +54,7 @@ core::InferenceSummary InferenceService::runImage(
     const cv::Mat image = imreadUnicode(cleanImagePath, cv::IMREAD_COLOR);
     if (image.empty()) {
         throw std::runtime_error(
-            QStringLiteral("Failed to read input image: %1").arg(QDir::toNativeSeparators(cleanImagePath)).toStdString());
+            QStringLiteral("无法读取输入图像：%1").arg(QDir::toNativeSeparators(cleanImagePath)).toStdString());
     }
     return runImageFromMat(model, image, QFileInfo(cleanImagePath).absoluteFilePath());
 }
@@ -89,7 +89,7 @@ QVector<core::InferenceSummary> InferenceService::runVideo(
     cv::VideoCapture capture;
     if (!openVideoCapture(cleanPath, capture)) {
         throw std::runtime_error(
-            QStringLiteral("Failed to open video file: %1").arg(QDir::toNativeSeparators(cleanPath)).toStdString());
+            QStringLiteral("无法打开视频文件：%1").arg(QDir::toNativeSeparators(cleanPath)).toStdString());
     }
 
     QVector<core::InferenceSummary> results;

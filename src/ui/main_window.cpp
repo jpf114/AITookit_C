@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFrame>
@@ -28,6 +29,9 @@
 #include <QFutureWatcher>
 
 #include "core/update_checker.h"
+#include "core/app_paths.h"
+#include "core/catalog_url_validator.h"
+#include "core/model_checksum.h"
 
 #include "ui/app_controller.h"
 #include "ui/nav_panel.h"
@@ -240,8 +244,21 @@ void MainWindow::wireHomeSignals() {
 
         auto* downloadProcess = new QProcess(this);
         connect(downloadProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                this, [this, downloadProcess, manifestPath, onnxPath](int, QProcess::ExitStatus) {
+                this, [this, downloadProcess, manifestPath, onnxPath, modelsDir](int, QProcess::ExitStatus) {
             downloadProcess->deleteLater();
+
+            QString verifyError;
+            if (!core::verifyDownloadedModel(modelsDir, QStringLiteral("yolov8n.onnx"), &verifyError)) {
+                QFile::remove(onnxPath);
+                QFile::remove(manifestPath);
+                QMessageBox::warning(
+                    this,
+                    tr("下载失败"),
+                    verifyError.isEmpty()
+                        ? tr("模型下载未完成。请检查网络连接后重试，或手动下载模型文件。")
+                        : verifyError);
+                return;
+            }
 
             if (QFileInfo::exists(manifestPath) && QFileInfo::exists(onnxPath)) {
                 controller_->loadModelManifest(manifestPath);
@@ -279,6 +296,12 @@ void MainWindow::wireHomeSignals() {
             return;
         }
 
+        const QString urlError = core::validateModelDownloadUrlOrError(url);
+        if (!urlError.isEmpty()) {
+            QMessageBox::warning(this, tr("下载失败"), urlError);
+            return;
+        }
+
         statusBar()->showMessage(tr("正在下载 %1...").arg(dialog.selectedModelName()));
 
         auto* downloadProcess = new QProcess(this);
@@ -304,6 +327,19 @@ void MainWindow::wireHomeSignals() {
             const QString onnxPath = modelsDir + QStringLiteral("/") + fileName;
             const QString jsonFileName = fileName.left(fileName.lastIndexOf('.')) + QStringLiteral(".json");
             const QString manifestPath = modelsDir + QStringLiteral("/") + jsonFileName;
+
+            QString verifyError;
+            if (!core::verifyDownloadedModel(modelsDir, fileName, &verifyError)) {
+                QFile::remove(onnxPath);
+                QFile::remove(manifestPath);
+                QMessageBox::warning(
+                    this,
+                    tr("下载失败"),
+                    verifyError.isEmpty()
+                        ? tr("模型下载未完成。请检查网络连接后重试。")
+                        : verifyError);
+                return;
+            }
 
             if (QFileInfo::exists(manifestPath) && QFileInfo::exists(onnxPath)) {
                 controller_->loadModelManifest(manifestPath);
@@ -526,6 +562,12 @@ void MainWindow::wireSettingsSignals() {
             tr("语言设置已保存，重启应用后生效。"));
     });
     connect(settingsPage_, &SettingsPage::modelCatalogUrlChanged, this, [this](const QString& url) {
+        const QString error = core::validateCatalogUrlOrError(url);
+        if (!error.isEmpty()) {
+            QMessageBox::warning(this, tr("模型目录 URL"), error);
+            refreshSettingsPage();
+            return;
+        }
         controller_->settingsStore().setModelCatalogUrl(url);
     });
     connect(settingsPage_, &SettingsPage::checkUpdatesOnStartupChanged, this, [this](const bool enabled) {

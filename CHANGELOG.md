@@ -8,15 +8,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and the 
 
 ### Added
 
-- 完整 `model_catalog.json`（14 款 YOLO 模型）
+- 完整 `model_catalog.json`（13 款 YOLO 模型，Ultralytics v8.4.0 官方 ONNX）
 - CMake 选项 `AI_ENABLE_TENSORRT` / `AI_ENABLE_OPENVINO`（插件骨架）
 - 扩展推理后端开发文档、`.clang-format` 配置
 - 模型页显示可用推理后端列表
+- C++ 模型下载 SHA256 校验（`model_checksum` + 完整 `checksums.json`）
+- Catalog / 模型下载 URL 安全校验（HTTPS + GitHub 域名白名单）
+- 网络请求 30 秒超时（`network_fetch`、catalog 异步拉取）
+- 发布与配置文档：`docs/RELEASING.md`、`docs/CONFIGURATION.md`
+- 测试：`test_model_checksum`、`test_catalog_url_validator`、`test_peers` 测试访问器
+- 脚本：`refresh_catalog_checksums.ps1`、`check_coverage_threshold.ps1`
 
 ### Changed
 
 - TensorRT/OpenVINO 插件错误提示与版本标识更清晰
 - README 同步 ONNX 任务类型自动推断说明
+- 模型 catalog URL 升级至 Ultralytics v8.4.0（修复 s/m 型号 404）
+- 移除不可用的 YOLOv5nu（官方无 ONNX 发布）
+- 设置页「检查更新」改为异步，不阻塞 UI
+- 模型目录对话框改为本地优先 + 异步远程刷新，移除硬编码 catalog
+- PRIVACY/TERMS 版本同步至 v1.2.1；README 修正 vcpkg 全局模式表述
+- CI：cppcheck 阻塞、clang-format 检查、覆盖率 60% 阈值门禁
+- 推理 Worker / InferenceService 错误提示中文化；删除未使用的 `AppError` 死代码
+
+### Removed
+
+- `hardcodedCatalogEntries()` 硬编码模型目录（约 130 行）
+- `yolov5nu` catalog 条目（无官方 ONNX 资产）
 
 ## [1.2.0] - 2026-05-24
 

@@ -15,6 +15,10 @@ class QShortcut;
 class QStackedWidget;
 class QWidget;
 
+namespace aitoolkit::testing {
+struct MainWindowTestPeer;
+}
+
 namespace aitoolkit::ui {
 
 class AppController;
@@ -131,6 +135,8 @@ private:
     void showPage(int pageId);
     void setupShortcuts();
     void handleDroppedUrls(const QList<QUrl>& urls);
+
+    friend struct aitoolkit::testing::MainWindowTestPeer;
 
 protected:
     void closeEvent(QCloseEvent* event) override;

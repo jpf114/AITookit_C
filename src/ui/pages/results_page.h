@@ -12,6 +12,10 @@ class QPushButton;
 class QTableWidget;
 class QHBoxLayout;
 
+namespace aitoolkit::testing {
+struct ResultsPageTestPeer;
+}
+
 namespace aitoolkit::ui {
 
 class ImagePreviewWidget;
@@ -32,6 +36,8 @@ signals:
     void exportImageRequested();
     void exportBatchJsonRequested();
     void resultSelectionChanged(const core::InferenceSummary& summary);
+
+    friend struct aitoolkit::testing::ResultsPageTestPeer;
 
 private:
     QString buildSummaryText(const core::InferenceSummary& summary) const;

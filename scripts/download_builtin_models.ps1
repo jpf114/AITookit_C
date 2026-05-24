@@ -34,9 +34,9 @@ function Test-FileSha256 {
 }
 
 $models = @(
-    @{ Name = 'yolov8n.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx' },
-    @{ Name = 'yolov8n-cls.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-cls.onnx' },
-    @{ Name = 'yolov8n-seg.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-seg.onnx' }
+    @{ Name = 'yolov8n.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.onnx' },
+    @{ Name = 'yolov8n-cls.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n-cls.onnx' },
+    @{ Name = 'yolov8n-seg.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n-seg.onnx' }
 )
 
 foreach ($m in $models) {

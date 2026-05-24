@@ -39,12 +39,10 @@ jobs:
 
       - name: Install OpenCppCoverage (Release only)
         if: matrix.build_type == 'Release'
-        continue-on-error: true
         run: choco install opencppcoverage -y
 
       - name: Collect code coverage (Release only)
         if: matrix.build_type == 'Release'
-        continue-on-error: true
         shell: pwsh
         run: |
           $cov = @(
@@ -63,9 +61,18 @@ jobs:
             -- `
             ctest --test-dir build -C Release --output-on-failure
 
+      - name: Enforce coverage threshold (Release only)
+        if: matrix.build_type == 'Release'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path cobertura.xml)) {
+            Write-Host "No coverage report generated, skipping threshold check"
+            exit 0
+          }
+          powershell -ExecutionPolicy Bypass -File scripts/check_coverage_threshold.ps1 -CoberturaPath cobertura.xml -MinimumLineRate 0.60
+
       - name: Upload coverage report (Release only)
         if: matrix.build_type == 'Release'
-        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -98,7 +105,7 @@ jobs:
         if: matrix.build_type == 'Release'
         shell: pwsh
         run: |
-          pwsh -ExecutionPolicy Bypass -File scripts/download_builtin_models.ps1
+          powershell -ExecutionPolicy Bypass -File scripts/download_builtin_models.ps1
 
       - name: E2E model validation (Release only)
         if: matrix.build_type == 'Release'
@@ -144,10 +151,23 @@ jobs:
 
       - name: Run cppcheck
         run: |
-          cppcheck --enable=warning,style,performance --error-exitcode=0 \
+          cppcheck --enable=warning,style,performance --error-exitcode=1 \
             --suppress=missingIncludeSystem \
             -I src \
             src/ 2>&1 | tee cppcheck-report.txt
+
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Check clang-format
+        run: |
+          find src tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 | \
+            xargs -0 clang-format --dry-run --Werror
 
       - name: Upload cppcheck report
         uses: actions/upload-artifact@v4

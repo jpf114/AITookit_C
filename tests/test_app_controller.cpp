@@ -7,10 +7,8 @@
 #include <QTemporaryDir>
 
 #include "core/json_utils.h"
-
-#define private public
+#include "test_peers.h"
 #include "ui/app_controller.h"
-#undef private
 
 namespace {
 
@@ -28,7 +26,7 @@ void AppControllerTest::cancelledBatchDoesNotEmitCompleted() {
     QSignalSpy completedSpy(&controller, &aitoolkit::ui::AppController::inferenceCompletedBatch);
     QSignalSpy cancelledSpy(&controller, &aitoolkit::ui::AppController::inferenceCancelled);
 
-    controller.inferenceRunning_ = true;
+    aitoolkit::testing::AppControllerTestPeer::setInferenceRunning(controller, true);
     controller.cancelInference();
 
     QCOMPARE(cancelledSpy.count(), 1);
@@ -38,11 +36,12 @@ void AppControllerTest::cancelledBatchDoesNotEmitCompleted() {
     summary.inputPath = QStringLiteral("frame-001");
     partialResults.append(summary);
 
-    emit controller.inferenceWorker_->batchFinished(partialResults);
+    emit aitoolkit::testing::AppControllerTestPeer::inferenceWorker(controller)->batchFinished(
+        partialResults);
     QCoreApplication::processEvents();
 
     QCOMPARE(completedSpy.count(), 0);
-    QCOMPARE(controller.batchResults_.size(), 0);
+    QCOMPARE(controller.currentBatchResults().size(), 0);
 }
 
 void AppControllerTest::loadModelManifestClearsStaleBatchResults() {
@@ -74,22 +73,20 @@ void AppControllerTest::loadModelManifestClearsStaleBatchResults() {
     staleSummary.inputPath = QStringLiteral("D:/images/previous.png");
     staleSummary.taskType = QStringLiteral("detection");
     staleSummary.detectionCount = 3;
-    controller.currentSummary_ = staleSummary;
+    aitoolkit::testing::AppControllerTestPeer::setCurrentSummary(controller, staleSummary);
 
     QVector<aitoolkit::core::InferenceSummary> staleBatchResults;
     staleBatchResults.push_back(staleSummary);
-    controller.batchResults_ = staleBatchResults;
+    aitoolkit::testing::AppControllerTestPeer::setBatchResults(controller, staleBatchResults);
 
     controller.loadModelManifest(manifestPath);
 
-    QCOMPARE(controller.currentSummary_.inputPath, QString());
-    QCOMPARE(controller.currentSummary_.detectionCount, 0);
-    QCOMPARE(controller.batchResults_.size(), 0);
-    QVERIFY(contextSpy.count() >= 1);
+    QCOMPARE(controller.currentSummary().inputPath, QString());
+    QCOMPARE(controller.currentBatchResults().size(), 0);
+    QVERIFY(contextSpy.count() > 0);
 }
 
 }  // namespace
 
 QTEST_MAIN(AppControllerTest)
-
 #include "test_app_controller.moc"

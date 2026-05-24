@@ -42,14 +42,14 @@ void InferenceWorker::runImage(const QString& imagePath) {
     }
 
     if (!model) {
-        emit error(QStringLiteral("No model loaded"));
+        emit error(tr("未加载模型"));
         return;
     }
 
     try {
         const cv::Mat image = imreadUnicode(cleanPath, cv::IMREAD_COLOR);
         if (image.empty()) {
-            emit error(QStringLiteral("Failed to read input image: %1").arg(QDir::toNativeSeparators(cleanPath)));
+            emit error(tr("无法读取输入图像：%1").arg(QDir::toNativeSeparators(cleanPath)));
             return;
         }
 
@@ -75,7 +75,7 @@ void InferenceWorker::runBatch(const QStringList& imagePaths) {
     }
 
     if (!model) {
-        emit error(QStringLiteral("No model loaded"));
+        emit error(tr("未加载模型"));
         return;
     }
 
@@ -96,7 +96,7 @@ void InferenceWorker::runBatch(const QStringList& imagePaths) {
                 skipped.modelName = model->manifest().name;
                 skipped.inputPath = cleanPath;
                 skipped.success = false;
-                skipped.errorMessage = QStringLiteral("Failed to read image file");
+                skipped.errorMessage = tr("无法读取图像文件");
                 results.append(skipped);
                 emit batchProgress(i + 1, total);
                 continue;
@@ -133,7 +133,7 @@ void InferenceWorker::runVideo(const QString& videoPath, const int maxFrames) {
     }
 
     if (!model) {
-        emit error(QStringLiteral("No model loaded"));
+        emit error(tr("未加载模型"));
         return;
     }
 
@@ -141,7 +141,7 @@ void InferenceWorker::runVideo(const QString& videoPath, const int maxFrames) {
         const QString cleanPath = QDir::cleanPath(videoPath);
         cv::VideoCapture capture;
         if (!openVideoCapture(cleanPath, capture)) {
-            emit error(QStringLiteral("Failed to open video file: %1").arg(QDir::toNativeSeparators(cleanPath)));
+            emit error(tr("无法打开视频文件：%1").arg(QDir::toNativeSeparators(cleanPath)));
             return;
         }
 

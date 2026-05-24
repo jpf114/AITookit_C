@@ -6,48 +6,12 @@
 
 #include "core/model_manifest.h"
 #include "core/types.h"
-#include "models/inference_backend.h"
 #include "services/inference_service.h"
+#include "test_helpers.h"
 
 namespace {
 
-class FakeInferenceBackend final : public aitoolkit::models::InferenceBackend {
-public:
-    explicit FakeInferenceBackend(aitoolkit::core::ModelManifest manifest)
-        : manifest_(std::move(manifest)) {
-    }
-
-    const aitoolkit::core::ModelManifest& manifest() const noexcept override {
-        return manifest_;
-    }
-
-    QVector<aitoolkit::core::DetectionItem> detect(const cv::Mat&, double, double) const override {
-        detectCalled = true;
-        return fakeDetections;
-    }
-
-    QVector<aitoolkit::core::ClassificationItem> classify(const cv::Mat&, double) const override {
-        classifyCalled = true;
-        return fakeClassifications;
-    }
-
-    QVector<aitoolkit::core::SegmentationItem> segment(const cv::Mat&, double, double) const override {
-        segmentCalled = true;
-        return fakeSegmentations;
-    }
-
-    QString backendName() const noexcept override {
-        return QStringLiteral("Fake Backend");
-    }
-
-    aitoolkit::core::ModelManifest manifest_;
-    QVector<aitoolkit::core::DetectionItem> fakeDetections;
-    QVector<aitoolkit::core::ClassificationItem> fakeClassifications;
-    QVector<aitoolkit::core::SegmentationItem> fakeSegmentations;
-    mutable bool detectCalled = false;
-    mutable bool classifyCalled = false;
-    mutable bool segmentCalled = false;
-};
+using test_helpers::FakeInferenceBackend;
 
 class InferenceServiceTest : public QObject {
     Q_OBJECT
@@ -79,9 +43,9 @@ void InferenceServiceTest::dispatchesToClassifyForClassificationTask() {
     aitoolkit::services::InferenceService service;
     const auto summary = service.runImageFromMat(backend, cv::Mat::zeros(100, 100, CV_8UC3));
 
-    QVERIFY(backend.classifyCalled);
-    QVERIFY(!backend.detectCalled);
-    QVERIFY(!backend.segmentCalled);
+    QVERIFY(backend.classifyCalls > 0);
+    QVERIFY(backend.detectCalls == 0);
+    QVERIFY(backend.segmentCalls == 0);
     QCOMPARE(summary.classifications.size(), 1);
     QCOMPARE(summary.detectionCount, 1);
 }
@@ -97,9 +61,9 @@ void InferenceServiceTest::dispatchesToSegmentForSegmentationTask() {
     aitoolkit::services::InferenceService service;
     const auto summary = service.runImageFromMat(backend, cv::Mat::zeros(100, 100, CV_8UC3));
 
-    QVERIFY(backend.segmentCalled);
-    QVERIFY(!backend.detectCalled);
-    QVERIFY(!backend.classifyCalled);
+    QVERIFY(backend.segmentCalls > 0);
+    QVERIFY(backend.detectCalls == 0);
+    QVERIFY(backend.classifyCalls == 0);
     QCOMPARE(summary.segmentations.size(), 1);
     QCOMPARE(summary.detectionCount, 1);
 }
@@ -116,9 +80,9 @@ void InferenceServiceTest::dispatchesToDetectForDetectionTask() {
     aitoolkit::services::InferenceService service;
     const auto summary = service.runImageFromMat(backend, cv::Mat::zeros(100, 100, CV_8UC3));
 
-    QVERIFY(backend.detectCalled);
-    QVERIFY(!backend.classifyCalled);
-    QVERIFY(!backend.segmentCalled);
+    QVERIFY(backend.detectCalls > 0);
+    QVERIFY(backend.classifyCalls == 0);
+    QVERIFY(backend.segmentCalls == 0);
     QCOMPARE(summary.detections.size(), 1);
     QCOMPARE(summary.detectionCount, 1);
 }

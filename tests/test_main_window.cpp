@@ -14,10 +14,10 @@
 #include <QWidget>
 
 #include "core/json_utils.h"
-#define private public
+#define AITOOLKIT_TESTING 1
+#include "test_peers.h"
 #include "ui/main_window.h"
 #include "ui/app_controller.h"
-#undef private
 #include "ui/pages/inference_page.h"
 #include "ui/pages/results_page.h"
 #include "ui/pages/settings_page.h"
@@ -66,26 +66,26 @@ aitoolkit::core::InferenceSummary makeSummary(const QString& modelName, const QS
 }
 
 void seedCurrentResult(aitoolkit::ui::MainWindow& window, const aitoolkit::core::InferenceSummary& summary) {
-    window.controller_->applyInferenceResult(summary);
-    window.resultsPage_->setSummary(summary);
-    window.runStatusLabel_->setText(
+    aitoolkit::testing::MainWindowTestPeer::controller(window)->applyInferenceResult(summary);
+    aitoolkit::testing::MainWindowTestPeer::resultsPage(window)->setSummary(summary);
+    aitoolkit::testing::MainWindowTestPeer::runStatusLabel(window)->setText(
         QStringLiteral("\u5df2\u5b8c\u6210\uff0c\u5171 %1 \u4e2a\u76ee\u6807\uff0c\u8017\u65f6 %2 ms")
             .arg(summary.detectionCount)
             .arg(QString::number(summary.elapsedMs, 'f', 2)));
-    window.nextStepLabel_->setText(QStringLiteral("\u53ef\u67e5\u770b\u7ed3\u679c\u660e\u7ec6\uff0c\u6216\u76f4\u63a5\u5bfc\u51fa JSON\u3002"));
+    aitoolkit::testing::MainWindowTestPeer::nextStepLabel(window)->setText(QStringLiteral("\u53ef\u67e5\u770b\u7ed3\u679c\u660e\u7ec6\uff0c\u6216\u76f4\u63a5\u5bfc\u51fa JSON\u3002"));
 }
 
 void verifyHasResultsState(aitoolkit::ui::MainWindow& window) {
-    QVERIFY(window.runStatusLabel_ != nullptr);
-    QVERIFY(window.runStatusLabel_->text().contains(QStringLiteral("12.50")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::runStatusLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::runStatusLabel(window)->text().contains(QStringLiteral("12.50")));
 
-    QVERIFY(window.nextStepLabel_ != nullptr);
-    QVERIFY(window.nextStepLabel_->text().contains(QStringLiteral("JSON")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::nextStepLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::nextStepLabel(window)->text().contains(QStringLiteral("JSON")));
 }
 
 void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
-    QCOMPARE(window.controller_->currentSummary().inputPath, QString());
-    QCOMPARE(window.controller_->currentSummary().detections.size(), 0);
+    QCOMPARE(aitoolkit::testing::MainWindowTestPeer::controller(window)->currentSummary().inputPath, QString());
+    QCOMPARE(aitoolkit::testing::MainWindowTestPeer::controller(window)->currentSummary().detections.size(), 0);
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
     QVERIFY(resultsSummaryLabel != nullptr);
@@ -95,7 +95,7 @@ void verifyClearedResultsState(aitoolkit::ui::MainWindow& window) {
     QVERIFY(detectionsTable != nullptr);
     QCOMPARE(detectionsTable->rowCount(), 0);
 
-    auto* contextResultValue = window.runStatusLabel_;
+    auto* contextResultValue = aitoolkit::testing::MainWindowTestPeer::runStatusLabel(window);
     QVERIFY(contextResultValue != nullptr);
     QVERIFY(!contextResultValue->text().contains(QStringLiteral("12.50")));
 }
@@ -133,17 +133,17 @@ void MainWindowTest::buildsThreePaneShell() {
     const auto contextPanel = window.findChild<QWidget*>(QStringLiteral("ContextPanel"));
     QVERIFY(contextPanel != nullptr);
 
-    QVERIFY(window.modelStatusTitleLabel_ != nullptr);
-    QVERIFY(window.modelStatusTitleLabel_->text().contains(QStringLiteral("模型")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::modelStatusTitleLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::modelStatusTitleLabel(window)->text().contains(QStringLiteral("模型")));
 
-    QVERIFY(window.imageStatusTitleLabel_ != nullptr);
-    QVERIFY(window.imageStatusTitleLabel_->text().contains(QStringLiteral("图像")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::imageStatusTitleLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::imageStatusTitleLabel(window)->text().contains(QStringLiteral("图像")));
 
-    QVERIFY(window.resultStatusTitleLabel_ != nullptr);
-    QVERIFY(window.resultStatusTitleLabel_->text().contains(QStringLiteral("结果")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::resultStatusTitleLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::resultStatusTitleLabel(window)->text().contains(QStringLiteral("结果")));
 
-    QVERIFY(window.nextStepTitleLabel_ != nullptr);
-    QVERIFY(window.nextStepTitleLabel_->text().contains(QStringLiteral("下一步")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::nextStepTitleLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::nextStepTitleLabel(window)->text().contains(QStringLiteral("下一步")));
 }
 
 void MainWindowTest::changingImageClearsStoredAndVisibleResults() {
@@ -159,7 +159,7 @@ void MainWindowTest::changingImageClearsStoredAndVisibleResults() {
 
     const auto summary = makeSummary(QStringLiteral("Warehouse Detector"), QStringLiteral("D:/images/first.jpg"));
     seedCurrentResult(window, summary);
-    QVERIFY(!window.controller_->currentSummary().inputPath.isEmpty());
+    QVERIFY(!aitoolkit::testing::MainWindowTestPeer::controller(window)->currentSummary().inputPath.isEmpty());
     verifyHasResultsState(window);
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
@@ -201,7 +201,7 @@ void MainWindowTest::changingModelClearsStoredAndVisibleResults() {
 
     const auto summary = makeSummary(QStringLiteral("Warehouse Detector A"), QStringLiteral("D:/images/first.jpg"));
     seedCurrentResult(window, summary);
-    QVERIFY(!window.controller_->currentSummary().inputPath.isEmpty());
+    QVERIFY(!aitoolkit::testing::MainWindowTestPeer::controller(window)->currentSummary().inputPath.isEmpty());
     verifyHasResultsState(window);
 
     auto* resultsSummaryLabel = window.findChild<QLabel*>(QStringLiteral("ResultsSummaryLabel"));
@@ -227,7 +227,7 @@ void MainWindowTest::completedVideoSummaryKeepsResultFocusedContext() {
     QVERIFY(!manifestPath.isEmpty());
 
     aitoolkit::ui::MainWindow window;
-    window.controller_->loadModelManifest(manifestPath);
+    aitoolkit::testing::MainWindowTestPeer::controller(window)->loadModelManifest(manifestPath);
 
     aitoolkit::core::InferenceSummary summary;
     summary.modelName = QStringLiteral("Warehouse Detector");
@@ -236,15 +236,16 @@ void MainWindowTest::completedVideoSummaryKeepsResultFocusedContext() {
     summary.detectionCount = 4;
     summary.elapsedMs = 18.5;
 
-    window.controller_->applyInferenceResult(summary);
-    window.controller_->currentImagePath_.clear();
-    emit window.controller_->contextChanged();
+    aitoolkit::testing::MainWindowTestPeer::controller(window)->applyInferenceResult(summary);
+    aitoolkit::testing::AppControllerTestPeer::clearCurrentImagePath(
+        *aitoolkit::testing::MainWindowTestPeer::controller(window));
+    emit aitoolkit::testing::MainWindowTestPeer::controller(window)->contextChanged();
 
-    QVERIFY(window.imageStatusLabel_ != nullptr);
-    QVERIFY(window.imageStatusLabel_->text().contains(QStringLiteral("视频")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::imageStatusLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::imageStatusLabel(window)->text().contains(QStringLiteral("视频")));
 
-    QVERIFY(window.nextStepLabel_ != nullptr);
-    QVERIFY(window.nextStepLabel_->text().contains(QStringLiteral("JSON")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::nextStepLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::nextStepLabel(window)->text().contains(QStringLiteral("JSON")));
 }
 
 void MainWindowTest::classificationSummaryUsesTaskAwareContextCopy() {
@@ -258,9 +259,9 @@ void MainWindowTest::classificationSummaryUsesTaskAwareContextCopy() {
     summary.classifications.append({7, QStringLiteral("tabby"), 0.92f});
     summary.classifications.append({3, QStringLiteral("tiger"), 0.06f});
 
-    window.controller_->applyInferenceResult(summary);
+    aitoolkit::testing::MainWindowTestPeer::controller(window)->applyInferenceResult(summary);
 
-    auto* contextResultValue = window.runStatusLabel_;
+    auto* contextResultValue = aitoolkit::testing::MainWindowTestPeer::runStatusLabel(window);
     QVERIFY(contextResultValue != nullptr);
     QVERIFY(contextResultValue->text().contains(QStringLiteral("2 个类别")));
     QVERIFY(!contextResultValue->text().contains(QStringLiteral("目标")));
@@ -280,8 +281,8 @@ void MainWindowTest::selectingBatchResultUpdatesCurrentExportContext() {
     const auto firstSummary = makeSummary(QStringLiteral("Warehouse Detector"), firstImagePath);
     const auto secondSummary = makeSummary(QStringLiteral("Warehouse Detector"), secondImagePath);
 
-    window.resultsPage_->setSummary(firstSummary);
-    window.resultsPage_->setResults({firstSummary, secondSummary});
+    aitoolkit::testing::MainWindowTestPeer::resultsPage(window)->setSummary(firstSummary);
+    aitoolkit::testing::MainWindowTestPeer::resultsPage(window)->setResults({firstSummary, secondSummary});
 
     auto* resultsList = window.findChild<QListWidget*>(QStringLiteral("ResultsList"));
     QVERIFY(resultsList != nullptr);
@@ -289,30 +290,30 @@ void MainWindowTest::selectingBatchResultUpdatesCurrentExportContext() {
 
     resultsList->setCurrentRow(1);
 
-    QCOMPARE(window.controller_->currentSummary().inputPath, secondImagePath);
-    QCOMPARE(window.controller_->currentImagePath(), secondImagePath);
+    QCOMPARE(aitoolkit::testing::MainWindowTestPeer::controller(window)->currentSummary().inputPath, secondImagePath);
+    QCOMPARE(aitoolkit::testing::MainWindowTestPeer::controller(window)->currentImagePath(), secondImagePath);
 
-    QVERIFY(window.imageStatusLabel_ != nullptr);
-    QVERIFY(window.imageStatusLabel_->text().contains(QStringLiteral("second.bmp")));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::imageStatusLabel(window) != nullptr);
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::imageStatusLabel(window)->text().contains(QStringLiteral("second.bmp")));
 }
 
 void MainWindowTest::exportFileNamesFollowSelectedResult() {
     aitoolkit::core::InferenceSummary imageSummary;
     imageSummary.inputPath = QStringLiteral("D:/images/second.png");
     QCOMPARE(
-        aitoolkit::ui::MainWindow::defaultJsonExportFileName(imageSummary),
+        aitoolkit::testing::MainWindowTestPeer::defaultJsonExportFileName(imageSummary),
         QStringLiteral("second.json"));
     QCOMPARE(
-        aitoolkit::ui::MainWindow::defaultImageExportFileName(imageSummary),
+        aitoolkit::testing::MainWindowTestPeer::defaultImageExportFileName(imageSummary),
         QStringLiteral("second.png"));
 
     aitoolkit::core::InferenceSummary videoSummary;
     videoSummary.inputPath = QStringLiteral("D:/videos/demo.mp4 [frame 12]");
     QCOMPARE(
-        aitoolkit::ui::MainWindow::defaultJsonExportFileName(videoSummary),
+        aitoolkit::testing::MainWindowTestPeer::defaultJsonExportFileName(videoSummary),
         QStringLiteral("demo_mp4_frame_12.json"));
     QCOMPARE(
-        aitoolkit::ui::MainWindow::defaultImageExportFileName(videoSummary),
+        aitoolkit::testing::MainWindowTestPeer::defaultImageExportFileName(videoSummary),
         QStringLiteral("demo_mp4_frame_12.png"));
 }
 
@@ -324,13 +325,13 @@ void MainWindowTest::batchExportFileNameFollowsSourceContext() {
     QVERIFY(QDir().mkpath(folderPath));
 
     QCOMPARE(
-        aitoolkit::ui::MainWindow::defaultBatchJsonExportFileName(folderPath),
+        aitoolkit::testing::MainWindowTestPeer::defaultBatchJsonExportFileName(folderPath),
         QStringLiteral("street-scenes_batch_results.json"));
     QCOMPARE(
-        aitoolkit::ui::MainWindow::defaultBatchJsonExportFileName(QStringLiteral("D:/videos/street.mp4")),
+        aitoolkit::testing::MainWindowTestPeer::defaultBatchJsonExportFileName(QStringLiteral("D:/videos/street.mp4")),
         QStringLiteral("street_batch_results.json"));
     QCOMPARE(
-        aitoolkit::ui::MainWindow::defaultBatchJsonExportFileName(QString()),
+        aitoolkit::testing::MainWindowTestPeer::defaultBatchJsonExportFileName(QString()),
         QStringLiteral("batch_results.json"));
 }
 
@@ -389,7 +390,7 @@ void MainWindowTest::unreadableRecentInputClearsImageState() {
     stack->setCurrentIndex(4);
 
     QVERIFY(QMetaObject::invokeMethod(
-        window.settingsPage_,
+        aitoolkit::testing::MainWindowTestPeer::settingsPage(window),
         "recentInputActivated",
         Qt::DirectConnection,
         Q_ARG(QString, imagePath)));
@@ -400,10 +401,10 @@ void MainWindowTest::unreadableRecentInputClearsImageState() {
     QVERIFY(imagePathLabel != nullptr);
     QCOMPARE(imagePathLabel->text(), QStringLiteral("\u5f53\u524d\u672a\u9009\u62e9\u56fe\u50cf"));
 
-    QVERIFY(window.imageStatusLabel_ != nullptr);
-    QVERIFY(!window.imageStatusLabel_->text().contains(QFileInfo(imagePath).fileName()));
+    QVERIFY(aitoolkit::testing::MainWindowTestPeer::imageStatusLabel(window) != nullptr);
+    QVERIFY(!aitoolkit::testing::MainWindowTestPeer::imageStatusLabel(window)->text().contains(QFileInfo(imagePath).fileName()));
 
-    auto* runButton = window.inferencePage_->findChild<QPushButton*>(QStringLiteral("PrimaryButton"));
+    auto* runButton = aitoolkit::testing::MainWindowTestPeer::inferencePage(window)->findChild<QPushButton*>(QStringLiteral("PrimaryButton"));
     QVERIFY(runButton != nullptr);
     QVERIFY(!runButton->isEnabled());
 }
@@ -463,7 +464,7 @@ void MainWindowTest::resolvesDownloadScriptFromInstalledShareDirectory() {
     scriptFile.close();
 
     const QString resolvedPath =
-        aitoolkit::ui::MainWindow::resolveDownloadScriptPath(root.filePath(QStringLiteral("bin")));
+        aitoolkit::testing::MainWindowTestPeer::resolveDownloadScriptPath(root.filePath(QStringLiteral("bin")));
     QCOMPARE(QDir::cleanPath(resolvedPath), QDir::cleanPath(scriptPath));
 }
 

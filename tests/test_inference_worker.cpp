@@ -7,43 +7,14 @@
 
 #include "core/model_manifest.h"
 #include "core/types.h"
-#include "models/inference_backend.h"
 #include "services/inference_worker.h"
+#include "test_helpers.h"
 
 #include <QMetaType>
 
 namespace {
 
-class FakeWorkerBackend final : public aitoolkit::models::InferenceBackend {
-public:
-    explicit FakeWorkerBackend(aitoolkit::core::ModelManifest manifest)
-        : manifest_(std::move(manifest)) {}
-
-    const aitoolkit::core::ModelManifest& manifest() const noexcept override {
-        return manifest_;
-    }
-
-    QVector<aitoolkit::core::DetectionItem> detect(const cv::Mat&, double, double) const override {
-        aitoolkit::core::DetectionItem item;
-        item.label = QStringLiteral("test");
-        item.confidence = 0.9f;
-        return {item};
-    }
-
-    QVector<aitoolkit::core::ClassificationItem> classify(const cv::Mat&, double) const override {
-        return {};
-    }
-
-    QVector<aitoolkit::core::SegmentationItem> segment(const cv::Mat&, double, double) const override {
-        return {};
-    }
-
-    QString backendName() const noexcept override {
-        return QStringLiteral("Fake");
-    }
-
-    aitoolkit::core::ModelManifest manifest_;
-};
+using test_helpers::FakeInferenceBackend;
 
 class InferenceWorkerTest : public QObject {
     Q_OBJECT
@@ -76,7 +47,12 @@ void InferenceWorkerTest::processesImageWhenModelSet() {
     manifest.name = QStringLiteral("Test");
     manifest.taskType = QStringLiteral("detection");
 
-    auto backend = std::make_shared<FakeWorkerBackend>(manifest);
+    auto backend = std::make_shared<FakeInferenceBackend>(manifest);
+    aitoolkit::core::DetectionItem item;
+    item.label = QStringLiteral("test");
+    item.confidence = 0.9f;
+    backend->fakeDetections.append(item);
+
     aitoolkit::services::InferenceWorker worker;
     worker.setModel(backend);
 
@@ -97,7 +73,12 @@ void InferenceWorkerTest::batchProcessesMultipleImages() {
     manifest.name = QStringLiteral("Test");
     manifest.taskType = QStringLiteral("detection");
 
-    auto backend = std::make_shared<FakeWorkerBackend>(manifest);
+    auto backend = std::make_shared<FakeInferenceBackend>(manifest);
+    aitoolkit::core::DetectionItem item;
+    item.label = QStringLiteral("test");
+    item.confidence = 0.9f;
+    backend->fakeDetections.append(item);
+
     aitoolkit::services::InferenceWorker worker;
     worker.setModel(backend);
 

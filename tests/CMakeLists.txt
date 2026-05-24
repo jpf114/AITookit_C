@@ -66,11 +66,14 @@ function(ai_add_qt_test_if_exists source_file)
             Qt6::Test
     )
     ai_copy_qt_windows_platform_plugin("${test_name}")
+    target_compile_definitions("${test_name}" PRIVATE AITOOLKIT_TESTING=1)
     add_test(NAME "${test_name}" COMMAND "${test_name}")
     set(ai_toolkit_test_targets ${ai_toolkit_test_targets} "${test_name}" PARENT_SCOPE)
 endfunction()
 
 ai_add_qt_test_if_exists(test_model_manifest.cpp)
+ai_add_qt_test_if_exists(test_model_checksum.cpp)
+ai_add_qt_test_if_exists(test_catalog_url_validator.cpp)
 ai_add_qt_test_if_exists(test_settings_store.cpp)
 ai_add_qt_test_if_exists(test_yolo_postprocess.cpp)
 ai_add_qt_test_if_exists(test_postprocess_registry.cpp)
@@ -196,6 +199,7 @@ if(TARGET test_app_controller)
         PRIVATE
             ai_services
             Qt6::Gui
+            Qt6::Widgets
     )
 endif()
 
@@ -277,6 +281,7 @@ if(TARGET test_settings_page)
             Qt6::Gui
             Qt6::Widgets
             Qt6::Network
+            Qt6::Concurrent
     )
 endif()
 
