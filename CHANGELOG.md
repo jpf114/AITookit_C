@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-05-24
+
+### Added
+
+- 启动时异步检查更新（24 小时节流，可设置页关闭）
+- 关于对话框展示全部推理后端及可用状态
+- yolo_v5 / yolo_x 解码器注册测试
+- `scripts/sync_checksums_from_catalog.ps1` 从 catalog 同步校验项
+
+### Changed
+
+- 设置页新增「启动时检查更新」选项
+
 ## [1.1.0] - 2026-05-24
 
 ### Added
