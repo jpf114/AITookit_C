@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.3] - 2026-05-24
+
+### Added
+
+- ImageNet 1000 类标签单一数据源：`resources/labels/imagenet1000.txt`
+- 模型推理性能基准脚本：`scripts/benchmark_models.py`
+
+### Changed
+
+- `yolov8n-cls.json` 改为引用外部标签文件
+- `download_sample_model.ps1` 移除约 150 行内嵌 ImageNet 标签数组
+
 ## [1.2.2] - 2026-05-24
 
 ### Added

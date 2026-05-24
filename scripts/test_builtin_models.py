@@ -29,6 +29,7 @@ except ImportError:
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 LABELS_DIR = Path(__file__).resolve().parent.parent / "resources" / "labels"
 DEFAULT_COCO_LABELS_PATH = LABELS_DIR / "coco80.txt"
+DEFAULT_IMAGENET_LABELS_PATH = LABELS_DIR / "imagenet1000.txt"
 
 
 def load_labels_file(path: Path) -> list[str]:
@@ -44,8 +45,11 @@ def resolve_manifest_labels(manifest: dict, manifest_path: Path) -> list[str]:
         labels_path = (manifest_path.parent / labels_ref).resolve()
         if labels_path.is_file():
             return load_labels_file(labels_path)
-    if DEFAULT_COCO_LABELS_PATH.is_file():
+    task_type = manifest.get("task_type", "")
+    if task_type in ("detection", "segmentation") and DEFAULT_COCO_LABELS_PATH.is_file():
         return load_labels_file(DEFAULT_COCO_LABELS_PATH)
+    if task_type == "classification" and DEFAULT_IMAGENET_LABELS_PATH.is_file():
+        return load_labels_file(DEFAULT_IMAGENET_LABELS_PATH)
     return []
 
 

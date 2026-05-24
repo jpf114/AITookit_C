@@ -62,6 +62,7 @@ cmake --preset release -DAI_ENABLE_CUDA=ON
 | `scripts/sync_checksums_from_catalog.ps1` | 从 catalog 同步校验项名称 |
 | `scripts/run_coverage.ps1` | 本地覆盖率报告 |
 | `scripts/test_builtin_models.py` | CI E2E 模型验证 |
+| `scripts/benchmark_models.py` | 本地推理性能基准（warmup + mean/p50/p95） |
 | `scripts/generate_sbom.py` | 生成 SBOM |
 
 ## NSIS 静默安装（企业部署）
