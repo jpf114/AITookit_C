@@ -11,7 +11,7 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-project(ai-toolkit-c VERSION 1.2.0 LANGUAGES CXX)
+project(ai-toolkit-c VERSION 1.2.1 LANGUAGES CXX)
 
 configure_file(
     "${CMAKE_SOURCE_DIR}/cmake/app_version.h.in"
@@ -40,6 +40,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(USE_STATIC_QT "Link Qt statically (requires Qt commercial license or LGPL compliance)" OFF)
 option(AI_ENABLE_CUDA "Enable CUDA GPU inference (requires CUDA Toolkit and onnxruntime GPU build)" OFF)
+option(AI_ENABLE_TENSORRT "Prepare TensorRT backend plugin (requires TensorRT SDK; inference is stub until linked)" OFF)
+option(AI_ENABLE_OPENVINO "Prepare OpenVINO backend plugin (requires OpenVINO SDK; inference is stub until linked)" OFF)
 if(USE_STATIC_QT)
     set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
     message(WARNING "Static Qt linking enabled. Ensure LGPL v3 compliance or hold a Qt commercial license.")

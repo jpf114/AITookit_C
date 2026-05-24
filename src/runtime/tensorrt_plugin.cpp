@@ -10,7 +10,11 @@ BackendInfo TensorRtPlugin::info() const {
     return {
         QStringLiteral("tensorrt"),
         QStringLiteral("TensorRT"),
+#ifdef AI_TENSORRT_ENABLED
+        QStringLiteral("0.0.0-dev"),
+#else
         QStringLiteral("0.0.0-stub"),
+#endif
         true,
         false,
     };
@@ -29,7 +33,12 @@ std::unique_ptr<models::InferenceBackend> TensorRtPlugin::createModel(
     int,
     bool) const {
     throw std::runtime_error(
-        "TensorRT backend is not yet available. Build with future TensorRT support or use ONNX Runtime.");
+#ifdef AI_TENSORRT_ENABLED
+        "TensorRT backend is not yet implemented. Build with TensorRT SDK linked or use ONNX Runtime.");
+#else
+        "TensorRT backend is not enabled. Configure with -DAI_ENABLE_TENSORRT=ON and link TensorRT SDK, "
+        "or use ONNX Runtime.");
+#endif
 }
 
 void registerTensorRtPlugin() {

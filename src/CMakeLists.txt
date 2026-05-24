@@ -149,6 +149,20 @@ if(AI_ENABLE_CUDA)
     endif()
 endif()
 
+if(AI_ENABLE_TENSORRT)
+    if(TARGET ai_runtime)
+        target_compile_definitions(ai_runtime PUBLIC AI_TENSORRT_ENABLED)
+        message(STATUS "TensorRT backend flag enabled (AI_TENSORRT_ENABLED); link TensorRT SDK to complete integration")
+    endif()
+endif()
+
+if(AI_ENABLE_OPENVINO)
+    if(TARGET ai_runtime)
+        target_compile_definitions(ai_runtime PUBLIC AI_OPENVINO_ENABLED)
+        message(STATUS "OpenVINO backend flag enabled (AI_OPENVINO_ENABLED); link OpenVINO SDK to complete integration")
+    endif()
+endif()
+
 ai_define_module(
     ai_models
     SOURCES

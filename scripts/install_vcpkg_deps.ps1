@@ -5,6 +5,8 @@
 #
 # 可选 GPU 推理:
 #   vcpkg install onnxruntime[cuda] --triplet x64-windows
+# 可选后端骨架（TensorRT / OpenVINO，需 SDK 才能完成集成）:
+#   cmake --preset release -DAI_ENABLE_TENSORRT=ON -DAI_ENABLE_OPENVINO=ON
 
 $ErrorActionPreference = "Stop"
 
