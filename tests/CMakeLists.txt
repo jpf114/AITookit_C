@@ -239,6 +239,7 @@ if(TARGET test_models_page)
     target_link_libraries(
         test_models_page
         PRIVATE
+            ai_runtime
             Qt6::Gui
             Qt6::Widgets
     )

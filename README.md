@@ -69,7 +69,19 @@ cpack -C Release
 2. 模型自动加载后，点击「快速体验」选择图像进行推理
 3. 在推理页调整置信度/NMS 阈值，查看结果
 4. 结果页支持类别过滤、图像缩放平移、多结果浏览，以及当前结果 / 批量结果导出
-5. 直接导入 `.onnx` 文件时，当前只会生成 `detection` 类型清单；`classification` / `segmentation` 请提供对应 JSON 清单
+5. 直接导入 `.onnx` 文件时，会根据文件名自动推断任务类型（`-cls` 分类、`-seg` 分割）；也可手动提供 JSON 清单
+
+### 可选后端编译标志
+
+```bash
+# GPU（ONNX Runtime CUDA）
+cmake --preset release -DAI_ENABLE_CUDA=ON
+
+# 预留 TensorRT / OpenVINO 插件（当前为骨架，需 SDK 才能完成推理）
+cmake --preset release -DAI_ENABLE_TENSORRT=ON -DAI_ENABLE_OPENVINO=ON
+```
+
+详见 [扩展推理后端](docs/算法说明/推理后端/扩展推理后端.md)。
 
 ## 模型清单
 

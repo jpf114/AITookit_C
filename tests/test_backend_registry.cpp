@@ -7,6 +7,9 @@
 #include "core/model_manifest.h"
 #include "models/inference_backend.h"
 #include "runtime/backend_registry.h"
+#include "runtime/onnx_plugin.h"
+#include "runtime/openvino_plugin.h"
+#include "runtime/tensorrt_plugin.h"
 
 namespace {
 
@@ -35,6 +38,7 @@ private slots:
     void registersAndRetrievesBackend();
     void listsAvailableBackendNames();
     void unregistersBackend();
+    void registersBuiltinPlugins();
 };
 
 void BackendRegistryTest::registersAndRetrievesBackend() {
@@ -64,6 +68,29 @@ void BackendRegistryTest::unregistersBackend() {
     registry.registerBackend(std::make_unique<FakeTestPlugin>());
     registry.unregisterBackend(QStringLiteral("fake_test"));
     QVERIFY(registry.getBackend(QStringLiteral("fake_test")) == nullptr);
+}
+
+void BackendRegistryTest::registersBuiltinPlugins() {
+    auto& registry = aitoolkit::runtime::BackendRegistry::instance();
+    aitoolkit::runtime::registerOnnxRuntimePlugin();
+    aitoolkit::runtime::registerTensorRtPlugin();
+    aitoolkit::runtime::registerOpenVinoPlugin();
+
+    const QStringList available = registry.availableBackendNames();
+    QVERIFY(available.contains(QStringLiteral("onnxruntime")));
+    QCOMPARE(available.size(), 1);
+
+    auto* onnx = registry.getBackend(QStringLiteral("onnxruntime"));
+    QVERIFY(onnx != nullptr);
+    QVERIFY(onnx->info().isAvailable);
+
+    auto* tensorrt = registry.getBackend(QStringLiteral("tensorrt"));
+    QVERIFY(tensorrt != nullptr);
+    QVERIFY(!tensorrt->info().isAvailable);
+
+    registry.unregisterBackend(QStringLiteral("onnxruntime"));
+    registry.unregisterBackend(QStringLiteral("tensorrt"));
+    registry.unregisterBackend(QStringLiteral("openvino"));
 }
 
 }  // namespace

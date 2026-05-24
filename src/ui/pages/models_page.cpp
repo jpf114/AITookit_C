@@ -12,6 +12,7 @@
 #include <QHBoxLayout>
 
 #include "core/app_paths.h"
+#include "runtime/backend_registry.h"
 
 namespace aitoolkit::ui {
 
@@ -83,6 +84,19 @@ ModelsPage::ModelsPage(QWidget* parent)
     auto* lead = new QLabel(tr("选择一个内置模型即可开始推理，也可导入自定义模型。"), this);
     lead->setObjectName(QStringLiteral("PageLead"));
     lead->setWordWrap(true);
+
+    QStringList availableBackends;
+    for (const runtime::BackendInfo& backendInfo : runtime::BackendRegistry::instance().allBackendInfos()) {
+        if (backendInfo.isAvailable) {
+            availableBackends.append(backendInfo.displayName);
+        }
+    }
+    QLabel* backendLabel = nullptr;
+    if (!availableBackends.isEmpty()) {
+        backendLabel = new QLabel(tr("可用推理后端：%1").arg(availableBackends.join(QStringLiteral("、"))), this);
+        backendLabel->setObjectName(QStringLiteral("BackendAvailabilityLabel"));
+        backendLabel->setWordWrap(true);
+    }
 
     auto* builtinSection = new QWidget(this);
     builtinSection->setObjectName(QStringLiteral("ModelBuiltinSection"));
@@ -233,6 +247,9 @@ ModelsPage::ModelsPage(QWidget* parent)
 
     layout->addWidget(title);
     layout->addWidget(lead);
+    if (backendLabel != nullptr) {
+        layout->addWidget(backendLabel);
+    }
     layout->addWidget(builtinSection);
     layout->addWidget(importSection);
     layout->addWidget(summarySection_);
