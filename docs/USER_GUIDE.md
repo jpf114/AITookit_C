@@ -38,9 +38,27 @@ cmake --build build/release --config Release
 
 ## 模型清单
 
-模型通过 JSON 清单描述，放置在 `models/` 目录。直接导入 `.onnx` 时默认生成 **detection** 类型清单；分类/分割需提供对应 JSON。
+模型通过 JSON 清单描述，放置在 `models/` 目录。直接导入 `.onnx` 时会根据文件名自动推断任务类型：
+
+- 文件名含 `-cls` → **图像分类**（默认输入 224×224）
+- 文件名含 `-seg` → **实例分割**
+- 其他 → **目标检测**
+
+也可在 **设置 → 模型目录 URL** 中指定自定义 catalog 地址（留空则使用 GitHub 官方 catalog）。
 
 详见 [README.md](../README.md) 中的 manifest 示例。
+
+## 企业部署与代码签名
+
+GitHub Release 安装包默认 **未签名**。Windows SmartScreen 可能提示“未知发布者”，属正常现象。
+
+如需企业内部分发，可：
+
+1. 使用 EV 代码签名证书对 NSIS 安装包签名
+2. 在 CI 中配置 `AI_CODESIGN_THUMBPRINT` secret（见 `.github/workflows/build.yml`）
+3. 使用 `signtool` 本地签名后再分发
+
+签名后 SmartScreen 警告会显著减少，但仍需证书信誉积累。
 
 ## 导出
 

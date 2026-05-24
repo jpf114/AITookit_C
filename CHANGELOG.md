@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-05-24
+
+### Added
+
+- ONNX 导入按文件名自动推断任务类型（`-cls` / `-seg`）
+- 设置页可配置模型目录 URL（高级选项）
+- 模型目录远程拉取失败时使用本地缓存
+- 检查更新时可一键打开 GitHub Release 下载页
+- 用户指南补充企业代码签名说明
+
+### Changed
+
+- 导入分类 ONNX 时默认输入尺寸自动调整为 224×224
+
 ## [1.0.2] - 2026-05-23
 
 ### Added

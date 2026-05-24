@@ -11,7 +11,7 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-project(ai-toolkit-c VERSION 1.0.2 LANGUAGES CXX)
+project(ai-toolkit-c VERSION 1.1.0 LANGUAGES CXX)
 
 configure_file(
     "${CMAKE_SOURCE_DIR}/cmake/app_version.h.in"
