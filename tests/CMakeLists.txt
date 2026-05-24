@@ -88,6 +88,7 @@ ai_add_qt_test_if_exists(test_inference_service.cpp)
 ai_add_qt_test_if_exists(test_backend_registry.cpp)
 ai_add_qt_test_if_exists(test_unicode_io.cpp)
 ai_add_qt_test_if_exists(test_inference_worker.cpp)
+ai_add_qt_test_if_exists(test_onnx_backend.cpp)
 
 if(TARGET test_yolo_postprocess)
     target_link_libraries(
@@ -167,6 +168,19 @@ if(TARGET test_inference_worker)
         test_inference_worker
         PRIVATE
             ai_services
+    )
+endif()
+
+if(TARGET test_onnx_backend)
+    target_compile_definitions(
+        test_onnx_backend
+        PRIVATE
+            AITOOLKIT_TEST_MODELS_DIR="${CMAKE_SOURCE_DIR}/models"
+    )
+    target_link_libraries(
+        test_onnx_backend
+        PRIVATE
+            ai_runtime
     )
 endif()
 
