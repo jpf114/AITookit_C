@@ -33,6 +33,7 @@ SettingsPage::SettingsPage(QWidget* parent)
     exportDirectoryEdit_->setPlaceholderText(tr("未设置时默认使用当前图像所在目录"));
     auto* browseButton = new QPushButton(tr("浏览"), this);
     browseButton->setObjectName(QStringLiteral("SecondaryButton"));
+    browseButton->setAccessibleName(tr("浏览导出目录"));
     exportRow->addWidget(exportDirectoryEdit_, 1);
     exportRow->addWidget(browseButton);
 
@@ -102,6 +103,7 @@ SettingsPage::SettingsPage(QWidget* parent)
 
     auto* aboutButton = new QPushButton(tr("关于"), this);
     aboutButton->setObjectName(QStringLiteral("SecondaryButton"));
+    aboutButton->setAccessibleName(tr("关于"));
     connect(aboutButton, &QPushButton::clicked, this, [this]() {
         QMessageBox::about(
             this,
@@ -119,6 +121,7 @@ SettingsPage::SettingsPage(QWidget* parent)
 
     auto* updateButton = new QPushButton(tr("检查更新"), this);
     updateButton->setObjectName(QStringLiteral("SecondaryButton"));
+    updateButton->setAccessibleName(tr("检查更新"));
     connect(updateButton, &QPushButton::clicked, this, [this]() {
         const auto result = aitoolkit::core::UpdateChecker::checkForUpdates(
             QCoreApplication::applicationVersion());

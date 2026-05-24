@@ -56,6 +56,7 @@ NavPanel::NavPanel(QWidget* parent)
         button->setObjectName(QStringLiteral("NavItem"));
         button->setCheckable(true);
         button->setMinimumHeight(38);
+        button->setAccessibleName(spec.text);
         connect(button, &QPushButton::clicked, this, [this, spec]() {
             setCurrentPage(spec.pageId);
             emit pageRequested(spec.pageId);

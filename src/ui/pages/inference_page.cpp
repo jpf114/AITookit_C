@@ -48,12 +48,15 @@ InferencePage::InferencePage(QWidget* parent)
 
     auto* openButton = new QPushButton(tr("\u9009\u62e9\u56fe\u50cf"), this);
     openButton->setObjectName(QStringLiteral("SecondaryButton"));
+    openButton->setAccessibleName(tr("选择图像"));
 
     auto* openFolderButton = new QPushButton(tr("\u9009\u62e9\u6587\u4ef6\u5939"), this);
     openFolderButton->setObjectName(QStringLiteral("SecondaryButton"));
+    openFolderButton->setAccessibleName(tr("选择文件夹"));
 
     auto* openVideoButton = new QPushButton(tr("\u9009\u62e9\u89c6\u9891"), this);
     openVideoButton->setObjectName(QStringLiteral("SecondaryButton"));
+    openVideoButton->setAccessibleName(tr("选择视频"));
 
     auto* maxFramesLabel = new QLabel(tr("\u6700\u5927\u5e27\u6570\uff1a"), this);
     maxFramesSpin_ = new QSpinBox(this);

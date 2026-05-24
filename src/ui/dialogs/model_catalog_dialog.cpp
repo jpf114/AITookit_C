@@ -4,6 +4,7 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDir>
+#include <QEventLoop>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -12,12 +13,62 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QPushButton>
+#include <QUrl>
 #include <QVBoxLayout>
 
 namespace aitoolkit::ui {
 
 namespace {
+
+QVector<CatalogModelEntry> parseCatalogDocument(const QJsonDocument& document) {
+    if (!document.isObject()) {
+        return {};
+    }
+
+    const QJsonArray models = document.object().value(QStringLiteral("models")).toArray();
+    QVector<CatalogModelEntry> entries;
+    entries.reserve(models.size());
+    for (const QJsonValue& value : models) {
+        const QJsonObject object = value.toObject();
+        entries.append(CatalogModelEntry{
+            object.value(QStringLiteral("name")).toString(),
+            object.value(QStringLiteral("taskType")).toString(),
+            object.value(QStringLiteral("fileName")).toString(),
+            object.value(QStringLiteral("url")).toString(),
+            object.value(QStringLiteral("description")).toString(),
+            object.value(QStringLiteral("inputSize")).toInt(640),
+            object.value(QStringLiteral("decoder")).toString(),
+            object.value(QStringLiteral("labelsCategory")).toString(),
+        });
+    }
+    return entries;
+}
+
+QVector<CatalogModelEntry> tryFetchRemoteCatalog() {
+    QNetworkAccessManager manager;
+    const QUrl url(QStringLiteral(
+        "https://raw.githubusercontent.com/jpf114/AITookit_C/main/resources/model_catalog.json"));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("AIToolkit-ModelCatalog/1.0"));
+
+    QEventLoop loop;
+    QNetworkReply* reply = manager.get(request);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        reply->deleteLater();
+        return {};
+    }
+
+    const QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
+    reply->deleteLater();
+    return parseCatalogDocument(document);
+}
 
 QVector<CatalogModelEntry> loadCatalogFromJson() {
     const QDir appDir(QCoreApplication::applicationDirPath());
@@ -36,26 +87,7 @@ QVector<CatalogModelEntry> loadCatalogFromJson() {
         }
 
         const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
-        if (!document.isObject()) {
-            continue;
-        }
-
-        const QJsonArray models = document.object().value(QStringLiteral("models")).toArray();
-        QVector<CatalogModelEntry> entries;
-        entries.reserve(models.size());
-        for (const QJsonValue& value : models) {
-            const QJsonObject object = value.toObject();
-            entries.append(CatalogModelEntry{
-                object.value(QStringLiteral("name")).toString(),
-                object.value(QStringLiteral("taskType")).toString(),
-                object.value(QStringLiteral("fileName")).toString(),
-                object.value(QStringLiteral("url")).toString(),
-                object.value(QStringLiteral("description")).toString(),
-                object.value(QStringLiteral("inputSize")).toInt(640),
-                object.value(QStringLiteral("decoder")).toString(),
-                object.value(QStringLiteral("labelsCategory")).toString(),
-            });
-        }
+        const QVector<CatalogModelEntry> entries = parseCatalogDocument(document);
         if (!entries.isEmpty()) {
             return entries;
         }
@@ -63,12 +95,7 @@ QVector<CatalogModelEntry> loadCatalogFromJson() {
     return {};
 }
 
-QVector<CatalogModelEntry> builtinCatalog() {
-    const QVector<CatalogModelEntry> fromJson = loadCatalogFromJson();
-    if (!fromJson.isEmpty()) {
-        return fromJson;
-    }
-
+QVector<CatalogModelEntry> hardcodedCatalogEntries() {
     return {
         {QStringLiteral("YOLO11n"),
          QStringLiteral("detection"),
@@ -240,6 +267,7 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
 
     downloadButton_ = new QPushButton(tr("下载"), this);
     downloadButton_->setObjectName(QStringLiteral("PrimaryButton"));
+    downloadButton_->setAccessibleName(tr("下载模型"));
     downloadButton_->setEnabled(false);
 
     licenseAcceptCheckBox_ = new QCheckBox(
@@ -254,6 +282,7 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
 
     auto* cancelButton = new QPushButton(tr("取消"), this);
     cancelButton->setObjectName(QStringLiteral("SecondaryButton"));
+    cancelButton->setAccessibleName(tr("取消"));
 
     auto* buttonRow = new QHBoxLayout();
     buttonRow->addStretch(1);
@@ -282,7 +311,13 @@ ModelCatalogDialog::ModelCatalogDialog(const QString& modelsDir, QWidget* parent
 }
 
 void ModelCatalogDialog::populateCatalog() {
-    entries_ = builtinCatalog();
+    entries_ = tryFetchRemoteCatalog();
+    if (entries_.isEmpty()) {
+        entries_ = loadCatalogFromJson();
+    }
+    if (entries_.isEmpty()) {
+        entries_ = hardcodedCatalogEntries();
+    }
     applyFilter(QString());
 }
 

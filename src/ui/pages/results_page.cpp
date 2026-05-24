@@ -115,12 +115,15 @@ ResultsPage::ResultsPage(QWidget* parent)
 
     exportButton_ = new QPushButton(tr("导出 JSON"), this);
     exportButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    exportButton_->setAccessibleName(tr("导出 JSON"));
 
     exportImageButton_ = new QPushButton(tr("导出图片"), this);
     exportImageButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    exportImageButton_->setAccessibleName(tr("导出图片"));
 
     exportBatchBtn_ = new QPushButton(tr("批量导出 JSON"), this);
     exportBatchBtn_->setObjectName(QStringLiteral("SecondaryButton"));
+    exportBatchBtn_->setAccessibleName(tr("批量导出 JSON"));
     exportBatchBtn_->hide();
 
     summaryStrip_ = new QWidget(this);

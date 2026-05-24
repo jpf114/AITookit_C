@@ -115,6 +115,7 @@ ModelsPage::ModelsPage(QWidget* parent)
 
     activateButton_ = new QPushButton(tr("使用此模型"), builtinSection);
     activateButton_->setObjectName(QStringLiteral("PrimaryButton"));
+    activateButton_->setAccessibleName(tr("使用此模型"));
     activateButton_->setEnabled(false);
 
     builtinLayout->addWidget(builtinTitle);
@@ -140,8 +141,10 @@ ModelsPage::ModelsPage(QWidget* parent)
     auto* importButtonRow = new QHBoxLayout();
     importJsonButton_ = new QPushButton(tr("导入模型清单"), importSection);
     importJsonButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    importJsonButton_->setAccessibleName(tr("导入模型清单"));
     importOnnxButton_ = new QPushButton(tr("导入 ONNX 文件"), importSection);
     importOnnxButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    importOnnxButton_->setAccessibleName(tr("导入 ONNX 文件"));
     importButtonRow->addWidget(importJsonButton_);
     importButtonRow->addWidget(importOnnxButton_);
     importButtonRow->addStretch(1);
