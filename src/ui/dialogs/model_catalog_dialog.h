@@ -40,6 +40,7 @@ public:
     QString selectedModelFileName() const;
     QString selectedModelDecoder() const;
     QString selectedModelLabelsCategory() const;
+    QString selectedModelTaskType() const;
     int selectedModelInputSize() const;
     QString modelsDir() const;
 

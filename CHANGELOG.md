@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.4] - 2026-05-24
+
+### Added
+
+- 共享 manifest 生成模块 `scripts/model_manifest.ps1`
+- CI 非门禁 benchmark artifact（`benchmark-results.txt`）
+
+### Changed
+
+- `download_sample_model.ps1` / `download_builtin_models.ps1` 统一使用 catalog 字段与 manifest 模板
+- 模型目录下载传递 catalog 显示名与 `taskType`，不再从文件名推断
+- `benchmark_models.py` 支持 `--output` 供 CI 上传
+
 ## [1.2.3] - 2026-05-24
 
 ### Added

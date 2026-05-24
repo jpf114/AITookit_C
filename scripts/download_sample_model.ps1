@@ -1,6 +1,7 @@
 param(
     [string]$ModelsDir = (Join-Path $PSScriptRoot "..\models"),
     [string]$ModelName = "yolov8n",
+    [string]$DisplayName = "",
     [string]$ModelUrl = "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.onnx",
     [string]$TaskType = "detection",
     [string]$Decoder = "yolo_v8",
@@ -10,6 +11,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "model_manifest.ps1")
 
 function Test-DownloadedSha256 {
     param([string]$FilePath, [string]$ExpectedHash)
@@ -49,59 +51,19 @@ $onnxFilePath = Join-Path $ModelsDir $onnxFileName
 $jsonFileName = "$ModelName.json"
 $jsonFilePath = Join-Path $ModelsDir $jsonFileName
 
-$RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
-
-function Get-LabelsFilePath {
-    param([string]$LabelsCategory)
-    if ([string]::IsNullOrWhiteSpace($LabelsCategory)) { return $null }
-    $labelsPath = Join-Path $RepoRoot ("resources\labels\{0}.txt" -f $LabelsCategory)
-    if (Test-Path $labelsPath) { return $labelsPath }
-    return $null
+if ([string]::IsNullOrWhiteSpace($DisplayName)) {
+    $DisplayName = $ModelName
 }
 
-function Get-LabelsReferencePath {
-    param([string]$LabelsCategory)
-    switch ($LabelsCategory) {
-        "coco80" { return "../resources/labels/coco80.txt" }
-        "imagenet1000" { return "../resources/labels/imagenet1000.txt" }
-        default { return $null }
-    }
-}
+$manifest = New-ModelManifestObject `
+    -DisplayName $DisplayName `
+    -TaskType $TaskType `
+    -OnnxFileName $onnxFileName `
+    -InputSize $InputSize `
+    -Decoder $Decoder `
+    -LabelsCategory $LabelsCategory
 
-
-$labels = @()
-$labelsReference = Get-LabelsReferencePath -LabelsCategory $LabelsCategory
-if ($labelsReference) {
-    if (-not (Get-LabelsFilePath -LabelsCategory $LabelsCategory)) {
-        throw "Labels file not found for category: $LabelsCategory"
-    }
-}
-
-$manifest = [ordered]@{
-    name = $ModelName
-    task_type = $TaskType
-    backend = "onnxruntime"
-    model = $onnxFileName
-    input_width = $InputSize
-    input_height = $InputSize
-    confidence_threshold = 0.25
-    nms_threshold = 0.45
-}
-
-if ($TaskType -eq "detection" -or $TaskType -eq "segmentation") {
-    if (-not [string]::IsNullOrEmpty($Decoder)) {
-        $manifest["decoder"] = $Decoder
-    }
-}
-
-if ($labelsReference) {
-    $manifest["labels"] = $labelsReference
-} elseif ($labels.Count -gt 0) {
-    $manifest["labels_inline"] = $labels
-}
-
-$jsonText = ConvertTo-Json -InputObject $manifest -Depth 3
-Set-Content -Path $jsonFilePath -Value $jsonText -Encoding UTF8
+Write-ModelManifestFile -JsonFilePath $jsonFilePath -Manifest $manifest
 Write-Host "Generated manifest: $jsonFilePath"
 
 if (Test-Path $onnxFilePath) {

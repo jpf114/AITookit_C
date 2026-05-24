@@ -275,7 +275,8 @@ void MainWindow::wireHomeSignals() {
             QStringLiteral("powershell"),
             {QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
              QStringLiteral("-File"), resolvedScript,
-             QStringLiteral("-ModelsDir"), modelsDir});
+             QStringLiteral("-ModelsDir"), modelsDir,
+             QStringLiteral("-DisplayName"), QStringLiteral("YOLOv8n")});
     });
     connect(homePage_, &HomePage::modelCatalogRequested, this, [this]() {
         QString modelsDir = core::findModelsDirectory();
@@ -313,12 +314,10 @@ void MainWindow::wireHomeSignals() {
         }
 
         const QString modelName = fileName.left(fileName.lastIndexOf('.'));
-        const QString selectedName = dialog.selectedModelName();
-        const QString taskType = selectedName.contains(QStringLiteral("-cls"))
-            ? QStringLiteral("classification")
-            : selectedName.contains(QStringLiteral("-seg"))
-                ? QStringLiteral("segmentation")
-                : QStringLiteral("detection");
+        const QString taskType = dialog.selectedModelTaskType();
+        if (taskType.isEmpty()) {
+            return;
+        }
 
         connect(downloadProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
                 this, [this, downloadProcess, modelsDir, fileName](int, QProcess::ExitStatus) {
@@ -356,6 +355,7 @@ void MainWindow::wireHomeSignals() {
              << QStringLiteral("-ModelsDir") << modelsDir
              << QStringLiteral("-ModelUrl") << url
              << QStringLiteral("-ModelName") << modelName
+             << QStringLiteral("-DisplayName") << dialog.selectedModelName()
              << QStringLiteral("-TaskType") << taskType
              << QStringLiteral("-Decoder") << (decoder.isEmpty() ? QString() : decoder)
              << QStringLiteral("-LabelsCategory") << (labelsCategory.isEmpty() ? QStringLiteral("coco80") : labelsCategory)

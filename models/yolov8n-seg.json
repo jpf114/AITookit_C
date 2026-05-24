@@ -1,5 +1,5 @@
 {
-    "name": "YOLOv8n COCO Segmentation",
+    "name": "YOLOv8n-seg",
     "task_type": "segmentation",
     "backend": "onnxruntime",
     "model": "yolov8n-seg.onnx",

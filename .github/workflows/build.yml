@@ -115,6 +115,22 @@ jobs:
           pip install onnxruntime opencv-python-headless numpy
           python scripts/test_builtin_models.py
 
+      - name: Model inference benchmark (Release only, non-blocking)
+        if: matrix.build_type == 'Release'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          python scripts/benchmark_models.py --warmup 3 --iterations 10 --output benchmark-results.txt
+
+      - name: Upload benchmark results (Release only)
+        if: matrix.build_type == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.txt
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Sign installer (optional)
         if: matrix.build_type == 'Release' && env.AI_CODESIGN_THUMBPRINT != ''
         env:

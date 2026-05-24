@@ -384,6 +384,13 @@ QString ModelCatalogDialog::selectedModelLabelsCategory() const {
     return (idx >= 0 && idx < entries_.size()) ? entries_[idx].labelsCategory : QString();
 }
 
+QString ModelCatalogDialog::selectedModelTaskType() const {
+    const int row = catalogList_->currentRow();
+    if (row < 0 || row >= catalogList_->count()) return {};
+    const int idx = catalogList_->item(row)->data(Qt::UserRole).toInt();
+    return (idx >= 0 && idx < entries_.size()) ? entries_[idx].taskType : QString();
+}
+
 int ModelCatalogDialog::selectedModelInputSize() const {
     const int row = catalogList_->currentRow();
     if (row < 0 || row >= catalogList_->count()) return 640;

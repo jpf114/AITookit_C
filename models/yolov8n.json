@@ -1,5 +1,5 @@
 {
-    "name": "YOLOv8n COCO",
+    "name": "YOLOv8n",
     "task_type": "detection",
     "backend": "onnxruntime",
     "model": "yolov8n.onnx",

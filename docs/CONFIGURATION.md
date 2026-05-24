@@ -55,8 +55,9 @@ cmake --preset release -DAI_ENABLE_CUDA=ON
 | 脚本 | 用途 |
 |------|------|
 | `scripts/install_vcpkg_deps.ps1` | 首次安装 vcpkg 依赖 |
-| `scripts/download_sample_model.ps1` | UI「下载示例模型」调用 |
-| `scripts/download_builtin_models.ps1` | CI E2E 最小模型集 |
+| `scripts/download_sample_model.ps1` | UI「下载示例模型」/ 模型目录下载调用 |
+| `scripts/download_builtin_models.ps1` | CI E2E 最小模型集（catalog + manifest 模板） |
+| `scripts/model_manifest.ps1` | 共享模型 manifest 生成（catalog 字段 → JSON） |
 | `scripts/refresh_catalog_checksums.ps1` | 下载 catalog 全部模型并刷新校验和 |
 | `scripts/update_model_checksums.ps1` | 根据本地 ONNX 更新 checksums.json |
 | `scripts/sync_checksums_from_catalog.ps1` | 从 catalog 同步校验项名称 |

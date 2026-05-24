@@ -1,7 +1,15 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $ProgressPreference = 'SilentlyContinue'
+
+. (Join-Path $PSScriptRoot "model_manifest.ps1")
+
 $modelsDir = Join-Path $PSScriptRoot '..\models'
-if (-not (Test-Path $modelsDir)) { New-Item -ItemType Directory -Path $modelsDir -Force | Out-Null }
+$catalogPath = Join-Path $PSScriptRoot '..\resources\model_catalog.json'
+$ciModelFiles = @('yolov8n.onnx', 'yolov8n-cls.onnx', 'yolov8n-seg.onnx')
+
+if (-not (Test-Path $modelsDir)) {
+    New-Item -ItemType Directory -Path $modelsDir -Force | Out-Null
+}
 
 function Get-ExpectedSha256 {
     param([string]$FileName)
@@ -33,28 +41,26 @@ function Test-FileSha256 {
     return $true
 }
 
-$models = @(
-    @{ Name = 'yolov8n.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n.onnx' },
-    @{ Name = 'yolov8n-cls.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n-cls.onnx' },
-    @{ Name = 'yolov8n-seg.onnx'; Url = 'https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8n-seg.onnx' }
-)
+foreach ($fileName in $ciModelFiles) {
+    $entry = Get-CatalogEntryByFileName -CatalogPath $catalogPath -FileName $fileName
+    $target = Join-Path $modelsDir $fileName
+    $expectedSha256 = Get-ExpectedSha256 -FileName $fileName
 
-foreach ($m in $models) {
-    $target = Join-Path $modelsDir $m.Name
-    $expectedSha256 = Get-ExpectedSha256 -FileName $m.Name
+    $manifestPath = Write-ModelManifestFromCatalogEntry -ModelsDir $modelsDir -CatalogEntry $entry
+    Write-Host "Generated manifest: $manifestPath"
 
     if (Test-Path $target) {
         if (-not (Test-FileSha256 -FilePath $target -ExpectedSha256 $expectedSha256)) {
             Remove-Item $target -Force
         } else {
-            Write-Host "$($m.Name) already exists, skipping."
+            Write-Host "$fileName already exists, skipping download."
             continue
         }
     }
 
-    Write-Host "Downloading: $($m.Url)"
+    Write-Host "Downloading: $($entry.url)"
     try {
-        Invoke-WebRequest -Uri $m.Url -OutFile $target -UseBasicParsing -TimeoutSec 300
+        Invoke-WebRequest -Uri $entry.url -OutFile $target -UseBasicParsing -TimeoutSec 300
         $size = (Get-Item $target).Length
         if ($size -lt 1000000) {
             Remove-Item $target -Force -ErrorAction SilentlyContinue
@@ -69,6 +75,6 @@ foreach ($m in $models) {
         Write-Host "  Done. Size: $([math]::Round($size / 1MB, 2)) MB"
     } catch {
         Write-Host "  Failed: $($_.Exception.Message)"
-        Write-Host "  Please download manually from: $($m.Url)"
+        Write-Host "  Please download manually from: $($entry.url)"
     }
 }

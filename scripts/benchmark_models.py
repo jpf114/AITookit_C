@@ -114,6 +114,7 @@ def main() -> None:
     parser.add_argument("--model", type=str, default="", help="仅测试指定 manifest 名称（不含扩展名）")
     parser.add_argument("--warmup", type=int, default=5, help="预热次数")
     parser.add_argument("--iterations", type=int, default=30, help="计时迭代次数")
+    parser.add_argument("--output", type=Path, default=None, help="将结果写入文件（供 CI artifact 使用）")
     parser.add_argument("--image", type=str, default="", help="测试图片（默认生成 640x480）")
     args = parser.parse_args()
 
@@ -154,14 +155,29 @@ def main() -> None:
         print("没有可基准测试的模型。")
         sys.exit(1)
 
-    print(f"{'模型':<18} {'任务':<14} {'输入':<10} {'mean':>8} {'p50':>8} {'p95':>8} {'FPS':>8}")
-    print("-" * 78)
+    lines = [
+        "=" * 78,
+        "  AIToolkit_C 模型推理性能基准",
+        "=" * 78,
+        f"  目录: {models_dir}",
+        f"  预热: {args.warmup}  迭代: {args.iterations}  Provider: CPUExecutionProvider",
+        "",
+        f"{'模型':<18} {'任务':<14} {'输入':<10} {'mean':>8} {'p50':>8} {'p95':>8} {'FPS':>8}",
+        "-" * 78,
+    ]
     for row in results:
-        print(
+        lines.append(
             f"{row['name']:<18} {row['task']:<14} {row['input']:<10} "
             f"{row['mean_ms']:>7.1f}ms {row['p50_ms']:>7.1f}ms {row['p95_ms']:>7.1f}ms {row['fps']:>7.1f}"
         )
-    print("=" * 78)
+    lines.append("=" * 78)
+    report = "\n".join(lines)
+
+    if args.output:
+        args.output.write_text(report + "\n", encoding="utf-8")
+        print(f"结果已写入: {args.output}")
+
+    print(report)
 
 
 if __name__ == "__main__":

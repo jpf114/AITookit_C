@@ -1,5 +1,5 @@
 {
-    "name": "YOLOv8n ImageNet",
+    "name": "YOLOv8n-cls",
     "task_type": "classification",
     "backend": "onnxruntime",
     "model": "yolov8n-cls.onnx",
