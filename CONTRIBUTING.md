@@ -155,6 +155,8 @@ ctest --test-dir build/release --preset release --output-on-failure
 
 注意：Ultralytics YOLO 模型采用 AGPL-3.0 许可证，商业使用需获取 Ultralytics 商业许可。
 
-## 跨平台说明
+## 平台范围
 
-当前 **生产目标为 Windows x64**。代码中通过 `#ifdef Q_OS_WIN` 隔离平台相关逻辑（崩溃处理、Unicode I/O、Qt 平台插件复制）。Linux/macOS 移植为后续版本计划，欢迎提交平台适配 PR。
+当前 **仅支持 Windows 10/11 x64**，为明确的产品定位，**暂不计划** Linux/macOS 移植或跨平台 CI。
+
+代码中通过 `#ifdef Q_OS_WIN` 隔离平台相关逻辑（崩溃处理、Unicode I/O、Qt 平台插件复制）。若社区有平台适配需求，可先与维护者讨论是否纳入范围。

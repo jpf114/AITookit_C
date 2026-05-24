@@ -17,7 +17,7 @@
 
 ### 环境要求
 
-- Windows 10/11 x64
+- **平台：仅 Windows 10/11 x64**（不支持 Linux/macOS）
 - Visual Studio 2022（MSVC v143）
 - CMake ≥ 3.21
 - [vcpkg](https://vcpkg.io/)（全局安装模式，需设置 `VCPKG_ROOT` 环境变量）
