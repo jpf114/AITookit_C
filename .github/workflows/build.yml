@@ -37,6 +37,43 @@ jobs:
       - name: Test
         run: ctest --test-dir build -C ${{ matrix.build_type }} --output-on-failure
 
+      - name: Install OpenCppCoverage (Release only)
+        if: matrix.build_type == 'Release'
+        continue-on-error: true
+        run: choco install opencppcoverage -y
+
+      - name: Collect code coverage (Release only)
+        if: matrix.build_type == 'Release'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $cov = @(
+            "${env:ProgramFiles}\OpenCppCoverage\OpenCppCoverage.exe",
+            "${env:ProgramFiles(x86)}\OpenCppCoverage\OpenCppCoverage.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $cov) {
+            Write-Host "OpenCppCoverage not installed, skipping coverage"
+            exit 0
+          }
+          $env:QT_QPA_PLATFORM = "minimal"
+          & $cov `
+            --sources "${{ github.workspace }}\src" `
+            --export_type "cobertura:${{ github.workspace }}\cobertura.xml" `
+            --export_type "html:${{ github.workspace }}\coverage-html" `
+            -- `
+            ctest --test-dir build -C Release --output-on-failure
+
+      - name: Upload coverage report (Release only)
+        if: matrix.build_type == 'Release'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            cobertura.xml
+            coverage-html/
+          retention-days: 14
+
       - name: Package (Release only)
         if: matrix.build_type == 'Release'
         run: |
