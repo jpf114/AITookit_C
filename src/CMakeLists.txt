@@ -126,6 +126,10 @@ ai_define_module(
         Qt6::Network
 )
 
+if(TARGET ai_core)
+    target_include_directories(ai_core PUBLIC "${CMAKE_BINARY_DIR}/generated")
+endif()
+
 ai_define_module(
     ai_runtime
     SOURCES

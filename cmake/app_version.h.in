@@ -1,3 +1,4 @@
 #pragma once
 
 #define AITOOLKIT_VERSION "@PROJECT_VERSION@"
+#define AITOOLKIT_GITHUB_REPO "jpf114/AITookit_C"

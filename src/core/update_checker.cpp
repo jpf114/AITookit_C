@@ -1,5 +1,7 @@
 #include "core/update_checker.h"
 
+#include "app_version.h"
+
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
@@ -13,7 +15,8 @@ namespace aitoolkit::core {
 UpdateCheckResult UpdateChecker::checkForUpdates(const QString& currentVersion) {
     UpdateCheckResult result;
     QNetworkAccessManager manager;
-    QNetworkRequest request(QUrl(QStringLiteral("https://api.github.com/repos/AIToolkit/AITookit_C/releases/latest")));
+    QNetworkRequest request(QUrl(QStringLiteral("https://api.github.com/repos/%1/releases/latest")
+                                   .arg(QStringLiteral(AITOOLKIT_GITHUB_REPO))));
     request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("AIToolkit-UpdateChecker/1.0"));
 
     QEventLoop loop;
