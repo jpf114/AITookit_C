@@ -6,6 +6,7 @@
 #include <QTemporaryDir>
 
 #include "core/json_utils.h"
+#include "core/model_manifest.h"
 #include "runtime/backend_registry.h"
 #include "services/model_service.h"
 
@@ -90,6 +91,8 @@ class ModelServiceTest : public QObject {
 
 private slots:
     void loadModelUsesRegisteredBackendAndForwardsGpuFlag();
+    void createManifestInfersClassificationTaskType();
+    void createManifestInfersSegmentationTaskType();
 };
 
 void ModelServiceTest::loadModelUsesRegisteredBackendAndForwardsGpuFlag() {
@@ -120,6 +123,46 @@ void ModelServiceTest::loadModelUsesRegisteredBackendAndForwardsGpuFlag() {
     QVERIFY(model != nullptr);
 
     aitoolkit::runtime::BackendRegistry::instance().unregisterBackend(QStringLiteral("fake_backend"));
+}
+
+QString writeOnnxFile(const QString& directoryPath, const QString& fileName) {
+    const QString onnxPath = QDir(directoryPath).filePath(fileName);
+    QFile onnxFile(onnxPath);
+    if (onnxFile.open(QIODevice::WriteOnly)) {
+        onnxFile.write("fake-onnx");
+        onnxFile.close();
+    }
+    return onnxPath;
+}
+
+void ModelServiceTest::createManifestInfersClassificationTaskType() {
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+
+    const QString onnxPath = writeOnnxFile(tempDir.path(), QStringLiteral("yolov8n-cls.onnx"));
+    aitoolkit::services::ModelService service;
+    const auto manifest = service.createManifestFromOnnx(
+        onnxPath, QStringLiteral("YOLOv8n-cls"), 640, 640, 0.25, 0.45, {});
+
+    QCOMPARE(manifest.taskType, QStringLiteral("classification"));
+    QCOMPARE(manifest.inputWidth, 224);
+    QCOMPARE(manifest.inputHeight, 224);
+    QCOMPARE(manifest.decoder, QString());
+}
+
+void ModelServiceTest::createManifestInfersSegmentationTaskType() {
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+
+    const QString onnxPath = writeOnnxFile(tempDir.path(), QStringLiteral("yolov8n-seg.onnx"));
+    aitoolkit::services::ModelService service;
+    const auto manifest = service.createManifestFromOnnx(
+        onnxPath, QStringLiteral("YOLOv8n-seg"), 640, 640, 0.25, 0.45, {});
+
+    QCOMPARE(manifest.taskType, QStringLiteral("segmentation"));
+    QCOMPARE(manifest.decoder, QStringLiteral("yolo_v8"));
+    QCOMPARE(manifest.inputWidth, 640);
+    QCOMPARE(manifest.inputHeight, 640);
 }
 
 }  // namespace

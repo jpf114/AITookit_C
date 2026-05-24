@@ -48,19 +48,39 @@ core::ModelManifest ModelService::createManifestFromOnnx(
         throw std::runtime_error(QStringLiteral("ONNX file not found: %1").arg(QDir::toNativeSeparators(onnxPath)).toStdString());
     }
 
+    const QString baseName = onnxInfo.completeBaseName().toLower();
+    QString taskType = QStringLiteral("detection");
+    QString decoder = QStringLiteral("yolo_v8");
+    int width = inputWidth;
+    int height = inputHeight;
+
+    if (baseName.contains(QStringLiteral("-cls")) || baseName.endsWith(QStringLiteral("cls"))) {
+        taskType = QStringLiteral("classification");
+        decoder.clear();
+        if (width == 640 && height == 640) {
+            width = 224;
+            height = 224;
+        }
+    } else if (baseName.contains(QStringLiteral("-seg")) || baseName.endsWith(QStringLiteral("seg"))) {
+        taskType = QStringLiteral("segmentation");
+    }
+
     const QDir onnxDir = onnxInfo.absoluteDir();
     const QString manifestFileName = onnxInfo.completeBaseName() + QStringLiteral(".json");
     const QString manifestPath = QDir::cleanPath(onnxDir.filePath(manifestFileName));
 
     QJsonObject root;
     root.insert(QStringLiteral("name"), modelName);
-    root.insert(QStringLiteral("task_type"), QStringLiteral("detection"));
+    root.insert(QStringLiteral("task_type"), taskType);
     root.insert(QStringLiteral("backend"), QStringLiteral("onnxruntime"));
     root.insert(QStringLiteral("model"), onnxInfo.fileName());
-    root.insert(QStringLiteral("input_width"), inputWidth);
-    root.insert(QStringLiteral("input_height"), inputHeight);
+    root.insert(QStringLiteral("input_width"), width);
+    root.insert(QStringLiteral("input_height"), height);
     root.insert(QStringLiteral("confidence_threshold"), confidenceThreshold);
     root.insert(QStringLiteral("nms_threshold"), nmsThreshold);
+    if (!decoder.isEmpty()) {
+        root.insert(QStringLiteral("decoder"), decoder);
+    }
 
     if (!labels.isEmpty()) {
         QJsonArray labelsArray;
