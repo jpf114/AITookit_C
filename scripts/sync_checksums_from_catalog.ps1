@@ -1,8 +1,16 @@
 [CmdletBinding()]
 param(
-    [string]$CatalogPath = (Join-Path $PSScriptRoot '..\resources\model_catalog.json'),
-    [string]$ModelsDirectory = (Join-Path $PSScriptRoot '..\models')
+    [string]$CatalogPath,
+    [string]$ModelsDirectory
 )
+
+$scriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $CatalogPath) {
+    $CatalogPath = Join-Path $scriptRoot '..\resources\model_catalog.json'
+}
+if (-not $ModelsDirectory) {
+    $ModelsDirectory = Join-Path $scriptRoot '..\models'
+}
 
 $checksumsPath = Join-Path $ModelsDirectory 'checksums.json'
 if (-not (Test-Path $CatalogPath)) {

@@ -2,31 +2,141 @@
   "version": 1,
   "models": [
     {
+      "name": "YOLO11n",
+      "taskType": "detection",
+      "fileName": "yolo11n.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.onnx",
+      "description": "YOLO11 Nano detection, ~5MB, mAP 39.5",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLO11s",
+      "taskType": "detection",
+      "fileName": "yolo11s.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s.onnx",
+      "description": "YOLO11 Small detection, ~18MB, mAP 47.0",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLO11m",
+      "taskType": "detection",
+      "fileName": "yolo11m.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11m.onnx",
+      "description": "YOLO11 Medium detection, ~40MB, mAP 51.5",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    },
+    {
       "name": "YOLOv8n",
       "taskType": "detection",
       "fileName": "yolov8n.onnx",
       "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx",
-      "description": "YOLOv8 Nano — classic detection, ~6MB",
+      "description": "YOLOv8 Nano detection, ~6MB, mAP 37.3",
       "inputSize": 640,
       "decoder": "yolo_v8",
       "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLOv8s",
+      "taskType": "detection",
+      "fileName": "yolov8s.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8s.onnx",
+      "description": "YOLOv8 Small detection, ~22MB, mAP 44.9",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLOv8m",
+      "taskType": "detection",
+      "fileName": "yolov8m.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8m.onnx",
+      "description": "YOLOv8 Medium detection, ~52MB, mAP 50.2",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLOv5nu",
+      "taskType": "detection",
+      "fileName": "yolov5nu.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov5nu.onnx",
+      "description": "YOLOv5 Nano detection, ~5MB, mAP 37.1",
+      "inputSize": 640,
+      "decoder": "yolo_v5",
+      "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLO11n-cls",
+      "taskType": "classification",
+      "fileName": "yolo11n-cls.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-cls.onnx",
+      "description": "YOLO11 Nano classification, ~5MB, Top-1 69.0%",
+      "inputSize": 224,
+      "decoder": "",
+      "labelsCategory": "imagenet1000"
+    },
+    {
+      "name": "YOLO11s-cls",
+      "taskType": "classification",
+      "fileName": "yolo11s-cls.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s-cls.onnx",
+      "description": "YOLO11 Small classification, ~11MB, Top-1 75.4%",
+      "inputSize": 224,
+      "decoder": "",
+      "labelsCategory": "imagenet1000"
     },
     {
       "name": "YOLOv8n-cls",
       "taskType": "classification",
       "fileName": "yolov8n-cls.onnx",
       "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-cls.onnx",
-      "description": "YOLOv8 Nano classification",
+      "description": "YOLOv8 Nano classification, ~6MB, Top-1 66.6%",
       "inputSize": 224,
       "decoder": "",
       "labelsCategory": "imagenet1000"
+    },
+    {
+      "name": "YOLO11n-seg",
+      "taskType": "segmentation",
+      "fileName": "yolo11n-seg.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.onnx",
+      "description": "YOLO11 Nano segmentation, ~6MB, mAP 38.0",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLO11s-seg",
+      "taskType": "segmentation",
+      "fileName": "yolo11s-seg.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s-seg.onnx",
+      "description": "YOLO11 Small segmentation, ~19MB, mAP 45.2",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
     },
     {
       "name": "YOLOv8n-seg",
       "taskType": "segmentation",
       "fileName": "yolov8n-seg.onnx",
       "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-seg.onnx",
-      "description": "YOLOv8 Nano instance segmentation",
+      "description": "YOLOv8 Nano segmentation, ~6MB, mAP 36.7",
+      "inputSize": 640,
+      "decoder": "yolo_v8",
+      "labelsCategory": "coco80"
+    },
+    {
+      "name": "YOLOv8s-seg",
+      "taskType": "segmentation",
+      "fileName": "yolov8s-seg.onnx",
+      "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8s-seg.onnx",
+      "description": "YOLOv8 Small segmentation, ~23MB, mAP 44.6",
       "inputSize": 640,
       "decoder": "yolo_v8",
       "labelsCategory": "coco80"

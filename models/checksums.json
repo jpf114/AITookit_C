@@ -1,11 +1,20 @@
 {
-  "version": 1,
-  "description": "Optional SHA256 checksums for downloaded ONNX models. Leave hash empty to skip verification.",
-  "files": {
-    "yolov8n.onnx": "9a158697cac55b2e7e7d09f8c43d08389c0ff003e8a6ec2077d62e2f76665a01",
-    "yolov8n-cls.onnx": "515be3873e19af03464d65f4c4d6c49e1879feed86db39df319b8fe2c4c34bfb",
-    "yolov8n-seg.onnx": "9fea8cf41018eccc612ca9893a6252ce937074f2e2102aa2ad6ac6908ea5d05f",
-    "yolov8s.onnx": "3a14b000c38a159e3ac240f9d90c146694ccc34d15a1316929eb219f7a3e5683",
-    "yolov8s-seg.onnx": "91ea61c3e5187ab20a1f52198c15a7e5d52a31d1afcead6e00dfd11b048e9e23"
-  }
+    "version":  1,
+    "description":  "Optional SHA256 checksums for downloaded ONNX models. Leave hash empty to skip verification.",
+    "files":  {
+                  "yolo11n.onnx":  "",
+                  "yolo11s.onnx":  "",
+                  "yolo11m.onnx":  "",
+                  "yolov8n.onnx":  "9a158697cac55b2e7e7d09f8c43d08389c0ff003e8a6ec2077d62e2f76665a01",
+                  "yolov8s.onnx":  "3a14b000c38a159e3ac240f9d90c146694ccc34d15a1316929eb219f7a3e5683",
+                  "yolov8m.onnx":  "",
+                  "yolov5nu.onnx":  "",
+                  "yolo11n-cls.onnx":  "",
+                  "yolo11s-cls.onnx":  "",
+                  "yolov8n-cls.onnx":  "515be3873e19af03464d65f4c4d6c49e1879feed86db39df319b8fe2c4c34bfb",
+                  "yolo11n-seg.onnx":  "",
+                  "yolo11s-seg.onnx":  "",
+                  "yolov8n-seg.onnx":  "9fea8cf41018eccc612ca9893a6252ce937074f2e2102aa2ad6ac6908ea5d05f",
+                  "yolov8s-seg.onnx":  "91ea61c3e5187ab20a1f52198c15a7e5d52a31d1afcead6e00dfd11b048e9e23"
+              }
 }
