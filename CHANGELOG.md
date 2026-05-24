@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-05-23
+
+### Added
+
+- 模型 SHA256 校验值（yolov8n/v8s 检测/分类/分割）
+- `test_onnx_backend` 真实 ONNX 会话与推理测试
+- CI OpenCppCoverage 覆盖率报告（可选 artifact）
+- `scripts/update_model_checksums.ps1`、`scripts/run_coverage.ps1`
+- 模型目录远程 catalog 拉取（GitHub raw 回退本地/内置）
+- 导航、模型、结果、设置页主要控件无障碍名称
+
+### Changed
+
+- UpdateChecker 仓库地址修正为 `jpf114/AITookit_C`
+- `app_version.h` 新增 `AITOOLKIT_GITHUB_REPO` 宏
+
 ## [1.0.1] - 2026-05-23
 
 ### Added
