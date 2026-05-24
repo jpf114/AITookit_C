@@ -137,6 +137,7 @@ src/
 - [用户指南](docs/USER_GUIDE.md) — 首次使用、GPU 设置、FAQ
 - [配置参考](docs/CONFIGURATION.md) — CMake 选项、QSettings、脚本索引
 - [发布流程](docs/RELEASING.md) — 维护者发布 checklist
+- [安全策略](SECURITY.md) — 漏洞报告与支持版本
 - [隐私政策](PRIVACY.md)
 - [服务条款](TERMS.md)
 - [第三方声明](THIRD_PARTY_NOTICES.md)

@@ -11,7 +11,7 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-project(ai-toolkit-c VERSION 1.2.1 LANGUAGES CXX)
+project(ai-toolkit-c VERSION 1.2.2 LANGUAGES CXX)
 
 configure_file(
     "${CMAKE_SOURCE_DIR}/cmake/app_version.h.in"
@@ -138,10 +138,16 @@ install(
         "${CMAKE_SOURCE_DIR}/PRIVACY.md"
         "${CMAKE_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
         "${CMAKE_SOURCE_DIR}/TERMS.md"
+        "${CMAKE_SOURCE_DIR}/SECURITY.md"
         "${CMAKE_SOURCE_DIR}/docs/USER_GUIDE.md"
         "${CMAKE_SOURCE_DIR}/docs/CONFIGURATION.md"
         "${CMAKE_SOURCE_DIR}/docs/RELEASING.md"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc"
+)
+
+install(
+    DIRECTORY "${CMAKE_SOURCE_DIR}/resources/labels/"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/resources/labels"
 )
 
 install(

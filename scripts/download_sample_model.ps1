@@ -49,18 +49,23 @@ $onnxFilePath = Join-Path $ModelsDir $onnxFileName
 $jsonFileName = "$ModelName.json"
 $jsonFilePath = Join-Path $ModelsDir $jsonFileName
 
-$cocoLabels = @(
-    "person","bicycle","car","motorcycle","airplane","bus","train","truck","boat",
-    "traffic light","fire hydrant","stop sign","parking meter","bench","bird","cat",
-    "dog","horse","sheep","cow","elephant","bear","zebra","giraffe","backpack",
-    "umbrella","handbag","tie","suitcase","frisbee","skis","snowboard","sports ball",
-    "kite","baseball bat","baseball glove","skateboard","surfboard","tennis racket",
-    "bottle","wine glass","cup","fork","knife","spoon","bowl","banana","apple",
-    "sandwich","orange","broccoli","carrot","hot dog","pizza","donut","cake","chair",
-    "couch","potted plant","bed","dining table","toilet","tv","laptop","mouse","remote",
-    "keyboard","cell phone","microwave","oven","toaster","sink","refrigerator","book",
-    "clock","vase","scissors","teddy bear","hair drier","toothbrush"
-)
+$RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
+
+function Get-LabelsFilePath {
+    param([string]$LabelsCategory)
+    if ([string]::IsNullOrWhiteSpace($LabelsCategory)) { return $null }
+    $labelsPath = Join-Path $RepoRoot ("resources\labels\{0}.txt" -f $LabelsCategory)
+    if (Test-Path $labelsPath) { return $labelsPath }
+    return $null
+}
+
+function Get-LabelsReferencePath {
+    param([string]$LabelsCategory)
+    switch ($LabelsCategory) {
+        "coco80" { return "../resources/labels/coco80.txt" }
+        default { return $null }
+    }
+}
 
 $imagenetLabels = @(
     "tench","goldfish","great white shark","tiger shark","hammerhead","electric ray",
@@ -220,8 +225,11 @@ $imagenetLabels = @(
 )
 
 $labels = @()
-if ($LabelsCategory -eq "coco80") {
-    $labels = $cocoLabels
+$labelsReference = Get-LabelsReferencePath -LabelsCategory $LabelsCategory
+if ($labelsReference) {
+    if (-not (Get-LabelsFilePath -LabelsCategory $LabelsCategory)) {
+        throw "Labels file not found for category: $LabelsCategory"
+    }
 } elseif ($LabelsCategory -eq "imagenet1000") {
     $labels = $imagenetLabels
 }
@@ -243,7 +251,9 @@ if ($TaskType -eq "detection" -or $TaskType -eq "segmentation") {
     }
 }
 
-if ($labels.Count -gt 0) {
+if ($labelsReference) {
+    $manifest["labels"] = $labelsReference
+} elseif ($labels.Count -gt 0) {
     $manifest["labels_inline"] = $labels
 }
 

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] - 2026-05-24
+
+### Added
+
+- COCO 80 类标签单一数据源：`resources/labels/coco80.txt`
+- `SECURITY.md` 安全策略与漏洞报告指南
+- CMake 模块 `cmake/qt_platform_plugin.cmake`（Qt 插件复制逻辑复用）
+
+### Changed
+
+- 内置 COCO 模型 manifest 改为引用外部标签文件，移除 4×80 行重复 `labels_inline`
+- `download_sample_model.ps1` / `test_builtin_models.py` 从标签文件加载 COCO 类别
+- GUI 集成测试 CMake 配置去重（`ai_configure_gui_integration_test`）
+- 安装包包含 `resources/labels/` 目录
+
 ## [1.2.1] - 2026-05-24
 
 ### Added

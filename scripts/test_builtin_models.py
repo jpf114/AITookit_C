@@ -27,22 +27,26 @@ except ImportError:
 
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
+LABELS_DIR = Path(__file__).resolve().parent.parent / "resources" / "labels"
+DEFAULT_COCO_LABELS_PATH = LABELS_DIR / "coco80.txt"
 
-COCO_LABELS = [
-    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train",
-    "truck", "boat", "traffic light", "fire hydrant", "stop sign",
-    "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep",
-    "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella",
-    "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard",
-    "sports ball", "kite", "baseball bat", "baseball glove", "skateboard",
-    "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork",
-    "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange",
-    "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair",
-    "couch", "potted plant", "bed", "dining table", "toilet", "tv",
-    "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave",
-    "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase",
-    "scissors", "teddy bear", "hair drier", "toothbrush",
-]
+
+def load_labels_file(path: Path) -> list[str]:
+    with open(path, "r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
+
+
+def resolve_manifest_labels(manifest: dict, manifest_path: Path) -> list[str]:
+    if "labels_inline" in manifest:
+        return manifest["labels_inline"]
+    labels_ref = manifest.get("labels")
+    if labels_ref:
+        labels_path = (manifest_path.parent / labels_ref).resolve()
+        if labels_path.is_file():
+            return load_labels_file(labels_path)
+    if DEFAULT_COCO_LABELS_PATH.is_file():
+        return load_labels_file(DEFAULT_COCO_LABELS_PATH)
+    return []
 
 
 def load_manifest(json_path: Path) -> dict:
@@ -175,12 +179,16 @@ def test_manifest(manifest_path: Path) -> bool:
             print(f"  [FAIL] {name}: 模型文件不存在 {m['model']}")
             return False
 
-        if "labels_inline" not in m and "labels_path" not in m:
+        if "labels_inline" not in m and "labels" not in m:
             print(f"  [FAIL] {name}: 缺少标签定义")
             return False
 
-        label_count = len(m.get("labels_inline", []))
-        print(f"  [ OK ] {name}: {m['name']} | {m['task_type']} | {m['input_width']}x{m['input_height']} | {label_count} labels")
+        labels = resolve_manifest_labels(m, manifest_path)
+        if not labels:
+            print(f"  [FAIL] {name}: 无法解析标签")
+            return False
+
+        print(f"  [ OK ] {name}: {m['name']} | {m['task_type']} | {m['input_width']}x{m['input_height']} | {len(labels)} labels")
         return True
     except Exception as e:
         print(f"  [FAIL] {name}: 解析错误 - {e}")
@@ -192,7 +200,10 @@ def test_inference(manifest_path: Path, test_image: np.ndarray) -> bool:
     try:
         m = load_manifest(manifest_path)
         model_path = MODELS_DIR / m["model"]
-        labels = m.get("labels_inline", COCO_LABELS)
+        labels = resolve_manifest_labels(m, manifest_path)
+        if not labels:
+            print(f"  [FAIL] {name}: 无法解析标签")
+            return False
 
         session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
         input_name = session.get_inputs()[0].name
